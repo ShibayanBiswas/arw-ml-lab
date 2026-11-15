@@ -69,9 +69,7 @@ def _migration_failed(out: str) -> bool:
 data = _data_dir()
 srv = pgserver.get_server(data, cleanup_mode="stop")
 failed = False
-with open(
-    os.path.join(os.path.dirname(__file__), "supabase_stub.sql"), encoding="utf-8"
-) as fh:
+with open(os.path.join(os.path.dirname(__file__), "supabase_stub.sql"), encoding="utf-8") as fh:
     _psql(srv, fh.read())
 for f in sorted(glob.glob(os.path.join(ROOT, "supabase", "migrations", "*.sql"))):
     with open(f, encoding="utf-8") as fh:
@@ -79,9 +77,7 @@ for f in sorted(glob.glob(os.path.join(ROOT, "supabase", "migrations", "*.sql"))
     bad = _migration_failed(out)
     failed |= bad
     print(
-        ("FAIL " if bad else "ok   ")
-        + os.path.basename(f)
-        + (("\n" + out[-600:]) if bad else "")
+        ("FAIL " if bad else "ok   ") + os.path.basename(f) + (("\n" + out[-600:]) if bad else "")
     )
 for f in sorted(glob.glob(os.path.join(ROOT, "supabase", "tests", "*.sql"))):
     with open(f, encoding="utf-8") as fh:

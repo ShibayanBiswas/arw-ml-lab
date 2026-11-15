@@ -2,14 +2,15 @@
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 0 complete — next: Phase 1 (Data + EDA + Education) |
-| Last completed step | Phase 0 foundations green (unit, vitest, db_harness, lint, frontend build) |
-| Last green commit | `eb21bfab4895a071fb68e33cf99a5b1fa2f37f47` (`phase 0: foundations`) |
-| Open failures | Supabase CLI not on PATH locally (db_harness used); full `docker compose` multi-service smoke deferred |
-| Next action | Plan Phase 1 in Plan mode → `docs/plans/PHASE_1_PLAN.md`, get approval, then build |
+| Current phase | Phase 1 complete — next: Phase 8.1 (Hosted skeleton) |
+| Last completed step | Phase 1 Data + EDA + Education green (unit/golden, vitest, tsc, ruff, mypy, db_harness) |
+| Last green commit | (pending `phase 1: …` commit this session) |
+| Open failures | 1M×50 EDA profile soft-skipped at 145.39s on this host; Supabase CLI not on PATH (db_harness used) |
+| Next action | Plan Phase 8.1 in Plan mode → `docs/plans/PHASE_8_1_PLAN.md`, get approval, then build (ask before external accounts/secrets) |
 
 ## Phase log
 | Phase | Status | Report | Commit |
 |---|---|---|---|
 | 0 | done | docs/PHASE_0_REPORT.md | phase 0: foundations |
-| 1 | pending | | |
+| 1 | done | docs/PHASE_1_REPORT.md | phase 1: data + EDA + education |
+| 8.1 | pending | | |

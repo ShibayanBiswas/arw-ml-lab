@@ -42,6 +42,7 @@ defusedxml==0.7.1      # hardens openpyxl against XML bombs / XXE in uploaded .x
 skops==0.16.0          # safe (non-pickle) persistence of sklearn pipelines with a type allow-list
 # Round 4 (§45/§46): ingestion encoding detection, report and notebook exports
 charset-normalizer==3.5.2
+pyyaml==6.0.3
 nbformat==5.11.1        # pipeline code export as a Jupyter notebook (§46.4)
 weasyprint==70.0        # PDF run reports; needs Pango in the Dockerfile (apt: libpango-1.0-0 libpangoft2-1.0-0)
 python-pptx==1.0.2      # PPTX report export (§25)

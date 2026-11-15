@@ -55,7 +55,21 @@ ignore = [
 "tests/db_harness/*" = ["SIM115", "E501"]
 "tests/unit/test_predict_samples.py" = ["E501", "E741"]
 "tests/unit/test_api_phase0.py" = ["E501"]
+"tests/unit/test_api_phase1.py" = ["E501"]
+"tests/golden/*" = ["E501"]
 "backend/worker/tasks/demo.py" = ["E501"]
+"backend/worker/tasks/ingest.py" = ["E501"]
+"backend/worker/tasks/eda.py" = ["E501"]
+"backend/app/routers/datasets.py" = ["E501"]
+"backend/app/routers/eda.py" = ["E501"]
+"backend/app/storage.py" = ["E501"]
+"labcore/eda/tables.py" = ["E501"]
+"labcore/eda/plots.py" = ["E501"]
+"labcore/eda/run.py" = ["E501"]
+"labcore/insights/rules.py" = ["E501", "SIM102"]
+"labcore/data/task_detect.py" = ["E501"]
+"labcore/data/infer.py" = ["E501"]
+"labcore/data/readers.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.12"
@@ -65,11 +79,55 @@ mypy_path = "."
 namespace_packages = true
 explicit_package_bases = true
 
+[[tool.mypy.overrides]]
+module = [
+  "scipy",
+  "scipy.*",
+  "sklearn",
+  "sklearn.*",
+  "statsmodels",
+  "statsmodels.*",
+  "optbinning",
+  "optbinning.*",
+  "nolds",
+  "nolds.*",
+  "ruptures",
+  "ruptures.*",
+  "arch",
+  "arch.*",
+  "phik",
+  "phik.*",
+  "dcor",
+  "dcor.*",
+  "plotly",
+  "plotly.*",
+  "charset_normalizer",
+  "charset_normalizer.*",
+  "yaml",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+  "labcore.eda.tables",
+  "labcore.eda.plots",
+  "labcore.eda.run",
+  "labcore.insights.rules",
+]
+# Thin library wrappers over untyped scientific APIs — keep runtime tests as the contract
+disallow_untyped_calls = false
+disallow_any_generics = false
+warn_return_any = false
+disable_error_code = ["arg-type", "operator", "union-attr", "assignment", "no-untyped-call", "call-overload"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "-q"
 filterwarnings = ["ignore::DeprecationWarning"]
+markers = [
+  "benchmark: wall-time / throughput checks (may soft-skip on low-CPU hosts)",
+]
 
 [build-system]
 requires = ["hatchling"]

@@ -1,4 +1,7 @@
 import { notFound } from "next/navigation";
+import { DataWorkbench } from "@/components/data/DataWorkbench";
+import { EdaWorkbench } from "@/components/eda/EdaWorkbench";
+import { LogicAtlas } from "@/components/learn/LogicAtlas";
 import { ModulePlaceholder } from "@/components/panels/ModulePlaceholder";
 import { MODULES } from "@/lib/modules";
 
@@ -10,6 +13,21 @@ export default async function ModuleSubPage({ params }: Props) {
   if (!mod) notFound();
   const nav = mod.nav.find((n) => n.id === page);
   if (!nav) notFound();
+
+  if (slug === "data") {
+    if (page === "upload") return <DataWorkbench mode="upload" />;
+    if (page === "samples") return <DataWorkbench mode="samples" />;
+    if (page === "explorer" || page === "home" || page === "versions")
+      return <DataWorkbench mode="explorer" />;
+    if (page === "schema") return <DataWorkbench mode="schema" />;
+  }
+  if (slug === "eda") {
+    return <EdaWorkbench section={page} />;
+  }
+  if (slug === "learn") {
+    return <LogicAtlas page={page} />;
+  }
+
   return (
     <ModulePlaceholder
       title={`${mod.label} · ${nav.label}`}

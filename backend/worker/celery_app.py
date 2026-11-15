@@ -27,7 +27,11 @@ celery_app = Celery(
     "arw_ml_lab",
     broker=settings.redis_url,
     backend=settings.redis_url,
-    include=["backend.worker.tasks.demo"],
+    include=[
+        "backend.worker.tasks.demo",
+        "backend.worker.tasks.ingest",
+        "backend.worker.tasks.eda",
+    ],
 )
 
 celery_app.conf.update(
@@ -45,6 +49,9 @@ celery_app.conf.update(
     # Known queue names (ARCHITECTURE §8 + q.predict.heavy + q.demo)
     task_routes={
         "lab.demo.progress": {"queue": "q.demo"},
+        "lab.ingest.parse": {"queue": "q.ingest"},
+        "lab.ingest.sample": {"queue": "q.ingest"},
+        "lab.eda.run": {"queue": "q.eda"},
     },
 )
 # Expose queue catalogue for workers / docs
