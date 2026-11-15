@@ -48,9 +48,9 @@ Thin ACs:
 
 ## Self-verification checklist (§000)
 - [x] Phase 3A unit ACs + `test_predict_samples.py` green (commands above)
-- [ ] Full `make test` / `make lint` — run in closeout with CI
+- [x] CI green — https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43737073716
 - [x] No new stub `NotImplementedError` in shipped predict paths (deferred PV codes are explicit `severity=deferred` messages)
 - [x] Endpoints align with §45.7 thin subset (aliases kept)
 - [x] No secrets in diff
 - [x] ADR-0013 + PROGRESS updated
-- [ ] Push + Vercel `arw-ml-lab` READY only
+- [x] Push + Vercel `arw-ml-lab` READY only (`https://arw-ml-lab.vercel.app`; no stray `frontend` project)
