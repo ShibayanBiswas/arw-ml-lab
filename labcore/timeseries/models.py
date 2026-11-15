@@ -44,7 +44,7 @@ def forecast_seasonal_naive(
     sf = StatsForecast(models=[SeasonalNaive(season_length=m)], freq=1, n_jobs=1)
     fc = sf.forecast(df=df, h=h)
     col = [c for c in fc.columns if c not in ("unique_id", "ds")][0]
-    return fc[col].to_numpy(dtype=float)
+    return np.asarray(fc[col], dtype=float)
 
 
 def forecast_sarima_airline(
