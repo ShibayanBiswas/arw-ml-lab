@@ -63,8 +63,8 @@ EXIT:0
 
 ### Deploy closeout
 
-- GitHub `main`: _(filled after push)_
-- Vercel production **READY**: _(filled after deploy)_
+- GitHub `main`: `f3bf6de` (`phase 2b: workstation ui shell`)
+- Vercel production **READY**: `https://arw-ml-cfvej0uee-shibayan-biswas-projects.vercel.app` (alias `https://arw-ml-lab.vercel.app`)
 
 ## Next
 

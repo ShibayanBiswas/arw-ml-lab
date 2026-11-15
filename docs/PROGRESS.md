@@ -4,7 +4,7 @@
 |---|---|
 | Current phase | Phase 2B done — awaiting continue |
 | Last completed step | Phase 2B Workstation UI shell |
-| Last green commit | _(filled after commit)_ (`phase 2b: workstation ui shell`) |
+| Last green commit | `f3bf6de` (`phase 2b: workstation ui shell`) |
 | Open failures | Render Blueprint `need_payment_info`; optional Vercel `SUPABASE_SERVICE_ROLE_KEY` for durable password changes |
 | Next action | User **continue** → Phase 3 (Explain+Predict) or Phase 2A-cont (full §34) |
 
