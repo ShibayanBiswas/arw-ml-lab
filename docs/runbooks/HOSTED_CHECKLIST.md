@@ -27,6 +27,7 @@ Use this after following [docs/DEPLOY.md](../DEPLOY.md). Reply with ticks only; 
 - [x] Production URL: `https://arw-ml-lab.vercel.app`
 - [ ] MCP team re-auth when SSO expires (approve consent link from agent); then inspect failed deploys
 - [ ] Update `NEXT_PUBLIC_LAB_API_URL` once lab-api exists (or point at local tunnel for demos)
+- [ ] **After every phase green:** push `main` → confirm latest production deploy READY (ADR-0006)
 
 ## GitHub
 

@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { EvalWorkbench } from "@/components/train/EvalWorkbench";
 import { getExperiment, getJob, listSamples, loadSample, startTrain } from "@/lib/api";
 
-type Props = { mode: "recipe" | "leaderboard" | "models" };
+type Props = { mode: "recipe" | "leaderboard" | "models" | "detail" };
 
 export function TrainWorkbench({ mode }: Props) {
   const [samples, setSamples] = useState<Array<Record<string, unknown>>>([]);
@@ -14,6 +15,8 @@ export function TrainWorkbench({ mode }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [board, setBoard] = useState<Array<Record<string, unknown>>>([]);
   const [expId, setExpId] = useState<string | null>(null);
+  const [evalPayload, setEvalPayload] = useState<Record<string, unknown> | null>(null);
+  const [championKey, setChampionKey] = useState<string | null>(null);
 
   useEffect(() => {
     void listSamples()
@@ -48,8 +51,15 @@ export function TrainWorkbench({ mode }: Props) {
       }
       if (tj.status !== "done") throw new Error(tj.error || tj.status);
       const exp = await getExperiment(started.experiment_id);
-      setBoard((exp.leaderboard as Array<Record<string, unknown>>) || []);
-      setStatus(`Done — ${board.length || (exp.leaderboard as unknown[])?.length || 0} models`);
+      const lb = (exp.leaderboard as Array<Record<string, unknown>>) || [];
+      setBoard(lb);
+      const result = (exp.result || {}) as {
+        eval?: Record<string, unknown>;
+        champion?: { algorithm_key?: string };
+      };
+      setEvalPayload(result.eval || null);
+      setChampionKey(result.champion?.algorithm_key || String(lb[0]?.algorithm_key || ""));
+      setStatus(`Done — ${lb.length} models`);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setStatus("");
@@ -59,12 +69,20 @@ export function TrainWorkbench({ mode }: Props) {
   return (
     <div className="space-y-6 p-6">
       <div>
-        <p className="section-kicker">{mode === "leaderboard" ? "Leaderboard" : "Supervised"}</p>
+        <p className="section-kicker">
+          {mode === "leaderboard" ? "Leaderboard" : mode === "detail" ? "Evaluation" : "Supervised"}
+        </p>
         <h1 className="section-title mt-1 text-3xl">
-          {mode === "recipe" ? "Recipe + Quick train" : mode === "leaderboard" ? "Leaderboard" : "Models"}
+          {mode === "recipe"
+            ? "Recipe + Quick train"
+            : mode === "leaderboard"
+              ? "Leaderboard"
+              : mode === "detail"
+                ? "Model evaluation"
+                : "Models"}
         </h1>
         <p className="mt-2 text-sm text-[var(--fg-muted)]">
-          Thin Phase 2: default recipe (median impute, one-hot, standard scale) + CV (seed 42).
+          Phase 2-cont: recipe + CV (seed 42) + §41/§42 Eval Core on the champion.
         </p>
       </div>
       {mode !== "leaderboard" || !board.length ? (
@@ -135,7 +153,7 @@ export function TrainWorkbench({ mode }: Props) {
         </p>
       ) : null}
       {expId ? <p className="font-mono text-xs text-[var(--fg-subtle)]">experiment {expId}</p> : null}
-      {board.length ? (
+      {board.length && mode !== "detail" ? (
         <div className="overflow-x-auto rounded-xl border border-[var(--border)]">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-[var(--bg-elevated)] text-[10px] uppercase tracking-wider text-[var(--fg-subtle)]">
@@ -167,6 +185,12 @@ export function TrainWorkbench({ mode }: Props) {
           </table>
         </div>
       ) : null}
+      {(mode === "detail" || evalPayload) && (
+        <EvalWorkbench
+          evalPayload={evalPayload as never}
+          championKey={championKey}
+        />
+      )}
     </div>
   );
 }

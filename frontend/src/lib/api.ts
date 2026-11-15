@@ -180,5 +180,8 @@ export async function getExperiment(experimentId: string) {
     id: string;
     status: string;
     leaderboard: Array<Record<string, unknown>>;
+    result?: Record<string, unknown>;
+    eval?: Record<string, unknown>;
+    champion?: { algorithm_key?: string };
   };
 }

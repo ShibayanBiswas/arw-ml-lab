@@ -1,5 +1,12 @@
 # Architecture decision records
 
+## ADR-0006 — Phase 2-cont Eval Core + deploy sync (2026-11-15)
+
+- Phase 2 thin deferred full §41/§42; this stop implements **Eval Core** only: CM suite, classification report, CLE.M for binary/multiclass, CLE.T.CV_METRICS, threshold OOF-only spy, McNemar/5×2/DeLong; REE residuals / resid tests / influence / core REE.M; minimum Plotly set for Overview/Confusion/Report/Curves/Residuals.
+- Deferred to next 2-cont slice: full CLE.P.* / REE.P.* catalogues, remaining CV schemes, Optuna trial loop / Halving / NSGA-II, leftover R*/C*, MLflow nested runs, CD-diagram goldens.
+- Eval artefact payload lives on the experiment result under `eval.classification` / `eval.regression` (JSON numbers + plotly); OOF arrays cached under `.cache/eval` in tests.
+- **Standing ops:** after every phase green commit, push `origin/main` and confirm Vercel Hobby production is READY (Machine Learning Lab / Root Directory `frontend`).
+
 ## ADR-0005 — BFF auth primary (Phase 2, 2026-11-15)
 
 - ARCHITECTURE §39.5 lists Supabase Auth as primary; SP `jose`+OTP as fallback. **User request:** same login as SP Workstation, **no Supabase email/magic OTP**, same Rathi roster.

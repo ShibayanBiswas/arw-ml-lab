@@ -12,8 +12,10 @@ def _p(name: str, typ: str, default: Any, help_key: str, **kw: Any) -> ParamSpec
 
 
 def thin_algorithm_specs() -> list[AlgorithmSpec]:
+    from labcore.registry.algorithms_extra import extra_algorithm_specs
+
     rs = _p("random_state", "int", 42, "seed")
-    return [
+    base: list[AlgorithmSpec] = [
         AlgorithmSpec(
             id="R1",
             key="reg.ridge",
@@ -241,6 +243,7 @@ def thin_algorithm_specs() -> list[AlgorithmSpec]:
             tags=["boosting"],
         ),
     ]
+    return base + extra_algorithm_specs()
 
 
 def build_estimator(spec: AlgorithmSpec, params: dict[str, Any] | None = None) -> Any:

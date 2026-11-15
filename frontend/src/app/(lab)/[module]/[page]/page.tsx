@@ -39,8 +39,13 @@ export default async function ModuleSubPage({ params }: Props) {
   if (slug === "preprocess" && page === "recipe") {
     return <TrainWorkbench mode="recipe" />;
   }
-  if (slug === "supervised" && (page === "leaderboard" || page === "models" || page === "home")) {
-    return <TrainWorkbench mode={page === "leaderboard" ? "leaderboard" : "models"} />;
+  if (
+    slug === "supervised" &&
+    (page === "leaderboard" || page === "models" || page === "home" || page === "detail")
+  ) {
+    const mode =
+      page === "leaderboard" ? "leaderboard" : page === "detail" ? "detail" : "models";
+    return <TrainWorkbench mode={mode} />;
   }
 
   return (

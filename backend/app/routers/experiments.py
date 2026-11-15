@@ -57,13 +57,16 @@ def get_experiment(
     rec = EXPERIMENT_STORE.get(experiment_id)
     if rec is None or rec.workspace_id != (user.workspace_id or rec.workspace_id):
         raise HTTPException(status_code=404, detail="experiment not found")
+    result = rec.result or {}
     return {
         "id": rec.id,
         "name": rec.name,
         "status": rec.status,
         "task_spec": rec.task_spec,
         "leaderboard": rec.leaderboard,
-        "result": rec.result,
+        "result": result,
+        "eval": result.get("eval"),
+        "champion": result.get("champion"),
     }
 
 

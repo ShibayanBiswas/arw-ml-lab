@@ -28,6 +28,15 @@ Supabase Auth magic-link redirects are **not** required for primary login (ADR-0
 
 **Render:** Do **not** add a payment method unless you approve cost. Until then: Vercel frontend + local/`make dev` API.
 
+## Standing rule — keep GitHub + Vercel current (ADR-0006)
+
+After **every** phase green closeout:
+
+1. `git commit` with `phase <n>: …`
+2. `git push origin main` so GitHub matches local
+3. Confirm Vercel Hobby production deployment is **READY** for Root Directory `frontend` (Git integration or MCP). If MCP returns 403, run team SSO consent once, then re-check deployments.
+4. Never put `NVIDIA_API_KEY` / service-role keys on Vercel.
+
 ## Topology
 
 | Piece | Platform | Notes |

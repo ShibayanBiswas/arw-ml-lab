@@ -28,6 +28,8 @@ IMPORT_TO_PACKAGE = {
     "sklearn": "scikit-learn",
     "skimage": "scikit-image",
     "imblearn": "imbalanced-learn",
+    "netcal": "netcal",
+    "MLstatkit": "MLstatkit",
 }
 
 
