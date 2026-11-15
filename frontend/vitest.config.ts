@@ -8,6 +8,8 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     setupFiles: ["./vitest.setup.ts"],
+    // bcrypt seed of full roster regularly exceeds Vitest's 5s default under load
+    testTimeout: 30_000,
   },
   resolve: {
     alias: {

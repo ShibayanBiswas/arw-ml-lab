@@ -28,5 +28,9 @@ describe("SP shell tokens", () => {
     expect(css).toContain(".animate-rise");
     expect(css).toContain(".dashboard-shell");
     expect(css).toContain(".dashboard-shell-collapsed");
+    expect(css).toContain(".sidebar-module-rail");
+    expect(css).toContain(".sidebar-icon-badge");
+    expect(css).toContain(".home-footer-luxe");
   });
 });
+

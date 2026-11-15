@@ -2,11 +2,11 @@
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 2A done (thin) — awaiting continue |
-| Last completed step | Phase 2A Deep Learning thin smoke |
-| Last green commit | `1fc9929` (`phase 2a: dl thin smoke`) |
+| Current phase | Phase 2B done — awaiting continue |
+| Last completed step | Phase 2B Workstation UI shell |
+| Last green commit | _(filled after commit)_ (`phase 2b: workstation ui shell`) |
 | Open failures | Render Blueprint `need_payment_info`; optional Vercel `SUPABASE_SERVICE_ROLE_KEY` for durable password changes |
-| Next action | User **continue** → Phase 2A-cont (full §34) or Phase 3 |
+| Next action | User **continue** → Phase 3 (Explain+Predict) or Phase 2A-cont (full §34) |
 
 ## Phase log
 | Phase | Status | Report | Commit |
@@ -20,3 +20,4 @@
 | 2-cont-2 | done | docs/PHASE_2_CONT_2_REPORT.md | phase 2-cont-2: tune cv plots |
 | 2-cont-3 | done | docs/PHASE_2_CONT_3_REPORT.md | phase 2-cont-3: sp auth ui parity |
 | 2A | done (thin) | docs/PHASE_2A_REPORT.md | phase 2a: dl thin smoke |
+| 2B | done | docs/PHASE_2B_REPORT.md | phase 2b: workstation ui shell |

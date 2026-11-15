@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { Sidebar } from "@/components/shell/Sidebar";
 
 type ShellContextValue = {
@@ -84,7 +85,7 @@ export function DashboardShell({ userName, userEmail, children }: Props) {
           >
             <Menu size={18} />
           </button>
-          <span className="font-[family-name:var(--font-display)] text-lg">Machine Learning Lab</span>
+          <BrandLogo className="h-8 w-auto max-w-[160px]" />
           <button
             type="button"
             className="dashboard-icon-btn"

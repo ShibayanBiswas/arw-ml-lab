@@ -3,47 +3,15 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
-import {
-  BarChart3,
-  Brain,
-  ChevronDown,
-  Database,
-  FileText,
-  FlaskConical,
-  GraduationCap,
-  LayoutDashboard,
-  Layers,
-  LineChart,
-  LogOut,
-  Moon,
-  Search,
-  Shield,
-  SlidersHorizontal,
-  Sparkles,
-  Sun,
-} from "lucide-react";
+import { ChevronDown, LayoutDashboard, LogOut, Moon, Sun } from "lucide-react";
+import { BrandLogo } from "@/components/ui/BrandLogo";
+import { MODULE_ICONS } from "@/lib/module-icons";
 import {
   MODULES,
   collectNavPaths,
-  type ModuleGroup,
   type NavItem,
 } from "@/lib/modules";
 import { useTheme } from "@/lib/theme";
-
-const MODULE_ICONS: Record<ModuleGroup["icon"], typeof BarChart3> = {
-  database: Database,
-  chart: BarChart3,
-  sliders: SlidersHorizontal,
-  brain: Brain,
-  layers: Layers,
-  lineChart: LineChart,
-  search: Search,
-  sparkles: Sparkles,
-  flask: FlaskConical,
-  fileText: FileText,
-  graduation: GraduationCap,
-  shield: Shield,
-};
 
 type Props = {
   userName: string;
@@ -169,58 +137,71 @@ export function Sidebar({ userName, userEmail, collapsed = false, onNavigate }: 
 
   return (
     <div className="relative z-[1] flex h-full min-h-0 flex-1 flex-col">
-      <div className="sidebar-brand border-b border-[color-mix(in_srgb,var(--gold)_12%,var(--border))] px-3 py-3.5">
+      <div className="sidebar-brand border-b border-[color-mix(in_srgb,var(--gold)_12%,var(--border))] px-3 py-3.5 md:px-4 md:py-4">
         <Link
           href="/"
-          className="flex min-w-0 items-center justify-center lg:justify-start"
+          className="flex min-w-0 items-center justify-center transition duration-300 hover:opacity-95 lg:justify-start"
           onClick={onNavigate}
           title="Home Terminal"
+          data-testid="sidebar-brand"
         >
           {collapsed ? (
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl gold-gradient text-xs font-bold text-[#111]">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl gold-gradient text-xs font-bold text-[#111] shadow-[0_8px_20px_color-mix(in_srgb,var(--gold)_28%,transparent)]">
               ML
             </span>
           ) : (
-            <span className="font-[family-name:var(--font-display)] text-xl tracking-tight">
-              <span className="gold-text">Machine Learning</span> Lab
-            </span>
+            <BrandLogo className="h-10 w-auto max-w-[200px] md:h-12 md:max-w-[220px]" />
           )}
         </Link>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-2 py-3" aria-label="Primary">
+      <nav className="flex-1 overflow-y-auto px-2 py-3 scrollbar-thin md:px-2.5 md:py-4" aria-label="Primary">
         <Link
           href="/"
           title="Home Terminal"
           onClick={onNavigate}
-          className={`mb-2 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm ${
+          className={`sidebar-nav-item panel-hover mb-2 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm ${
             collapsed ? "justify-center px-2" : ""
           } ${
             pathname === "/"
-              ? "bg-[color-mix(in_srgb,var(--gold)_18%,transparent)] text-[var(--fg)]"
+              ? "sidebar-nav-item-active bg-[color-mix(in_srgb,var(--gold)_18%,transparent)] text-[var(--fg)] shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--gold)_35%,var(--border)),0_8px_22px_color-mix(in_srgb,var(--gold)_12%,transparent)]"
               : "text-[var(--fg-muted)]"
           }`}
         >
-          <LayoutDashboard size={15} />
-          {!collapsed ? <span className="font-semibold">Home Terminal</span> : null}
+          <span className="sidebar-icon-badge shrink-0">
+            <LayoutDashboard size={15} />
+          </span>
+          {!collapsed ? (
+            <span className="sidebar-label font-semibold tracking-[-0.01em]">Home Terminal</span>
+          ) : null}
         </Link>
 
         {!collapsed ? (
-          <p className="section-kicker mb-2.5 mt-5 px-3">MODULES</p>
+          <p className="mb-2.5 mt-5 px-3 text-[10px] font-semibold tracking-[0.28em] text-[var(--fg-subtle)]">
+            MODULES
+          </p>
         ) : (
           <div className="my-3 h-px bg-[color-mix(in_srgb,var(--gold)_18%,var(--border))]" />
         )}
 
-        {MODULES.map((mod) => {
+        {MODULES.map((mod, index) => {
           const open = !collapsed && (openModules[mod.id] ?? false);
           const active = pathname.startsWith(mod.href);
           const ModuleIcon = MODULE_ICONS[mod.icon];
           return (
-            <div key={mod.id} className="mb-1.5">
+            <div
+              key={mod.id}
+              className={`sidebar-module-rail mb-1.5 ${active ? "sidebar-module-rail-active sidebar-module-active" : ""}`}
+              style={{ animationDelay: `${80 + index * 45}ms` }}
+            >
               <div
-                className={`flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-sm ${
-                  collapsed ? "justify-center" : ""
-                } ${active ? "bg-[color-mix(in_srgb,var(--gold)_10%,var(--bg-muted))]" : "text-[var(--fg-muted)]"}`}
+                className={`flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-sm transition-all duration-200 ${
+                  collapsed ? "justify-center px-1" : ""
+                } ${
+                  active
+                    ? "bg-[color-mix(in_srgb,var(--gold)_10%,var(--bg-muted))] text-[var(--fg)]"
+                    : "text-[var(--fg-muted)] hover:bg-[var(--bg-muted)]"
+                }`}
               >
                 <Link
                   href={mod.href}
@@ -228,9 +209,13 @@ export function Sidebar({ userName, userEmail, collapsed = false, onNavigate }: 
                   title={mod.label}
                   onClick={onNavigate}
                 >
-                  <ModuleIcon size={15} />
+                  <span className="sidebar-icon-badge shrink-0">
+                    <ModuleIcon size={15} />
+                  </span>
                   {!collapsed ? (
-                    <span className="min-w-0 flex-1 truncate font-semibold">{mod.label}</span>
+                    <span className="sidebar-label min-w-0 flex-1 truncate font-semibold">
+                      {mod.label}
+                    </span>
                   ) : null}
                 </Link>
                 {!collapsed ? (
@@ -238,7 +223,7 @@ export function Sidebar({ userName, userEmail, collapsed = false, onNavigate }: 
                     type="button"
                     aria-label={open ? `Collapse ${mod.label}` : `Expand ${mod.label}`}
                     aria-expanded={open}
-                    className="shrink-0 rounded-md p-1.5"
+                    className="shrink-0 rounded-md p-1.5 text-[var(--fg-subtle)]"
                     onClick={() =>
                       setOpenModules((s) => ({ ...s, [mod.id]: !s[mod.id] }))
                     }
@@ -268,7 +253,7 @@ export function Sidebar({ userName, userEmail, collapsed = false, onNavigate }: 
 
       <div className="border-t border-[color-mix(in_srgb,var(--gold)_12%,var(--border))] p-3">
         <div
-          className={`mb-3 flex items-center gap-3 rounded-xl px-2.5 py-2.5 ${collapsed ? "justify-center" : ""}`}
+          className={`sidebar-user-card mb-3 flex items-center gap-3 rounded-xl px-2.5 py-2.5 ${collapsed ? "justify-center" : ""}`}
         >
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full gold-gradient text-xs font-bold text-[#111]">
             {initials}

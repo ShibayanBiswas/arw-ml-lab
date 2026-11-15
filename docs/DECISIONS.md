@@ -1,5 +1,14 @@
 # Architecture decision records
 
+## ADR-0010 — Phase 2B Workstation UI shell (2026-11-15)
+
+- Insert **Phase 2B** before Phase 3: UI-first parity with SP / Marketing Workstation for home, modules, and logos. Phase 3 Explain+Predict and full §34 2A-cont wait for next continue.
+- Port **patterns only** (BrandLogo theme invert, `.sidebar-module-rail`, Greeting / TerminalHeader / module tiles, ModuleHub). Never commit `refs/sp-workstation` or Desktop SP/Marketing source.
+- Sidebar expanded = ARWL wordmark; collapsed = gold **ML** monogram. Mobile top bar uses BrandLogo. Dark theme uses `brightness-0 invert` on the PNG.
+- Home Terminal replaces sparse tile dump; footer `ANAND RATHI WEALTH · MACHINE LEARNING LAB`. Lab status strip (seed 42, module count) instead of markets tape.
+- `[module]/page.tsx` is a registry-driven submodule launcher (`ModuleHub` from `mod.nav`), not a blank placeholder.
+- Vitest `testTimeout` raised to 30s so bcrypt roster seed under parallel load does not flake.
+
 ## ADR-0009 — Phase 2A Deep Learning thin smoke (2026-11-15)
 
 - Full §34 (all T*/Q*, DL.P catalogue, MC-dropout/ensembles) deferred to **2A-cont**; this stop is a thin smoke like Phase 2.
