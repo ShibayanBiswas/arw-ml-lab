@@ -4,7 +4,7 @@
 |---|---|
 | Current phase | Phase 2 complete (thin scope) — next: Phase 2-cont or 2A |
 | Last completed step | Phase 2 auth/brand + thin supervised (recipe, 14 algos, CV, leaderboard) |
-| Last green commit | (pending `phase 2: auth brand thin supervised`) |
+| Last green commit | `6f0bdfa` (`phase 2: auth brand thin supervised`) |
 | Open failures | Render Blueprint `need_payment_info`; Vercel MCP needs team SSO re-auth for deploy repair; DS12 OpenML lazy file may soft-skip intake golden |
 | Next action | Say **continue** for Phase 2-cont (full §41/§42 + remaining R*/C*) or Phase 2A |
 
