@@ -36,6 +36,7 @@ Thin ACs:
 
 ## Self-verification checklist (§000)
 - [x] Phase 4 unit ACs green (commands above)
-- [ ] CI green + Vercel `arw-ml-lab` READY only (closeout)
+- [x] CI green — https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43741597661
+- [x] Vercel `arw-ml-lab` READY only (`https://arw-ml-lab.vercel.app`)
 - [x] ADR-0014 + PROGRESS
 - [x] No secrets in diff

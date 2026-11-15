@@ -4,7 +4,7 @@
 |---|---|
 | Current phase | Phase 4 thin done — awaiting continue |
 | Last completed step | Phase 4 Time Series thin + deploy sync |
-| Last green commit | *(pending commit `phase 4: timeseries thin`)* |
+| Last green commit | `def621a` (`phase 4` + mypy fix; CI green) |
 | Open failures | Render Blueprint `need_payment_info`; optional Vercel `SUPABASE_SERVICE_ROLE_KEY` for durable password changes |
 | Next action | User **continue** → Phase 4-cont / 4A (full §19/§35) or Phase 5B |
 
