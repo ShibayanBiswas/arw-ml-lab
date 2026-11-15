@@ -37,6 +37,7 @@ def run_train_task(self, job_id: str, experiment_id: str, body: dict[str, Any]) 
             n_splits=int(body.get("n_splits") or 5),
             seed=42,
             recipe=RecipeSpec(seed=42),
+            cv_scheme=body.get("cv_scheme"),
         )
         JOB_STORE.update(
             job_id,

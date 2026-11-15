@@ -1,5 +1,12 @@
 # Architecture decision records
 
+## ADR-0007 — Phase 2-cont-2 Tune / CV / nested default (2026-11-15)
+
+- Nested CV **on by default when n_train &lt; 2000** (MI-03); outer folds use the selected scheme, inner = 3-fold stratified/kfold for tune only.
+- Optuna artefacts: study best params + trial history dict; MLflow logging only when `MLFLOW_TRACKING_URI` is set (no fabricated tracking).
+- TargetEncoder is an optional recipe encoder (`target`) fitted inside the pipeline / CV folds only (MI-02).
+- Full plot catalogues and Halving/NSGA-II remain deferred to 2-cont-3.
+
 ## ADR-0006 — Phase 2-cont Eval Core + deploy sync (2026-11-15)
 
 - Phase 2 thin deferred full §41/§42; this stop implements **Eval Core** only: CM suite, classification report, CLE.M for binary/multiclass, CLE.T.CV_METRICS, threshold OOF-only spy, McNemar/5×2/DeLong; REE residuals / resid tests / influence / core REE.M; minimum Plotly set for Overview/Confusion/Report/Curves/Residuals.

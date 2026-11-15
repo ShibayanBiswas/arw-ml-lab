@@ -1,4 +1,4 @@
-"""Supervised CV runner — Phase 2-cont (seed 42, leakage-safe, eval suites)."""
+"""Supervised CV runner — Phase 2-cont-2 (seed 42, leakage-safe, CV catalogue)."""
 
 from __future__ import annotations
 
@@ -16,8 +16,10 @@ from sklearn.metrics import (
     r2_score,
     roc_auc_score,
 )
-from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
+from sklearn.model_selection import train_test_split
 
+from labcore.cv.schemes import build_splitter, default_scheme_for_task, nested_default
+from labcore.cv.visualise import iter_splits, plot_cv_folds
 from labcore.preprocess.recipe import RecipeSpec, compile_recipe
 from labcore.registry.algorithms import build_estimator, thin_algorithm_specs
 from labcore.registry.spec import AlgorithmSpec
@@ -34,6 +36,8 @@ class TrainConfig(BaseModel):
     seed: int = 42
     recipe: RecipeSpec = Field(default_factory=RecipeSpec)
     run_eval: bool = True
+    cv_scheme: str | None = None  # None → task default; "nested" forces nested flag
+    nested: bool | None = None  # None → MI-03 auto (n_train < 2000)
 
 
 def _metrics_reg(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, float]:
@@ -113,14 +117,30 @@ def run_supervised_cv(
         stratify=stratify,
     )
 
-    if config.task == "regression":
-        splitter = KFold(n_splits=config.n_splits, shuffle=True, random_state=config.seed)
-        split_iter = splitter.split(X_tr)
-    else:
-        splitter = StratifiedKFold(n_splits=config.n_splits, shuffle=True, random_state=config.seed)
-        split_iter = splitter.split(X_tr, y_tr)
+    scheme = config.cv_scheme or default_scheme_for_task(config.task)
+    nested_on = config.nested if config.nested is not None else nested_default(len(X_tr))
+    if scheme == "nested":
+        nested_on = True
+        scheme = default_scheme_for_task(config.task)
 
-    fold_indices = list(split_iter)
+    splitter = build_splitter(
+        scheme,
+        n_splits=config.n_splits,
+        seed=config.seed,
+        task=config.task,
+    )
+    if splitter is None:
+        # holdout on train: single 80/20 of train as one "fold"
+        from sklearn.model_selection import ShuffleSplit
+
+        splitter = ShuffleSplit(n_splits=1, test_size=0.2, random_state=config.seed)
+
+    fold_indices = iter_splits(splitter, X_tr, y_tr)
+    gap = 0
+    if scheme == "time_series_split":
+        gap = 0  # TimeSeriesSplit gap param not used in thin build_splitter
+    cv_plot = plot_cv_folds(fold_indices, title=f"CV folds ({scheme})", gap=gap)
+
     specs = _select_specs(config.algorithm_keys, config.task)
     rows: list[dict[str, Any]] = []
     champion_payload: dict[str, Any] | None = None
@@ -145,7 +165,6 @@ def run_supervised_cv(
             if config.task == "regression":
                 oof_pred[va_idx] = pred.astype(float)
             else:
-                # store class labels as float codes for array; keep fold dict with originals
                 oof_pred[va_idx] = pd.Series(pred).astype("category").cat.codes.to_numpy()
             proba = None
             if config.task != "regression" and hasattr(full, "predict_proba"):
@@ -187,7 +206,6 @@ def run_supervised_cv(
         else:
             test_m = _metrics_clf(y_te.to_numpy(), test_pred, test_proba)
             primary = "balanced_accuracy"
-            # reconstruct typed OOF predictions from fold_preds
             y_oof_hat = np.empty(len(X_tr), dtype=y_oof_true.dtype)
             for (_tr_idx, va_idx), fp in zip(fold_indices, fold_preds, strict=True):
                 y_oof_hat[va_idx] = np.asarray(fp["y_pred"]).astype(y_oof_true.dtype, copy=False)
@@ -272,6 +290,9 @@ def run_supervised_cv(
         "n_test": int(len(X_te)),
         "dropped_high_card": drop_cols,
         "seed": config.seed,
+        "cv_scheme": scheme,
+        "nested": nested_on,
+        "cv_visualiser": cv_plot,
         "eval": eval_payload,
         "champion": champion_payload,
     }

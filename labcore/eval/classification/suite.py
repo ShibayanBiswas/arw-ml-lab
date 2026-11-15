@@ -9,7 +9,18 @@ import numpy as np
 from labcore.eval.classification.cm import confusion_suite
 from labcore.eval.classification.compare import delong_test, mcnemar_test
 from labcore.eval.classification.metrics import aggregate_cv_metrics, compute_cle_metrics
-from labcore.eval.classification.plots import plot_confusion, plot_pr, plot_reliability, plot_roc
+from labcore.eval.classification.plots import (
+    plot_confusion,
+    plot_det,
+    plot_gains_lift,
+    plot_ks,
+    plot_per_class_prf,
+    plot_pr,
+    plot_prob_density_by_class,
+    plot_reliability,
+    plot_roc,
+    plot_threshold_vs_metric,
+)
 from labcore.eval.classification.report import classification_report_table
 from labcore.eval.classification.threshold import tune_threshold_oof
 
@@ -82,6 +93,7 @@ def run_classification_eval(
             plot_id="CLE.P.CM_NORM_TRUE",
         ),
     ]
+    plots.append(plot_per_class_prf(y_oof, y_pred_oof, labels=labels))
     if task == "binary" and y_proba_oof is not None:
         scores = y_proba_oof[:, 1] if y_proba_oof.ndim == 2 else y_proba_oof
         plots.extend(
@@ -89,8 +101,13 @@ def run_classification_eval(
                 plot_roc(y_oof, scores),
                 plot_pr(y_oof, scores),
                 plot_reliability(y_oof, scores),
+                plot_ks(y_oof, scores),
+                plot_threshold_vs_metric(y_oof, scores),
+                plot_det(y_oof, scores),
+                plot_prob_density_by_class(y_oof, scores),
             ]
         )
+        plots.extend(plot_gains_lift(y_oof, scores))
 
     compare: dict[str, Any] = {}
     if compare_alt_pred is not None:

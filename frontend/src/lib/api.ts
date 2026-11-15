@@ -161,6 +161,8 @@ export async function startTrain(body: {
   target: string;
   task: string;
   algorithm_keys?: string[];
+  cv_scheme?: string;
+  tuning_preset?: string;
 }) {
   const res = await fetch(`${labApiBase()}/api/v1/experiments/train`, {
     method: "POST",
@@ -168,6 +170,24 @@ export async function startTrain(body: {
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`train: ${res.status}`);
+  return (await res.json()) as { job_id: string; experiment_id: string };
+}
+
+export async function startTune(body: {
+  dataset_id: string;
+  target: string;
+  algorithm_key: string;
+  task: string;
+  preset?: string;
+  n_trials?: number;
+  fixed_params?: Record<string, unknown>;
+}) {
+  const res = await fetch(`${labApiBase()}/api/v1/experiments/tune`, {
+    method: "POST",
+    headers: { ...labAuthHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`tune: ${res.status}`);
   return (await res.json()) as { job_id: string; experiment_id: string };
 }
 

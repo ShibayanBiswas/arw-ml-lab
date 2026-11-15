@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { EvalWorkbench } from "@/components/train/EvalWorkbench";
-import { getExperiment, getJob, listSamples, loadSample, startTrain } from "@/lib/api";
+import { getExperiment, getJob, listSamples, loadSample, startTrain, startTune } from "@/lib/api";
 
 type Props = { mode: "recipe" | "leaderboard" | "models" | "detail" };
 
@@ -11,12 +11,15 @@ export function TrainWorkbench({ mode }: Props) {
   const [sampleId, setSampleId] = useState("DS3");
   const [target, setTarget] = useState("Survived");
   const [task, setTask] = useState("binary");
+  const [tuningPreset, setTuningPreset] = useState<"quick" | "balanced">("quick");
+  const [runMode, setRunMode] = useState<"train" | "tune">("train");
   const [status, setStatus] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [board, setBoard] = useState<Array<Record<string, unknown>>>([]);
   const [expId, setExpId] = useState<string | null>(null);
   const [evalPayload, setEvalPayload] = useState<Record<string, unknown> | null>(null);
   const [championKey, setChampionKey] = useState<string | null>(null);
+  const [tuneResult, setTuneResult] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     void listSamples()
@@ -36,12 +39,38 @@ export function TrainWorkbench({ mode }: Props) {
       }
       if (job.status !== "done") throw new Error(job.status);
       const datasetId = (job.result as { dataset_id: string }).dataset_id;
+      if (runMode === "tune") {
+        setStatus(`Tuning (${tuningPreset})…`);
+        const started = await startTune({
+          dataset_id: datasetId,
+          target,
+          task,
+          algorithm_key: task === "regression" ? "reg.lgbm" : "clf.lgbm",
+          preset: tuningPreset,
+          n_trials: tuningPreset === "quick" ? 8 : 20,
+        });
+        setExpId(started.experiment_id);
+        let tj = await getJob(started.job_id);
+        while (tj.status === "queued" || tj.status === "running") {
+          await new Promise((r) => setTimeout(r, 300));
+          tj = await getJob(started.job_id);
+        }
+        if (tj.status !== "done") throw new Error(tj.error || tj.status);
+        const exp = await getExperiment(started.experiment_id);
+        const tune = ((exp.result || {}) as { tune?: Record<string, unknown> }).tune || null;
+        setTuneResult(tune);
+        setBoard([]);
+        setEvalPayload(null);
+        setStatus(`Tune done — best ${String(tune?.best_value ?? "—")}`);
+        return;
+      }
       setStatus("Training…");
       const started = await startTrain({
         dataset_id: datasetId,
         target,
         task,
         algorithm_keys: [],
+        tuning_preset: tuningPreset,
       });
       setExpId(started.experiment_id);
       let tj = await getJob(started.job_id);
@@ -59,6 +88,7 @@ export function TrainWorkbench({ mode }: Props) {
       };
       setEvalPayload(result.eval || null);
       setChampionKey(result.champion?.algorithm_key || String(lb[0]?.algorithm_key || ""));
+      setTuneResult(null);
       setStatus(`Done — ${lb.length} models`);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -82,7 +112,7 @@ export function TrainWorkbench({ mode }: Props) {
                 : "Models"}
         </h1>
         <p className="mt-2 text-sm text-[var(--fg-muted)]">
-          Phase 2-cont: recipe + CV (seed 42) + §41/§42 Eval Core on the champion.
+          Phase 2-cont-2: recipe + CV catalogue + Optuna Quick/Balanced + Eval Core.
         </p>
       </div>
       {mode !== "leaderboard" || !board.length ? (
@@ -137,13 +167,43 @@ export function TrainWorkbench({ mode }: Props) {
               <option value="regression">regression</option>
             </select>
           </label>
+          <label className="block text-sm">
+            Mode
+            <select
+              className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-2"
+              value={runMode}
+              onChange={(e) => setRunMode(e.target.value as "train" | "tune")}
+            >
+              <option value="train">Quick train (CV)</option>
+              <option value="tune">Optuna tune</option>
+            </select>
+          </label>
+          <label className="block text-sm">
+            Tuning preset
+            <select
+              className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-2"
+              value={tuningPreset}
+              onChange={(e) => setTuningPreset(e.target.value as "quick" | "balanced")}
+            >
+              <option value="quick">Quick (20 trials)</option>
+              <option value="balanced">Balanced (60 trials)</option>
+            </select>
+          </label>
           <button
             type="button"
             className="rounded-lg gold-gradient px-4 py-2 text-sm font-semibold text-[#111]"
             onClick={() => void onRun()}
           >
-            Run Quick train
+            {runMode === "tune" ? `Run Optuna ${tuningPreset}` : "Run Quick train"}
           </button>
+        </div>
+      ) : null}
+      {tuneResult ? (
+        <div className="panel-luxe max-w-xl space-y-2 rounded-2xl p-4 font-mono text-xs">
+          <p>best_value: {String(tuneResult.best_value)}</p>
+          <pre className="overflow-x-auto whitespace-pre-wrap">
+            {JSON.stringify(tuneResult.best_params, null, 2)}
+          </pre>
         </div>
       ) : null}
       {status ? <p className="text-sm text-[var(--fg-muted)]">{status}</p> : null}

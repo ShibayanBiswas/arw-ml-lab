@@ -33,6 +33,7 @@ celery_app = Celery(
         "backend.worker.tasks.eda",
         "backend.worker.tasks.intake",
         "backend.worker.tasks.train",
+        "backend.worker.tasks.tune",
     ],
 )
 
@@ -54,6 +55,8 @@ celery_app.conf.update(
         "lab.ingest.parse": {"queue": "q.ingest"},
         "lab.ingest.sample": {"queue": "q.ingest"},
         "lab.eda.run": {"queue": "q.eda"},
+        "lab.train.run": {"queue": "q.train.cpu"},
+        "lab.tune.run": {"queue": "q.tune"},
     },
 )
 # Expose queue catalogue for workers / docs

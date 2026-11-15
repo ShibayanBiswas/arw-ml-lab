@@ -13,7 +13,7 @@ from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, RobustScaler, S
 
 ImputerKind = Literal["mean", "median", "most_frequent", "constant"]
 ScalerKind = Literal["none", "standard", "robust", "minmax"]
-EncoderKind = Literal["one_hot", "ordinal"]
+EncoderKind = Literal["one_hot", "ordinal", "target"]
 ResampleKind = Literal["none", "smote"]
 
 
@@ -27,6 +27,8 @@ class RecipeSpec(BaseModel):
     drop_constant: bool = True
     resample: ResampleKind = "none"
     seed: int = 42
+    # TargetEncoder cv folds (MI-02); used only when categorical_encoder=target
+    target_encoder_cv: int = 5
 
 
 def _split_columns(X: pd.DataFrame) -> tuple[list[str], list[str]]:
@@ -81,6 +83,19 @@ def compile_recipe(
     if cat_cols:
         if recipe.categorical_encoder == "ordinal":
             enc: Any = OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)
+        elif recipe.categorical_encoder == "target":
+            from sklearn.model_selection import KFold
+            from sklearn.preprocessing import TargetEncoder
+
+            enc = TargetEncoder(
+                cv=KFold(
+                    n_splits=recipe.target_encoder_cv,
+                    shuffle=True,
+                    random_state=recipe.seed,
+                ),
+                smooth="auto",
+                target_type="auto",
+            )
         else:
             enc = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
         cat_pipe = Pipeline(

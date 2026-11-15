@@ -14,6 +14,7 @@ from backend.app.experiment_store import EXPERIMENT_STORE
 from backend.app.jobs_store import JOB_STORE
 from backend.app.security import AuthUser, require_write_role
 from backend.worker.tasks.train import run_train_task
+from backend.worker.tasks.tune import run_tune_task
 
 router = APIRouter(tags=["experiments"])
 
@@ -25,6 +26,20 @@ class TrainBody(BaseModel):
     algorithm_keys: list[str] = Field(default_factory=list)
     name: str | None = None
     n_splits: int = 5
+    cv_scheme: str | None = None
+    tuning_preset: str | None = None
+
+
+class TuneBody(BaseModel):
+    dataset_id: str
+    target: str
+    algorithm_key: str
+    task: str = "binary"
+    preset: str = "quick"
+    n_splits: int = 5
+    name: str | None = None
+    fixed_params: dict[str, Any] | None = None
+    n_trials: int | None = None
 
 
 @router.post("/api/v1/experiments/train")
@@ -46,6 +61,28 @@ def start_train(body: TrainBody, user: AuthUser = Depends(require_write_role)) -
         queue="q.train.cpu",
     )
     run_train_task.apply_async(args=(job.id, exp.id, body.model_dump()), queue="q.train.cpu")
+    return {"job_id": job.id, "experiment_id": exp.id}
+
+
+@router.post("/api/v1/experiments/tune")
+def start_tune(body: TuneBody, user: AuthUser = Depends(require_write_role)) -> dict[str, str]:
+    ds = DATASET_STORE.get(body.dataset_id)
+    if ds is None:
+        raise HTTPException(status_code=404, detail="dataset not found")
+    exp = EXPERIMENT_STORE.create(
+        workspace_id=user.workspace_id or ds.workspace_id,
+        dataset_id=body.dataset_id,
+        name=body.name or f"tune-{body.algorithm_key}",
+        family="supervised",
+        task_spec=body.model_dump(),
+        status="queued",
+    )
+    job = JOB_STORE.create(
+        workspace_id=user.workspace_id or ds.workspace_id,
+        kind="tune",
+        queue="q.tune",
+    )
+    run_tune_task.apply_async(args=(job.id, exp.id, body.model_dump()), queue="q.tune")
     return {"job_id": job.id, "experiment_id": exp.id}
 
 

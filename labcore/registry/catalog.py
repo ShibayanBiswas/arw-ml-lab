@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from labcore.cv.schemes import list_cv_schemes
 from labcore.registry.algorithms import thin_algorithm_specs
 from labcore.registry.spec import AlgorithmSpec
 from labcore.train.presets import TUNING_PRESETS
@@ -32,6 +33,7 @@ def get_catalog() -> Catalog:
         encoders=[
             {"id": "one_hot", "name": "One-Hot"},
             {"id": "ordinal", "name": "Ordinal"},
+            {"id": "target", "name": "TargetEncoder"},
         ],
         imputers=[
             {"id": "mean", "name": "Mean"},
@@ -44,10 +46,7 @@ def get_catalog() -> Catalog:
             {"id": "minmax", "name": "MinMax"},
             {"id": "none", "name": "None"},
         ],
-        cv=[
-            {"id": "kfold", "name": "KFold"},
-            {"id": "stratified_kfold", "name": "StratifiedKFold"},
-        ],
+        cv=list_cv_schemes(),
         metrics=[
             {"id": "r2", "name": "R²"},
             {"id": "rmse", "name": "RMSE"},

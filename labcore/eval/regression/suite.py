@@ -9,10 +9,14 @@ import numpy as np
 from labcore.eval.regression.diagnostics import influence_table, residual_table, residual_tests
 from labcore.eval.regression.metrics import compute_ree_metrics
 from labcore.eval.regression.plots import (
+    plot_bland_altman,
+    plot_cooks_distance,
     plot_pred_vs_actual,
     plot_qq,
+    plot_residual_acf,
     plot_residual_hist,
     plot_residual_scatter,
+    plot_studentised_residuals,
 )
 
 
@@ -49,17 +53,24 @@ def run_regression_eval(
             for k in keys
         }
 
+    infl = influence_table(y_oof, y_pred_oof)
+    cooks = np.asarray([r["cooks_d"] for r in infl["rows"]], dtype=float)
+    stud = np.asarray([r["studentised_resid"] for r in infl["rows"]], dtype=float)
     plots = [
         plot_pred_vs_actual(y_oof, y_pred_oof),
         plot_residual_scatter(y_pred_oof, resid),
         plot_residual_hist(resid),
         plot_qq(resid),
+        plot_cooks_distance(cooks),
+        plot_studentised_residuals(stud),
+        plot_bland_altman(y_oof, y_pred_oof),
+        plot_residual_acf(resid),
     ]
     return {
         "suite": "regression",
         "residuals": residual_table(y_oof, y_pred_oof),
         "resid_tests": residual_tests(y_oof, y_pred_oof),
-        "influence": influence_table(y_oof, y_pred_oof),
+        "influence": infl,
         "metrics": metrics,
         "cv_metrics": {"id": "REE.T.CV_METRICS", "metrics": cv} if cv else None,
         "test_metrics": test_m,
