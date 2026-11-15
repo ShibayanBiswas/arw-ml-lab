@@ -38,6 +38,9 @@ jobs:
           -r backend/requirements/ml-core.txt
           -r backend/requirements/eda.txt
           -r backend/requirements/xai-uq.txt
+          statsforecast==2.1.1
+          utilsforecast==0.2.17
+          coreforecast==0.0.20
       - run: uv run ruff check labcore backend tests && uv run ruff format --check labcore backend tests && uv run mypy labcore
       - env:
           LAB_DEFAULT_SEED: "42"

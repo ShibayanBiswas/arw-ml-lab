@@ -333,3 +333,57 @@ export async function explainRows(modelId: string, rows: Record<string, unknown>
   if (!res.ok) throw new Error(`explain: ${res.status}`);
   return (await res.json()) as Record<string, unknown>;
 }
+
+export async function tsHorizon(body: {
+  sample_id?: string;
+  n?: number;
+  freq?: string;
+  m?: number;
+  h_request?: number;
+}) {
+  const res = await fetch(`${labApiBase()}/api/v1/timeseries/horizon`, {
+    method: "POST",
+    headers: labAuthHeaders(),
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(`horizon: ${res.status} ${detail}`);
+  }
+  return (await res.json()) as {
+    h_max: number;
+    h_default: number;
+    reasons: string[];
+    disabled_models: Array<{ model: string; reason: string }>;
+    request_allowed?: boolean;
+  };
+}
+
+export async function tsBacktest(body: {
+  sample_id?: string;
+  h: number;
+  w?: number;
+  m?: number;
+  freq?: string;
+}) {
+  const res = await fetch(`${labApiBase()}/api/v1/timeseries/backtest`, {
+    method: "POST",
+    headers: labAuthHeaders(),
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(`backtest: ${res.status} ${detail}`);
+  }
+  return (await res.json()) as Record<string, unknown>;
+}
+
+export async function tsAnalysis(body: { sample_id?: string; m?: number }) {
+  const res = await fetch(`${labApiBase()}/api/v1/timeseries/analysis`, {
+    method: "POST",
+    headers: labAuthHeaders(),
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`analysis: ${res.status}`);
+  return (await res.json()) as Record<string, unknown>;
+}

@@ -7,6 +7,7 @@ import { LogicAtlas } from "@/components/learn/LogicAtlas";
 import { ModulePlaceholder } from "@/components/panels/ModulePlaceholder";
 import { PredictWorkbench } from "@/components/predict/PredictWorkbench";
 import { TrainWorkbench } from "@/components/train/TrainWorkbench";
+import { TsWorkbench } from "@/components/timeseries/TsWorkbench";
 import { MODULES } from "@/lib/modules";
 
 type Props = { params: Promise<{ module: string; page: string }> };
@@ -51,6 +52,26 @@ export default async function ModuleSubPage({ params }: Props) {
   if (slug === "predict" && (page === "home" || page === "batch" || page === "single")) {
     const mode = page === "batch" ? "batch" : page === "single" ? "single" : "home";
     return <PredictWorkbench mode={mode} />;
+  }
+  if (
+    slug === "timeseries" &&
+    (page === "home" ||
+      page === "analysis" ||
+      page === "backtesting" ||
+      page === "forecast" ||
+      page === "lab")
+  ) {
+    const mode =
+      page === "analysis"
+        ? "analysis"
+        : page === "backtesting"
+          ? "backtesting"
+          : page === "forecast"
+            ? "forecast"
+            : page === "lab"
+              ? "lab"
+              : "home";
+    return <TsWorkbench mode={mode} />;
   }
 
   return (

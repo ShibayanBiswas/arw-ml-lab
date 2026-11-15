@@ -1,5 +1,13 @@
 # Architecture decision records
 
+## ADR-0014 — Phase 4 Time Series thin (2026-11-15)
+
+- Thin smoke of §19/§20 only: canonical `labcore/timeseries/horizon_guard.py` (Steps 1–2–4; Step 3 soft h* after backtest); SeasonalNaive (statsforecast) + airline SARIMA (statsmodels); rolling-origin W=4; MASE/MAE/RMSE/sMAPE + Ljung-Box; STL/classical/ACF analysis; sync API + minimal `TsWorkbench`.
+- Intake `labcore/intake/horizon.py` re-exports the canonical guard (DS22 golden h_max=24 preserved).
+- Seasonal gate: n ≥ 2m+h with strict boundary (n ≤ 2m+h → disabled) so DS23 at h=12 is refused.
+- Full F1–F54, DS24 coverage ±5 pp, DS28 GPU N-HiTS/PatchTST, §35 → **4-cont / 4A**.
+- CI unit job installs `statsforecast` pin (not full `ts.txt`) for SeasonalNaive.
+
 ## ADR-0013 — Phase 3A Prediction Studio thin (2026-11-15)
 
 - Thin smoke of §45 only: PV core (PV01 extension + PV04–PV09; other codes deferred stubs), CSV/XLSX templates, sync batch validate+score (≤5k rows), contract-driven custom form UI, DS3 sample path.
