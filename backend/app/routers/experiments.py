@@ -153,7 +153,5 @@ def export_leaderboard_csv(
     return PlainTextResponse(
         body,
         media_type="text/csv; charset=utf-8",
-        headers={
-            "Content-Disposition": f'attachment; filename="leaderboard-{experiment_id}.csv"'
-        },
+        headers={"Content-Disposition": f'attachment; filename="leaderboard-{experiment_id}.csv"'},
     )

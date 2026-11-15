@@ -37,7 +37,9 @@ def drift_report(parent_df: pd.DataFrame, child_df: pd.DataFrame) -> dict[str, A
                     entry["ks_pvalue"] = float(p)
                 except Exception:
                     entry["ks_pvalue"] = None
-                flag = "red" if entry["psi"] > 0.25 else ("amber" if entry["psi"] > 0.1 else "green")
+                flag = (
+                    "red" if entry["psi"] > 0.25 else ("amber" if entry["psi"] > 0.1 else "green")
+                )
                 entry["flag"] = flag
         else:
             # chi-square on top categories

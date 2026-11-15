@@ -22,7 +22,9 @@ def confusion_suite(
     fold_matrices: list[np.ndarray] | None = None,
 ) -> dict[str, Any]:
     """Counts + three normalisations + derived TP/FP/TN/FN + optional fold agg."""
-    labels_arr = np.asarray(labels) if labels is not None else np.unique(np.concatenate([y_true, y_pred]))
+    labels_arr = (
+        np.asarray(labels) if labels is not None else np.unique(np.concatenate([y_true, y_pred]))
+    )
     cm = confusion_matrix(y_true, y_pred, labels=labels_arr)
     cm_true = confusion_matrix(y_true, y_pred, labels=labels_arr, normalize="true")
     cm_pred = confusion_matrix(y_true, y_pred, labels=labels_arr, normalize="pred")
@@ -62,11 +64,15 @@ def confusion_suite(
             folds_out.append({"fold": fi, "counts": fm.tolist()})
             row_sum = fm.sum(axis=1, keepdims=True)
             with np.errstate(invalid="ignore", divide="ignore"):
-                rn = np.divide(fm, row_sum, out=np.full_like(fm, np.nan, dtype=float), where=row_sum != 0)
+                rn = np.divide(
+                    fm, row_sum, out=np.full_like(fm, np.nan, dtype=float), where=row_sum != 0
+                )
             norms.append(rn)
         stack = np.stack(norms, axis=0)
         cv_mean_norm = np.nanmean(stack, axis=0)
-        cv_std_norm = np.nanstd(stack, axis=0, ddof=1) if len(norms) > 1 else np.zeros_like(cv_mean_norm)
+        cv_std_norm = (
+            np.nanstd(stack, axis=0, ddof=1) if len(norms) > 1 else np.zeros_like(cv_mean_norm)
+        )
         pooled = np.sum(fold_matrices, axis=0)
         # Integrity: pooled counts should match OOF cm when folds partition OOF
         assert pooled.shape == cm.shape

@@ -15,9 +15,7 @@ PHONE_RE = re.compile(r"^\+?[\d\s\-()]{8,}$")
 PAN_RE = re.compile(r"^[A-Z]{5}[0-9]{4}[A-Z]$")
 AADHAAR_RE = re.compile(r"^\d{12}$")
 ISIN_RE = re.compile(r"^[A-Z]{2}[A-Z0-9]{9}[0-9]$")
-UUID_RE = re.compile(
-    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.I
-)
+UUID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.I)
 TICKER_RE = re.compile(r"^[A-Z.&-]{1,15}$")
 
 _SAMPLE_CAP = 20_000

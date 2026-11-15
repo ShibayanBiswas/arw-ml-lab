@@ -26,7 +26,7 @@ Supabase Auth magic-link redirects are **not** required for primary login (ADR-0
 | GitHub | private `arw-ml-lab` | https://github.com/ShibayanBiswas/arw-ml-lab |
 | Supabase | healthy | ref `ushtfpelbpjfkjoppklz` — apply migration `20261115180000_lab_bff_auth.sql` |
 | Render Blueprint | **blocked** `need_payment_info` | Free-tier path: run `lab-api` + workers via `docker compose` / local; no payment without your OK |
-| Vercel | Hobby OK | Project name display: **Machine Learning Lab**; Root Directory `frontend` |
+| Vercel | Hobby OK | **Only** project `arw-ml-lab` (ADR-0011). Root Directory `frontend`. Alias `https://arw-ml-lab.vercel.app`. Never create a second Git-linked project named `frontend`. |
 | Hosted API smoke | blocked until Render or self-host API | `scripts/smoke_hosted.sh` |
 
 **Render:** Do **not** add a payment method unless you approve cost. Until then: Vercel frontend + local/`make dev` API.
@@ -37,7 +37,7 @@ After **every** phase green closeout:
 
 1. `git commit` with `phase <n>: …`
 2. `git push origin main` so GitHub matches local
-3. Confirm Vercel Hobby production deployment is **READY** for Root Directory `frontend` (Git integration or MCP). If MCP returns 403, run team SSO consent once, then re-check deployments.
+3. Confirm Vercel Hobby production deployment is **READY** on project **`arw-ml-lab`** only (Root Directory `frontend`). Do not `vercel link` from `frontend/` — that creates a duplicate project with Root `.` that fails with `NEXT_NO_VERSION`. If MCP returns 403, run team SSO consent once, then re-check deployments.
 4. Never put `NVIDIA_API_KEY` on Vercel. `SUPABASE_SERVICE_ROLE_KEY` is allowed **only** as a non-`NEXT_PUBLIC` Vercel server env for BFF `lab_app_users` (ADR-0008); CI still fails if it appears in the client bundle.
 
 ## Topology

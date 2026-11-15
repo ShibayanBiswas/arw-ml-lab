@@ -29,7 +29,9 @@ def set_seed(seed: int = DEFAULT_SEED) -> None:
     seed_everything(seed, workers=True)
 
 
-def adamw_kwargs(lr: float = DEFAULT_LR, weight_decay: float = DEFAULT_WEIGHT_DECAY) -> dict[str, float]:
+def adamw_kwargs(
+    lr: float = DEFAULT_LR, weight_decay: float = DEFAULT_WEIGHT_DECAY
+) -> dict[str, float]:
     return {"lr": lr, "weight_decay": weight_decay}
 
 

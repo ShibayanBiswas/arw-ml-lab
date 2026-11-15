@@ -22,7 +22,11 @@ def tune_threshold_oof(
     _ = spy_test_touched  # reserved for callers; this function must not touch test
     scores = proba_oof[:, 1] if proba_oof.ndim == 2 else proba_oof
     methods = methods or ["youden", "f1", "cost"]
-    out: dict[str, Any] = {"id": "CLE.T.THRESHOLD_CHOICE", "prediction_source": "oof", "methods": {}}
+    out: dict[str, Any] = {
+        "id": "CLE.T.THRESHOLD_CHOICE",
+        "prediction_source": "oof",
+        "methods": {},
+    }
 
     fpr, tpr, thr = roc_curve(y_oof, scores)
     # sklearn thr length = len(fpr)-1 sometimes; align

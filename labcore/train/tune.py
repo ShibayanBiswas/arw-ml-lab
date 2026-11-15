@@ -45,8 +45,10 @@ def _suggest_params(trial: Any, spec: AlgorithmSpec) -> dict[str, Any]:
             # Optuna cannot suggest None directly in some versions — stringify
             labels = [("__none__" if c is None else str(c)) for c in choices]
             pick = trial.suggest_categorical(p.name, labels)
-            params[p.name] = None if pick == "__none__" else (
-                pick if not isinstance(p.default, bool) else pick == "True"
+            params[p.name] = (
+                None
+                if pick == "__none__"
+                else (pick if not isinstance(p.default, bool) else pick == "True")
             )
             # restore original typed choice
             for c in choices:

@@ -34,7 +34,9 @@ def run_regression_eval(
     metrics = compute_ree_metrics(y_oof, y_pred_oof)
     test_m = None
     if y_test is not None and y_pred_test is not None:
-        test_m = compute_ree_metrics(np.asarray(y_test, dtype=float), np.asarray(y_pred_test, dtype=float))
+        test_m = compute_ree_metrics(
+            np.asarray(y_test, dtype=float), np.asarray(y_pred_test, dtype=float)
+        )
 
     fold_metrics = []
     if fold_preds:

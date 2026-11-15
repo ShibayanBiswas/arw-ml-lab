@@ -23,7 +23,9 @@ def residual_table(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, Any]:
     return {"id": "REE.T.RESIDUALS", "rows": rows, "prediction_source": "oof"}
 
 
-def residual_tests(y_true: np.ndarray, y_pred: np.ndarray, X: np.ndarray | None = None) -> dict[str, Any]:
+def residual_tests(
+    y_true: np.ndarray, y_pred: np.ndarray, X: np.ndarray | None = None
+) -> dict[str, Any]:
     """Run diagnostic tests; each row: name, statistic, pvalue, verdict."""
     import statsmodels.api as sm
     from scipy import stats
@@ -50,7 +52,9 @@ def residual_tests(y_true: np.ndarray, y_pred: np.ndarray, X: np.ndarray | None 
                 "verdict": (
                     "reject_H0"
                     if p is not None and not np.isnan(p) and p < alpha
-                    else ("fail_to_reject_H0" if p is not None and not np.isnan(p) else "not_computed")
+                    else (
+                        "fail_to_reject_H0" if p is not None and not np.isnan(p) else "not_computed"
+                    )
                 ),
             }
         )

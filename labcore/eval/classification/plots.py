@@ -41,9 +41,16 @@ def plot_roc(y_true: np.ndarray, scores: np.ndarray) -> dict[str, Any]:
     a = auc(fpr, tpr)
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=fpr, y=tpr, mode="lines", name=f"ROC AUC={a:.3f}"))
-    fig.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode="lines", name="chance", line={"dash": "dash"}))
+    fig.add_trace(
+        go.Scatter(x=[0, 1], y=[0, 1], mode="lines", name="chance", line={"dash": "dash"})
+    )
     fig.update_layout(title="ROC", xaxis_title="FPR", yaxis_title="TPR", height=400)
-    return {"id": "CLE.P.ROC", "kind": "plot", "plotly": fig.to_plotly_json(), "numbers": {"auc": float(a)}}
+    return {
+        "id": "CLE.P.ROC",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {"auc": float(a)},
+    }
 
 
 def plot_pr(y_true: np.ndarray, scores: np.ndarray) -> dict[str, Any]:
@@ -53,7 +60,9 @@ def plot_pr(y_true: np.ndarray, scores: np.ndarray) -> dict[str, Any]:
     p, r, _ = precision_recall_curve(y_true, scores)
     ap = float(average_precision_score(y_true, scores))
     fig = go.Figure(go.Scatter(x=r, y=p, mode="lines", name=f"AP={ap:.3f}"))
-    fig.update_layout(title="Precision-Recall", xaxis_title="Recall", yaxis_title="Precision", height=400)
+    fig.update_layout(
+        title="Precision-Recall", xaxis_title="Recall", yaxis_title="Precision", height=400
+    )
     return {"id": "CLE.P.PR", "kind": "plot", "plotly": fig.to_plotly_json(), "numbers": {"ap": ap}}
 
 
@@ -63,8 +72,15 @@ def plot_reliability(y_true: np.ndarray, scores: np.ndarray) -> dict[str, Any]:
     frac_pos, mean_pred = calibration_curve(y_true, scores, n_bins=10, strategy="uniform")
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=mean_pred, y=frac_pos, mode="lines+markers", name="model"))
-    fig.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode="lines", name="perfect", line={"dash": "dash"}))
-    fig.update_layout(title="Reliability", xaxis_title="Mean predicted", yaxis_title="Fraction positive", height=400)
+    fig.add_trace(
+        go.Scatter(x=[0, 1], y=[0, 1], mode="lines", name="perfect", line={"dash": "dash"})
+    )
+    fig.update_layout(
+        title="Reliability",
+        xaxis_title="Mean predicted",
+        yaxis_title="Fraction positive",
+        height=400,
+    )
     return {"id": "CLE.P.RELIABILITY", "kind": "plot", "plotly": fig.to_plotly_json()}
 
 
@@ -85,8 +101,12 @@ def plot_gains_lift(y_true: np.ndarray, scores: np.ndarray) -> list[dict[str, An
     lift = gains / np.maximum(baseline, 1e-12)
     fig_g = go.Figure()
     fig_g.add_trace(go.Scatter(x=pct, y=gains, mode="lines", name="model"))
-    fig_g.add_trace(go.Scatter(x=pct, y=baseline, mode="lines", name="baseline", line={"dash": "dash"}))
-    fig_g.update_layout(title="Cumulative gains", xaxis_title="% population", yaxis_title="% positives", height=400)
+    fig_g.add_trace(
+        go.Scatter(x=pct, y=baseline, mode="lines", name="baseline", line={"dash": "dash"})
+    )
+    fig_g.update_layout(
+        title="Cumulative gains", xaxis_title="% population", yaxis_title="% positives", height=400
+    )
     fig_l = go.Figure(go.Scatter(x=pct, y=lift, mode="lines", name="lift"))
     fig_l.add_hline(y=1.0, line_dash="dash")
     fig_l.update_layout(title="Lift", xaxis_title="% population", yaxis_title="Lift", height=400)
@@ -114,7 +134,9 @@ def plot_ks(y_true: np.ndarray, scores: np.ndarray) -> dict[str, Any]:
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=x, y=ecdf_p, mode="lines", name="positive"))
     fig.add_trace(go.Scatter(x=x, y=ecdf_n, mode="lines", name="negative"))
-    fig.update_layout(title=f"KS={ks_stat:.3f}", xaxis_title="Score", yaxis_title="ECDF", height=400)
+    fig.update_layout(
+        title=f"KS={ks_stat:.3f}", xaxis_title="Score", yaxis_title="ECDF", height=400
+    )
     return {
         "id": "CLE.P.KS",
         "kind": "plot",
@@ -140,7 +162,9 @@ def plot_threshold_vs_metric(y_true: np.ndarray, scores: np.ndarray) -> dict[str
     fig.add_trace(go.Scatter(x=thr, y=f1s, mode="lines", name="F1"))
     fig.add_trace(go.Scatter(x=thr, y=precs, mode="lines", name="Precision"))
     fig.add_trace(go.Scatter(x=thr, y=recs, mode="lines", name="Recall"))
-    fig.update_layout(title="Threshold vs metric", xaxis_title="Threshold", yaxis_title="Score", height=400)
+    fig.update_layout(
+        title="Threshold vs metric", xaxis_title="Threshold", yaxis_title="Score", height=400
+    )
     return {"id": "CLE.P.THRESHOLD", "kind": "plot", "plotly": fig.to_plotly_json()}
 
 
@@ -171,7 +195,9 @@ def plot_prob_density_by_class(y_true: np.ndarray, scores: np.ndarray) -> dict[s
     return {"id": "CLE.P.PROB_DENS", "kind": "plot", "plotly": fig.to_plotly_json()}
 
 
-def plot_per_class_prf(y_true: np.ndarray, y_pred: np.ndarray, labels: list[Any] | None = None) -> dict[str, Any]:
+def plot_per_class_prf(
+    y_true: np.ndarray, y_pred: np.ndarray, labels: list[Any] | None = None
+) -> dict[str, Any]:
     import plotly.graph_objects as go
     from sklearn.metrics import precision_recall_fscore_support
 

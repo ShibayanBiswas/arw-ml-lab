@@ -117,7 +117,9 @@ def detect_datetime_index(df: pd.DataFrame, profile: dict[str, Any]) -> dict[str
                     errors="coerce",
                 )
             parse_rate = float(composed.notna().mean())
-            mono = float(composed.dropna().is_monotonic_increasing) if composed.notna().any() else 0.0
+            mono = (
+                float(composed.dropna().is_monotonic_increasing) if composed.notna().any() else 0.0
+            )
             # Prefer composite over bare year/quarter parts
             time_score = (
                 0.30 * parse_rate
@@ -144,7 +146,11 @@ def detect_datetime_index(df: pd.DataFrame, profile: dict[str, Any]) -> dict[str
     for i, name in enumerate(df.columns):
         meta = cols.get(name, {})
         parse_rate, fmt, ambiguous = _parse_rate_and_format(df[name])
-        name_hint = 1.0 if TIME_NAME_RE.search(name) or "date" in name.lower() or "time" in name.lower() else 0.0
+        name_hint = (
+            1.0
+            if TIME_NAME_RE.search(name) or "date" in name.lower() or "time" in name.lower()
+            else 0.0
+        )
         if parse_rate < 0.5 and name_hint == 0 and meta.get("semantic_type") != "datetime":
             continue
         if parse_rate < 0.5 and name_hint == 0:
@@ -280,7 +286,6 @@ def detect_datetime_index(df: pd.DataFrame, profile: dict[str, Any]) -> dict[str
         "entity": entity,
         "questions": questions,
         "_parsed_map": {
-            (c.get("column") or tuple(c.get("composite_of") or [])): c.get("parsed")
-            for c in ranked
+            (c.get("column") or tuple(c.get("composite_of") or [])): c.get("parsed") for c in ranked
         },
     }

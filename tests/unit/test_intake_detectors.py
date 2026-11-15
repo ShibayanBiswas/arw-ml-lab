@@ -23,9 +23,9 @@ def test_ambiguous_date_day_month_le_12():
     )
     profile = extended_profile(df)
     d1 = detect_datetime_index(df, profile)
-    assert any("ambiguous" in q.lower() or "≤ 12" in q or "<= 12" in q for q in d1["questions"]) or (
-        d1.get("accepted") and d1["accepted"].get("ambiguous_format")
-    )
+    assert any(
+        "ambiguous" in q.lower() or "≤ 12" in q or "<= 12" in q for q in d1["questions"]
+    ) or (d1.get("accepted") and d1["accepted"].get("ambiguous_format"))
 
 
 def test_confirm_hard_exclude_raises():
@@ -40,7 +40,13 @@ def test_confirm_hard_exclude_raises():
 
 
 def test_schema_diff_rename_and_breaking():
-    parent = pd.DataFrame({"Date": pd.date_range("2020-01-01", periods=30, freq="B"), "Close": range(30), "Volume": range(30)})
+    parent = pd.DataFrame(
+        {
+            "Date": pd.date_range("2020-01-01", periods=30, freq="B"),
+            "Close": range(30),
+            "Volume": range(30),
+        }
+    )
     renamed = parent.rename(columns={"Volume": "Vol"})
     diff = schema_diff(parent, renamed)
     assert any(r.get("from") == "Volume" and r.get("to") == "Vol" for r in diff["renames"])
@@ -49,7 +55,9 @@ def test_schema_diff_rename_and_breaking():
     broken["Close"] = broken["Close"].astype(str)
     diff2 = schema_diff(parent, broken)
     assert diff2["breaking"] is True
-    assert any(c.get("kind") == "type_change" and c.get("column") == "Close" for c in diff2["changes"])
+    assert any(
+        c.get("kind") == "type_change" and c.get("column") == "Close" for c in diff2["changes"]
+    )
 
 
 def test_nifty_append_compatible_diff():

@@ -162,14 +162,24 @@ def test_tabular_smoke_ds3_classification(model_key: str):
         target="Survived",
         model_key=model_key,  # type: ignore[arg-type]
         task="classification",
-        params={"layers": "32-16", "n_d": 8, "n_a": 8, "n_steps": 2, "input_embed_dim": 8, "num_heads": 2, "num_attn_blocks": 1},
+        params={
+            "layers": "32-16",
+            "n_d": 8,
+            "n_a": 8,
+            "n_steps": 2,
+            "input_embed_dim": 8,
+            "num_heads": 2,
+            "num_attn_blocks": 1,
+        },
         max_epochs=3,
         batch_size=64,
         early_stopping_patience=2,
     )
     assert out["n_train"] > 0 and out["n_val"] > 0
     assert out["library"] == "pytorch-tabular"
-    arts = pack_dl_artefacts(model_key=model_key, loss_curve=out["loss_curve"], metrics=out["metrics"])
+    arts = pack_dl_artefacts(
+        model_key=model_key, loss_curve=out["loss_curve"], metrics=out["metrics"]
+    )
     assert arts["tables"]["DL.T.METRICS"]["model_key"] == model_key
 
 

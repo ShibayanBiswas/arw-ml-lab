@@ -127,12 +127,20 @@ def _seasonality_candidates(series: pd.Series, freq_alias: str | None) -> list[f
     raw = freq_alias or "D"
     if "trading" in str(raw).lower():
         key = "trading"
-    elif str(raw).upper().startswith("QS") or str(raw).upper().startswith("QE") or str(raw).upper().startswith("Q"):
+    elif (
+        str(raw).upper().startswith("QS")
+        or str(raw).upper().startswith("QE")
+        or str(raw).upper().startswith("Q")
+    ):
         key = "QS" if "S" in str(raw).upper() else ("QE" if "E" in str(raw).upper() else "Q")
         if key not in table:
             key = "Q"
     elif str(raw).upper().startswith("MS") or str(raw).upper() in {"M", "ME"}:
-        key = "MS" if str(raw).upper().startswith("MS") else ("ME" if str(raw).upper() == "ME" else "M")
+        key = (
+            "MS"
+            if str(raw).upper().startswith("MS")
+            else ("ME" if str(raw).upper() == "ME" else "M")
+        )
     elif str(raw).upper().startswith("H"):
         key = "H"
     else:
@@ -160,7 +168,9 @@ def _seasonality_candidates(series: pd.Series, freq_alias: str | None) -> list[f
     return out
 
 
-def infer_frequency(df: pd.DataFrame, d1: dict[str, Any], profile: dict[str, Any]) -> dict[str, Any]:
+def infer_frequency(
+    df: pd.DataFrame, d1: dict[str, Any], profile: dict[str, Any]
+) -> dict[str, Any]:
     times = _resolve_time_series(df, d1)
     if times is None or times.notna().sum() < 3:
         return {
@@ -205,7 +215,9 @@ def infer_frequency(df: pd.DataFrame, d1: dict[str, Any], profile: dict[str, Any
     if mode_delta is not None:
         day = 86400.0
         if alias is None:
-            if abs(mode_delta - 3600) < 120 or (60 <= mode_delta <= 3600 and mode_delta % 60 == 0 and mode_delta < day):
+            if abs(mode_delta - 3600) < 120 or (
+                60 <= mode_delta <= 3600 and mode_delta % 60 == 0 and mode_delta < day
+            ):
                 if abs(mode_delta - 3600) < 120:
                     alias = "H"
                 else:
@@ -255,14 +267,10 @@ def infer_frequency(df: pd.DataFrame, d1: dict[str, Any], profile: dict[str, Any
             if pd.api.types.is_numeric_dtype(df[name]):
                 target_like = name
                 break
-    seasonal = (
-        _seasonality_candidates(df[target_like], alias) if target_like else []
-    )
+    seasonal = _seasonality_candidates(df[target_like], alias) if target_like else []
     # Always include catalogue defaults for the alias when empty
     if not seasonal and alias:
-        seasonal = _seasonality_candidates(
-            pd.Series(dtype=float), alias
-        ) or []
+        seasonal = _seasonality_candidates(pd.Series(dtype=float), alias) or []
 
     if isinstance(alias, str):
         if alias.lower() == "h":

@@ -21,7 +21,12 @@ OHLC_MAP = {
 
 
 def _ohlcv_consistency(df: pd.DataFrame, mapping: dict[str, str]) -> bool:
-    o, h, low, c = mapping.get("open"), mapping.get("high"), mapping.get("low"), mapping.get("close")
+    o, h, low, c = (
+        mapping.get("open"),
+        mapping.get("high"),
+        mapping.get("low"),
+        mapping.get("close"),
+    )
     if not all([o, h, low, c]):
         return False
     hi = df[h].astype(float)
@@ -108,11 +113,16 @@ def detect_roles(
         elif meta.get("pct_missing", 0) >= 0.60:
             tags.append("high_missing")
             included = False
-            role = "feature_categorical" if meta.get("semantic_type") in {
-                "categorical",
-                "high_cardinality",
-                "text",
-            } else "feature_numeric"
+            role = (
+                "feature_categorical"
+                if meta.get("semantic_type")
+                in {
+                    "categorical",
+                    "high_cardinality",
+                    "text",
+                }
+                else "feature_numeric"
+            )
             reasons.append("missing_ge_60pct")
         elif meta.get("semantic_type") == "id" or (
             meta.get("unique_ratio", 0) >= 0.98
@@ -127,7 +137,10 @@ def detect_roles(
         ):
             role, conf, included = "row_id", 0.95, False
             reasons.append("row_id_rule")
-        elif meta.get("regex", {}).get("email", 0) >= 0.5 or meta.get("regex", {}).get("pan", 0) >= 0.5:
+        elif (
+            meta.get("regex", {}).get("email", 0) >= 0.5
+            or meta.get("regex", {}).get("pan", 0) >= 0.5
+        ):
             role, conf, included = "pii", 0.95, False
             reasons.append("pii_regex")
         elif (
@@ -137,7 +150,10 @@ def detect_roles(
             or (meta.get("mean_str_len", 0) > 30 and meta.get("mean_tokens", 0) > 5)
         ):
             # Person names / free text → PII or text exclude (NLP out of scope)
-            if re.search(r"(^name$|email|mobile|address|phone)", name, re.I) or "name" in name.lower():
+            if (
+                re.search(r"(^name$|email|mobile|address|phone)", name, re.I)
+                or "name" in name.lower()
+            ):
                 role, conf, included = "pii", 0.9, False
                 reasons.append("pii_or_text")
             else:

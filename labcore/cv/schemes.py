@@ -89,9 +89,7 @@ def build_splitter(
     if key == "repeated_kfold":
         return RepeatedKFold(n_splits=n_splits, n_repeats=n_repeats, random_state=seed)
     if key == "repeated_stratified_kfold":
-        return RepeatedStratifiedKFold(
-            n_splits=n_splits, n_repeats=n_repeats, random_state=seed
-        )
+        return RepeatedStratifiedKFold(n_splits=n_splits, n_repeats=n_repeats, random_state=seed)
     if key == "group_kfold":
         return GroupKFold(n_splits=n_splits)
     if key == "shuffle_split":

@@ -146,7 +146,9 @@ def confirm_intake(
 
     fam = (rec.merged.get("family") or {}).get("proposed") or "supervised_non_sequential"
     targets = rec.merged.get("targets") or []
-    primary = next((t for t in targets if t.get("column") != "__derived__"), targets[0] if targets else None)
+    primary = next(
+        (t for t in targets if t.get("column") != "__derived__"), targets[0] if targets else None
+    )
     task_spec = {
         "family": fam,
         "financial": bool((rec.merged.get("family") or {}).get("financial")),
@@ -300,7 +302,11 @@ def lineage(dataset_id: str, user: AuthUser = Depends(get_current_user)) -> dict
     group = root.dataset_group_id or root.id
     nodes = []
     for d in DATASET_STORE.list_datasets(root.workspace_id):
-        if (d.dataset_group_id or d.id) == group or d.id == group or d.parent_version_id == dataset_id:
+        if (
+            (d.dataset_group_id or d.id) == group
+            or d.id == group
+            or d.parent_version_id == dataset_id
+        ):
             nodes.append(
                 {
                     "id": d.id,

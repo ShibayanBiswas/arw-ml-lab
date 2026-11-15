@@ -158,7 +158,12 @@ def recommend_targets_features(
             ttype = "multiclass"
         else:
             ttype = "regression"
-        task = {"type": ttype, "confidence": 0.75, "alternatives": [], "reasons": [f"n_unique={nunq}"]}
+        task = {
+            "type": ttype,
+            "confidence": 0.75,
+            "alternatives": [],
+            "reasons": [f"n_unique={nunq}"],
+        }
 
         # MI ranks for features
         sample = df.sample(n=min(len(df), 20_000), random_state=42) if len(df) > 20_000 else df
@@ -198,7 +203,11 @@ def recommend_targets_features(
         meta = profile["columns"].get(name, {})
         encoder = None
         transform = None
-        imputer = "median" if meta.get("semantic_type") in {"continuous", "numeric_discrete"} else "most_frequent"
+        imputer = (
+            "median"
+            if meta.get("semantic_type") in {"continuous", "numeric_discrete"}
+            else "most_frequent"
+        )
         if r["role"] == "feature_categorical":
             nuniq = meta.get("n_unique", 0)
             encoder = "target" if nuniq and nuniq > 20 else "one_hot"

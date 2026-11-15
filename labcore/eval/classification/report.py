@@ -28,8 +28,12 @@ def classification_report_table(
     p, r, f1, support = precision_recall_fscore_support(
         y_true, y_pred, labels=labels_arr, zero_division=np.nan
     )
-    f05 = fbeta_score(y_true, y_pred, beta=0.5, labels=labels_arr, average=None, zero_division=np.nan)
-    f2 = fbeta_score(y_true, y_pred, beta=2.0, labels=labels_arr, average=None, zero_division=np.nan)
+    f05 = fbeta_score(
+        y_true, y_pred, beta=0.5, labels=labels_arr, average=None, zero_division=np.nan
+    )
+    f2 = fbeta_score(
+        y_true, y_pred, beta=2.0, labels=labels_arr, average=None, zero_division=np.nan
+    )
     mcm = multilabel_confusion_matrix(y_true, y_pred, labels=labels_arr)
 
     rows: list[dict[str, Any]] = []
@@ -53,7 +57,9 @@ def classification_report_table(
                 if y_proba.ndim == 1 or y_proba.shape[1] == 2:
                     scores = y_proba if y_proba.ndim == 1 else y_proba[:, 1]
                     if len(labels_arr) == 2 and i == 1:
-                        row["roc_auc_ovr"] = float(roc_auc_score((y_true == lab).astype(int), scores))
+                        row["roc_auc_ovr"] = float(
+                            roc_auc_score((y_true == lab).astype(int), scores)
+                        )
                         row["average_precision_ovr"] = float(
                             average_precision_score((y_true == lab).astype(int), scores)
                         )
@@ -88,7 +94,9 @@ def classification_report_table(
 
 
 def _f(v: Any) -> float:
-    return float(v) if v is not None and not (isinstance(v, float) and np.isnan(v)) else float("nan")
+    return (
+        float(v) if v is not None and not (isinstance(v, float) and np.isnan(v)) else float("nan")
+    )
 
 
 def _div(a: float, b: float) -> float:

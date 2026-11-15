@@ -78,9 +78,7 @@ def compute_cle_metrics(
                 out["CLE.M.31"] = float(
                     roc_auc_score(y_true, y_proba, multi_class="ovr", average="macro")
                 )
-                out["CLE.M.34"] = float(
-                    average_precision_score(y_true, y_proba, average="macro")
-                )
+                out["CLE.M.34"] = float(average_precision_score(y_true, y_proba, average="macro"))
                 try:
                     out["CLE.M.38"] = float(top_k_accuracy_score(y_true, y_proba, k=3))
                 except Exception:
@@ -125,9 +123,11 @@ def aggregate_cv_metrics(
         if test and k in test:
             row["test"] = test[k]
         if train and k in train and pooled and k in pooled:
-            row["train_cv_gap"] = float(train[k] - pooled[k]) if not (
-                np.isnan(train[k]) or np.isnan(pooled[k])
-            ) else float("nan")
+            row["train_cv_gap"] = (
+                float(train[k] - pooled[k])
+                if not (np.isnan(train[k]) or np.isnan(pooled[k]))
+                else float("nan")
+            )
         table[k] = row
     return {"id": "CLE.T.CV_METRICS", "n_folds": n, "metrics": table}
 

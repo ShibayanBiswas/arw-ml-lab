@@ -52,9 +52,7 @@ def run_classification_eval(
         for fp in fold_preds:
             from sklearn.metrics import confusion_matrix
 
-            fold_cms.append(
-                confusion_matrix(fp["y_true"], fp["y_pred"], labels=labels)
-            )
+            fold_cms.append(confusion_matrix(fp["y_true"], fp["y_pred"], labels=labels))
             fold_metrics.append(
                 compute_cle_metrics(
                     fp["y_true"],
@@ -83,9 +81,7 @@ def run_classification_eval(
         threshold = tune_threshold_oof(y_oof, y_proba_oof)
 
     plots: list[dict[str, Any]] = [
-        plot_confusion(
-            cm["counts"], cm["labels"], title="Confusion (counts)", plot_id="CLE.P.CM"
-        ),
+        plot_confusion(cm["counts"], cm["labels"], title="Confusion (counts)", plot_id="CLE.P.CM"),
         plot_confusion(
             cm["norm_true"],
             cm["labels"],

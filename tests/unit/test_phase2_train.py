@@ -150,9 +150,7 @@ def test_smote_not_applied_to_validation():
     n = 200
     X = pd.DataFrame({"x": rng.normal(size=n), "z": rng.normal(size=n)})
     y = pd.Series(np.concatenate([np.zeros(160, dtype=int), np.ones(40, dtype=int)]))
-    X_tr, X_va, y_tr, y_va = train_test_split(
-        X, y, test_size=0.25, random_state=42, stratify=y
-    )
+    X_tr, X_va, y_tr, y_va = train_test_split(X, y, test_size=0.25, random_state=42, stratify=y)
     pipe = ImbPipeline(
         [
             ("scale", StandardScaler()),

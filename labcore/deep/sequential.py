@@ -113,10 +113,14 @@ def _as_lightning_module(backbone: nn.Module, task: str) -> Any:
             self.log(f"{stage}_loss", loss, on_epoch=True, prog_bar=False)
             return loss
 
-        def training_step(self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
+        def training_step(
+            self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
+        ) -> torch.Tensor:
             return self._step(batch, "train")
 
-        def validation_step(self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> torch.Tensor:
+        def validation_step(
+            self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
+        ) -> torch.Tensor:
             return self._step(batch, "val")
 
         def configure_optimizers(self) -> Any:
@@ -130,7 +134,9 @@ def _as_lightning_module(backbone: nn.Module, task: str) -> Any:
 
 
 class LSTMBackbone(nn.Module):
-    def __init__(self, n_features: int, hidden: int = 32, layers: int = 1, dropout: float = 0.0) -> None:
+    def __init__(
+        self, n_features: int, hidden: int = 32, layers: int = 1, dropout: float = 0.0
+    ) -> None:
         super().__init__()
         self.lstm = nn.LSTM(
             input_size=n_features,
@@ -147,7 +153,9 @@ class LSTMBackbone(nn.Module):
 
 
 class TCNBackbone(nn.Module):
-    def __init__(self, n_features: int, channels: int = 32, levels: int = 2, kernel: int = 3) -> None:
+    def __init__(
+        self, n_features: int, channels: int = 32, levels: int = 2, kernel: int = 3
+    ) -> None:
         super().__init__()
         from pytorch_tcn import TCN
 
@@ -227,9 +235,7 @@ def fit_sequential(
     )
 
     n_features = X_tr.shape[-1]
-    backbone: nn.Module = (
-        LSTMBackbone(n_features) if model == "lstm" else TCNBackbone(n_features)
-    )
+    backbone: nn.Module = LSTMBackbone(n_features) if model == "lstm" else TCNBackbone(n_features)
 
     module = _as_lightning_module(backbone, task if task == "regression" else "classification")
     # for binary, cast labels
@@ -260,7 +266,9 @@ def fit_sequential(
         lr_info = run_lr_finder(module, tr_loader, num_training=n_steps)
         suggested = float(lr_info.get("suggested_lr") or DEFAULT_LR)
         backbone = LSTMBackbone(n_features) if model == "lstm" else TCNBackbone(n_features)
-        module = _as_lightning_module(backbone, "regression" if task == "regression" else "classification")
+        module = _as_lightning_module(
+            backbone, "regression" if task == "regression" else "classification"
+        )
         module.lr = suggested
 
     trainer = make_trainer(max_epochs=max_epochs, patience=3, accelerator="cpu")
@@ -315,7 +323,9 @@ def frame_to_xy(
     work = df.copy()
     if target_col is None:
         # prefer Close / Adj Close
-        close_col = next((c for c in ("Close", "Adj Close", "close", "adj_close") if c in work.columns), None)
+        close_col = next(
+            (c for c in ("Close", "Adj Close", "close", "adj_close") if c in work.columns), None
+        )
         if close_col is None:
             num = work.select_dtypes(include=[np.number]).columns.tolist()
             if not num:
@@ -332,7 +342,12 @@ def frame_to_xy(
         ][:6]
         if not feature_cols:
             feature_cols = [c for c in work.columns if c != target_col][:4]
-    X = work[feature_cols].apply(pd.to_numeric, errors="coerce").fillna(0.0).to_numpy(dtype=np.float64)
+    X = (
+        work[feature_cols]
+        .apply(pd.to_numeric, errors="coerce")
+        .fillna(0.0)
+        .to_numpy(dtype=np.float64)
+    )
     y = pd.to_numeric(work[target_col], errors="coerce").fillna(0.0).to_numpy(dtype=np.float64)
     # drop last row if NaN forward return was filled — keep aligned length
     return X, y

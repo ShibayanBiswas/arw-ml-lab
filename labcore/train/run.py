@@ -212,9 +212,7 @@ def run_supervised_cv(
 
         keys0 = fold_metrics[0]
         cv_mean = {k: float(np.nanmean([m[k] for m in fold_metrics])) for k in keys0}
-        cv_std = {
-            k: float(np.nanstd([m[k] for m in fold_metrics], ddof=1)) for k in keys0
-        }
+        cv_std = {k: float(np.nanstd([m[k] for m in fold_metrics], ddof=1)) for k in keys0}
         row = {
             "algorithm_key": spec.key,
             "algorithm_id": spec.id,

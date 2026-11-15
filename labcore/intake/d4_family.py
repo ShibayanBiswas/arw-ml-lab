@@ -93,14 +93,20 @@ def infer_family(
     ts_boost = 2.5 if has_time and ohlcv < 1.0 else 0.0
     seq_boost = 2.0 if ohlcv >= 1.0 else 0.0
     # Named forecast targets (Passengers, OT, Temp) still belong to time_series without OHLCV
-    seq_target = fam_w["supervised_sequential"]["target_named"] * target_named * (0.2 if has_time and ohlcv < 1.0 else 1.0)
+    seq_target = (
+        fam_w["supervised_sequential"]["target_named"]
+        * target_named
+        * (0.2 if has_time and ohlcv < 1.0 else 1.0)
+    )
     logits = {
         "time_series": (
             fam_w["time_series"]["has_time"] * has_time
             + fam_w["time_series"]["regular"] * regular
             + fam_w["time_series"]["few_cols_time"] * few_cols_time
             + fam_w["time_series"]["autocorr"] * autocorr
-            + fam_w["time_series"]["wide_cross_section"] * wide_cross_section * (0.0 if has_time else 1.0)
+            + fam_w["time_series"]["wide_cross_section"]
+            * wide_cross_section
+            * (0.0 if has_time else 1.0)
             + ts_boost
         ),
         "supervised_sequential": (

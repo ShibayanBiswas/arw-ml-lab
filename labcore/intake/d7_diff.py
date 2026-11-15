@@ -76,9 +76,11 @@ def schema_diff(
                 }
             )
             # rename is not automatically breaking
-            breaking = any(ch for ch in changes if ch.get("kind") == "column_removed" and ch.get("column") != old) or any(
-                ch.get("kind") == "type_change" for ch in changes
-            )
+            breaking = any(
+                ch
+                for ch in changes
+                if ch.get("kind") == "column_removed" and ch.get("column") != old
+            ) or any(ch.get("kind") == "type_change" for ch in changes)
 
     # type changes on overlapping columns
     for c in sorted(parent_cols & child_cols):
@@ -113,11 +115,13 @@ def schema_diff(
     # if only renames explain add/remove, compatible
     if renames and len(renames) == len(removed) == len(added):
         # still check type changes
-        breaking = any(ch.get("severity") == "breaking" and ch.get("kind") == "type_change" for ch in changes)
+        breaking = any(
+            ch.get("severity") == "breaking" and ch.get("kind") == "type_change" for ch in changes
+        )
         # remove pure add/remove that were paired
-        changes = [ch for ch in changes if ch.get("kind") not in {"column_added", "column_removed"}] + [
-            ch for ch in changes if ch.get("kind") == "rename_proposed"
-        ]
+        changes = [
+            ch for ch in changes if ch.get("kind") not in {"column_added", "column_removed"}
+        ] + [ch for ch in changes if ch.get("kind") == "rename_proposed"]
 
     severity = "breaking" if breaking else ("warning" if changes else "info")
     return {

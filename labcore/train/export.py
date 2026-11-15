@@ -20,7 +20,7 @@ def leaderboard_to_csv(rows: list[dict[str, Any]]) -> str:
         return "rank,algorithm_key,name\n"
     metric_keys: list[str] = []
     for r in rows:
-        for k in (r.get("cv_mean") or {}):
+        for k in r.get("cv_mean") or {}:
             if k not in metric_keys:
                 metric_keys.append(k)
     fieldnames = ["rank", "algorithm_key", "algorithm_id", "name", "library", "primary_metric"]

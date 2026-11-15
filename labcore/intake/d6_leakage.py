@@ -21,7 +21,9 @@ def detect_leakage(
     family: dict[str, Any],
 ) -> list[dict[str, Any]]:
     suspects: list[dict[str, Any]] = []
-    y_col = next((t["column"] for t in targets if t.get("column") and t["column"] != "__derived__"), None)
+    y_col = next(
+        (t["column"] for t in targets if t.get("column") and t["column"] != "__derived__"), None
+    )
     if y_col is None or y_col not in df.columns:
         # still check later-event timestamps without target
         y_col = None
@@ -60,7 +62,11 @@ def detect_leakage(
                             "column": name,
                             "rule": "transform_of_target",
                             "severity": "critical",
-                            "evidence": {"r2": r2, "coef": float(lr.coef_[0]), "intercept": float(lr.intercept_)},
+                            "evidence": {
+                                "r2": r2,
+                                "coef": float(lr.coef_[0]),
+                                "intercept": float(lr.intercept_),
+                            },
                         }
                     )
                     continue
@@ -70,8 +76,15 @@ def detect_leakage(
                     continue
                 if len(np.unique(yy)) <= 20:
                     stump = DecisionTreeClassifier(max_depth=1, random_state=42)
-                    stump.fit(xx.reshape(-1, 1), yy.astype(int) if set(np.unique(yy)) <= {0, 1} else yy)
-                    acc = float(stump.score(xx.reshape(-1, 1), yy.astype(int) if set(np.unique(yy)) <= {0, 1} else yy))
+                    stump.fit(
+                        xx.reshape(-1, 1), yy.astype(int) if set(np.unique(yy)) <= {0, 1} else yy
+                    )
+                    acc = float(
+                        stump.score(
+                            xx.reshape(-1, 1),
+                            yy.astype(int) if set(np.unique(yy)) <= {0, 1} else yy,
+                        )
+                    )
                     if acc >= 0.99:
                         suspects.append(
                             {
@@ -112,8 +125,15 @@ def detect_leakage(
                     aligned = pd.concat([series, y], axis=1).dropna()
                     if len(aligned) < 30:
                         continue
-                    lr = LinearRegression().fit(aligned.iloc[:, 0].to_numpy().reshape(-1, 1), aligned.iloc[:, 1])
-                    r2 = float(r2_score(aligned.iloc[:, 1], lr.predict(aligned.iloc[:, 0].to_numpy().reshape(-1, 1))))
+                    lr = LinearRegression().fit(
+                        aligned.iloc[:, 0].to_numpy().reshape(-1, 1), aligned.iloc[:, 1]
+                    )
+                    r2 = float(
+                        r2_score(
+                            aligned.iloc[:, 1],
+                            lr.predict(aligned.iloc[:, 0].to_numpy().reshape(-1, 1)),
+                        )
+                    )
                     if r2 >= 0.999:
                         suspects.append(
                             {
@@ -148,7 +168,10 @@ def detect_leakage(
         for name in df.columns:
             if name == time_col:
                 continue
-            if profile["columns"].get(name, {}).get("semantic_type") != "datetime" and "date" not in name.lower():
+            if (
+                profile["columns"].get(name, {}).get("semantic_type") != "datetime"
+                and "date" not in name.lower()
+            ):
                 # still try parse
                 if "date" not in name.lower() and "time" not in name.lower():
                     continue
@@ -182,7 +205,10 @@ def detect_leakage(
                         "column": name,
                         "rule": "lead_lag_future_info",
                         "severity": "high",
-                        "evidence": {"corr_t": float(c0) if pd.notna(c0) else None, "corr_lead": float(c_lead)},
+                        "evidence": {
+                            "corr_t": float(c0) if pd.notna(c0) else None,
+                            "corr_lead": float(c_lead),
+                        },
                     }
                 )
             # centred rolling mean

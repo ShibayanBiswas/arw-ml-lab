@@ -1,5 +1,12 @@
 # Architecture decision records
 
+## ADR-0011 — Sole Vercel project `arw-ml-lab` (2026-11-15)
+
+- This repo deploys to **one** Vercel project: **`arw-ml-lab`** (`prj_gohylY9RNNIcBZHqG6GqaKtaTmrY`), Root Directory **`frontend`**, production alias `https://arw-ml-lab.vercel.app`.
+- A stray project named **`frontend`** (Root Directory `.`) was created by linking from `frontend/` and failed every build with `NEXT_NO_VERSION`. It was deleted; local `frontend/.vercel` must not be recreated.
+- Agents/devs: run Vercel CLI from the **repo root** (link to `arw-ml-lab`) or rely on Git integration. Never create a second Git-connected project for this repo.
+- CI must pin `pnpm/action-setup` to `frontend/package.json` because job `defaults.working-directory` does not apply to `uses:` steps.
+
 ## ADR-0010 — Phase 2B Workstation UI shell (2026-11-15)
 
 - Insert **Phase 2B** before Phase 3: UI-first parity with SP / Marketing Workstation for home, modules, and logos. Phase 3 Explain+Predict and full §34 2A-cont wait for next continue.

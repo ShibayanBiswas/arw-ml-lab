@@ -14,8 +14,12 @@ def plot_pred_vs_actual(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, Any
     fig.add_trace(go.Scatter(x=y_true, y=y_pred, mode="markers", name="points", opacity=0.6))
     lo = float(min(np.min(y_true), np.min(y_pred)))
     hi = float(max(np.max(y_true), np.max(y_pred)))
-    fig.add_trace(go.Scatter(x=[lo, hi], y=[lo, hi], mode="lines", name="y=x", line={"dash": "dash"}))
-    fig.update_layout(title="Predicted vs actual", xaxis_title="Actual", yaxis_title="Predicted", height=400)
+    fig.add_trace(
+        go.Scatter(x=[lo, hi], y=[lo, hi], mode="lines", name="y=x", line={"dash": "dash"})
+    )
+    fig.update_layout(
+        title="Predicted vs actual", xaxis_title="Actual", yaxis_title="Predicted", height=400
+    )
     return {"id": "REE.P.PRED_VS_ACTUAL", "kind": "plot", "plotly": fig.to_plotly_json()}
 
 
@@ -24,7 +28,9 @@ def plot_residual_scatter(y_pred: np.ndarray, resid: np.ndarray) -> dict[str, An
 
     fig = go.Figure(go.Scatter(x=y_pred, y=resid, mode="markers", opacity=0.6))
     fig.add_hline(y=0, line_dash="dash")
-    fig.update_layout(title="Residuals vs fitted", xaxis_title="Fitted", yaxis_title="Residual", height=400)
+    fig.update_layout(
+        title="Residuals vs fitted", xaxis_title="Fitted", yaxis_title="Residual", height=400
+    )
     return {"id": "REE.P.RESID_SCATTER", "kind": "plot", "plotly": fig.to_plotly_json()}
 
 
@@ -45,7 +51,9 @@ def plot_qq(resid: np.ndarray) -> dict[str, Any]:
     fig.add_trace(go.Scatter(x=osm, y=osr, mode="markers", name="sample"))
     fit_y = slope * np.asarray(osm) + intercept
     fig.add_trace(go.Scatter(x=osm, y=fit_y, mode="lines", name="fit"))
-    fig.update_layout(title="Normal Q-Q", xaxis_title="Theoretical", yaxis_title="Sample", height=400)
+    fig.update_layout(
+        title="Normal Q-Q", xaxis_title="Theoretical", yaxis_title="Sample", height=400
+    )
     return {"id": "REE.P.QQ", "kind": "plot", "plotly": fig.to_plotly_json()}
 
 
@@ -54,7 +62,9 @@ def plot_cooks_distance(cooks: np.ndarray) -> dict[str, Any]:
 
     idx = np.arange(len(cooks))
     fig = go.Figure(go.Scatter(x=idx, y=cooks, mode="markers", name="Cook's D"))
-    fig.update_layout(title="Cook's distance", xaxis_title="Index", yaxis_title="Cook's D", height=400)
+    fig.update_layout(
+        title="Cook's distance", xaxis_title="Index", yaxis_title="Cook's D", height=400
+    )
     return {"id": "REE.P.COOKS", "kind": "plot", "plotly": fig.to_plotly_json()}
 
 
