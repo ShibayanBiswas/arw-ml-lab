@@ -42,10 +42,12 @@ def test_healthz(client: TestClient) -> None:
     assert body["seed"] == 42
 
 
-def test_catalog_empty(client: TestClient) -> None:
+def test_catalog_populated(client: TestClient) -> None:
     r = client.get("/api/v1/catalog/algorithms")
     assert r.status_code == 200
-    assert r.json() == []
+    algos = r.json()
+    assert isinstance(algos, list)
+    assert len(algos) >= 10
 
 
 def test_viewer_denied_on_post(client: TestClient) -> None:

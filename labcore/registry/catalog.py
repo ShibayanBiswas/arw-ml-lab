@@ -1,15 +1,15 @@
-"""Catalogue exposed by GET /catalog (Phase 0: empty typed registries)."""
+"""Catalogue exposed by GET /catalog."""
 
 from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from labcore.registry.algorithms import thin_algorithm_specs
 from labcore.registry.spec import AlgorithmSpec
+from labcore.train.presets import TUNING_PRESETS
 
 
 class Catalog(BaseModel):
-    """Typed catalogue. Algorithms are registered in later phases — never invent entries."""
-
     model_config = ConfigDict(extra="forbid")
 
     algorithms: list[AlgorithmSpec] = Field(default_factory=list)
@@ -23,7 +23,40 @@ class Catalog(BaseModel):
     tests: list[dict[str, str]] = Field(default_factory=list)
     explainers: list[dict[str, str]] = Field(default_factory=list)
     datasets: list[dict[str, str]] = Field(default_factory=list)
+    tuning_presets: list[dict[str, str | int]] = Field(default_factory=list)
 
 
 def get_catalog() -> Catalog:
-    return Catalog()
+    return Catalog(
+        algorithms=thin_algorithm_specs(),
+        encoders=[
+            {"id": "one_hot", "name": "One-Hot"},
+            {"id": "ordinal", "name": "Ordinal"},
+        ],
+        imputers=[
+            {"id": "mean", "name": "Mean"},
+            {"id": "median", "name": "Median"},
+            {"id": "most_frequent", "name": "Most frequent"},
+        ],
+        scalers=[
+            {"id": "standard", "name": "Standard"},
+            {"id": "robust", "name": "Robust"},
+            {"id": "minmax", "name": "MinMax"},
+            {"id": "none", "name": "None"},
+        ],
+        cv=[
+            {"id": "kfold", "name": "KFold"},
+            {"id": "stratified_kfold", "name": "StratifiedKFold"},
+        ],
+        metrics=[
+            {"id": "r2", "name": "R²"},
+            {"id": "rmse", "name": "RMSE"},
+            {"id": "balanced_accuracy", "name": "Balanced accuracy"},
+            {"id": "roc_auc", "name": "ROC-AUC"},
+            {"id": "f1_macro", "name": "F1 macro"},
+        ],
+        tuning_presets=[
+            {"id": k, "name": k.title(), "n_trials": int(v["n_trials"])}
+            for k, v in TUNING_PRESETS.items()
+        ],
+    )

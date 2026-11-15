@@ -84,7 +84,7 @@ export function DashboardShell({ userName, userEmail, children }: Props) {
           >
             <Menu size={18} />
           </button>
-          <span className="font-[family-name:var(--font-display)] text-lg">ARW ML Lab</span>
+          <span className="font-[family-name:var(--font-display)] text-lg">Machine Learning Lab</span>
           <button
             type="button"
             className="dashboard-icon-btn"

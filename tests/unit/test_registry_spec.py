@@ -31,9 +31,9 @@ def test_algorithm_spec_empty_params() -> None:
     assert a.params == []
 
 
-def test_catalog_phase0_empty_but_typed() -> None:
+def test_catalog_phase2_algorithms_typed() -> None:
     cat = get_catalog()
     dumped = cat.model_dump()
-    assert dumped["algorithms"] == []
+    assert len(dumped["algorithms"]) >= 10
     assert "encoders" in dumped
     assert "datasets" in dumped

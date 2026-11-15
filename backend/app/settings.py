@@ -29,6 +29,13 @@ class Settings(BaseSettings):
     service_role: str = Field(default="api", alias="SERVICE_ROLE")
     # When true, accept TEST_AUTH_* headers for unit tests (never in production)
     auth_test_bypass: bool = Field(default=False, alias="AUTH_TEST_BYPASS")
+    # bff = jose HS256 from Next.js (ADR-0005); supabase = JWKS
+    auth_mode: str = Field(default="bff", alias="AUTH_MODE")
+    jwt_secret: str = Field(default="dev-jwt-secret-change-me", alias="JWT_SECRET")
+    lab_default_workspace_id: str = Field(
+        default="00000000-0000-0000-0000-000000000010",
+        alias="LAB_DEFAULT_WORKSPACE_ID",
+    )
 
 
 @lru_cache

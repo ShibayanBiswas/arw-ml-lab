@@ -5,6 +5,7 @@ import { IntakeReview } from "@/components/data/IntakeReview";
 import { EdaWorkbench } from "@/components/eda/EdaWorkbench";
 import { LogicAtlas } from "@/components/learn/LogicAtlas";
 import { ModulePlaceholder } from "@/components/panels/ModulePlaceholder";
+import { TrainWorkbench } from "@/components/train/TrainWorkbench";
 import { MODULES } from "@/lib/modules";
 
 type Props = { params: Promise<{ module: string; page: string }> };
@@ -34,6 +35,12 @@ export default async function ModuleSubPage({ params }: Props) {
   }
   if (slug === "learn") {
     return <LogicAtlas page={page} />;
+  }
+  if (slug === "preprocess" && page === "recipe") {
+    return <TrainWorkbench mode="recipe" />;
+  }
+  if (slug === "supervised" && (page === "leaderboard" || page === "models" || page === "home")) {
+    return <TrainWorkbench mode={page === "leaderboard" ? "leaderboard" : "models"} />;
   }
 
   return (

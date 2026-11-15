@@ -22,7 +22,7 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ARW ML Lab",
+  title: "Machine Learning Lab | Anand Rathi Wealth",
   description: "Anand Rathi Wealth — Machine Learning Lab",
 };
 

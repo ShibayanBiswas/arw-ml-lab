@@ -27,6 +27,7 @@ IMPORT_TO_PACKAGE = {
     "cv2": "opencv-python",
     "sklearn": "scikit-learn",
     "skimage": "scikit-image",
+    "imblearn": "imbalanced-learn",
 }
 
 

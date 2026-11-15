@@ -1,0 +1,40 @@
+"use client";
+
+import type { ReactNode } from "react";
+import { BrandLogo } from "@/components/ui/BrandLogo";
+
+type Props = {
+  children: ReactNode;
+  subtitle?: string;
+  variant?: "signin" | "verify" | "recover";
+};
+
+export function AuthShell({ children, subtitle, variant = "signin" }: Props) {
+  return (
+    <div
+      className={`auth-shell auth-shell-${variant} relative flex min-h-screen flex-col overflow-hidden bg-[var(--bg)] text-[var(--fg)]`}
+    >
+      <div className="auth-aurora auth-aurora-animate pointer-events-none absolute inset-0" aria-hidden />
+      <div className="auth-grid pointer-events-none absolute inset-0" aria-hidden />
+
+      <header className="relative z-10 flex items-center justify-between px-6 py-6 md:px-12">
+        <BrandLogo priority className="h-11 w-auto md:h-12" />
+        {subtitle ? (
+          <span className="hidden text-[10px] font-bold tracking-[0.32em] text-[var(--fg-subtle)] md:inline">
+            {subtitle}
+          </span>
+        ) : null}
+      </header>
+
+      <main className="relative z-10 flex w-full flex-1 items-center justify-center px-5 py-10 md:px-10 md:py-14">
+        <div className="auth-card-wrap w-full max-w-md">{children}</div>
+      </main>
+
+      <footer className="relative z-10 border-t border-[color-mix(in_srgb,var(--gold)_12%,var(--border))] px-6 py-6 text-center md:px-12">
+        <p className="text-[10px] font-medium tracking-[0.22em] text-[var(--fg-subtle)]">
+          © {new Date().getFullYear()} ANAND RATHI WEALTH · MACHINE LEARNING LAB · INTERNAL USE ONLY
+        </p>
+      </footer>
+    </div>
+  );
+}

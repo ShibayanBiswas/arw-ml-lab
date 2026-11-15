@@ -41,6 +41,13 @@ def reset_jwk_client() -> None:
 
 
 def decode_bearer_token(token: str, settings: Settings) -> dict[str, Any]:
+    if settings.auth_mode.lower() == "bff":
+        return jwt.decode(
+            token,
+            settings.jwt_secret,
+            algorithms=["HS256"],
+            options={"verify_aud": False},
+        )
     client = _get_jwk_client(settings)
     signing_key = client.get_signing_key_from_jwt(token)
     return jwt.decode(
@@ -108,10 +115,27 @@ async def get_current_user(
             detail=f"Invalid token: {exc}",
         ) from exc
 
-    user_id = str(claims.get("sub") or "")
+    user_id = str(claims.get("sub") or claims.get("userId") or "")
     if not user_id:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token missing sub")
-    workspace_id = request.headers.get("x-workspace-id")
+    workspace_id = request.headers.get("x-workspace-id") or claims.get("workspaceId")
+    if isinstance(workspace_id, str) and not workspace_id:
+        workspace_id = None
+    # BFF roster tokens carry role claim; fall back to membership / scientist
+    claim_role = claims.get("role")
+    bff_roles = WRITE_ROLES | {"viewer", "member", "admin"}
+    if settings.auth_mode.lower() == "bff" and claim_role in bff_roles:
+        mapped: Role = "scientist"
+        if claim_role in ("owner", "admin", "scientist", "analyst", "viewer"):
+            mapped = claim_role  # type: ignore[assignment]
+        elif claim_role == "member":
+            mapped = "scientist"
+        return AuthUser(
+            user_id=user_id,
+            email=claims.get("email"),
+            role=mapped,
+            workspace_id=workspace_id or settings.lab_default_workspace_id,
+        )
     role = _role_from_membership(settings, user_id, workspace_id)
     return AuthUser(
         user_id=user_id,

@@ -29,7 +29,6 @@ import {
   type NavItem,
 } from "@/lib/modules";
 import { useTheme } from "@/lib/theme";
-import { createClient } from "@/lib/supabase/client";
 
 const MODULE_ICONS: Record<ModuleGroup["icon"], typeof BarChart3> = {
   database: Database,
@@ -163,8 +162,7 @@ export function Sidebar({ userName, userEmail, collapsed = false, onNavigate }: 
   );
 
   async function logout() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
     router.refresh();
   }
@@ -180,11 +178,11 @@ export function Sidebar({ userName, userEmail, collapsed = false, onNavigate }: 
         >
           {collapsed ? (
             <span className="flex h-10 w-10 items-center justify-center rounded-xl gold-gradient text-xs font-bold text-[#111]">
-              AR
+              ML
             </span>
           ) : (
             <span className="font-[family-name:var(--font-display)] text-xl tracking-tight">
-              <span className="gold-text">ARW</span> ML Lab
+              <span className="gold-text">Machine Learning</span> Lab
             </span>
           )}
         </Link>

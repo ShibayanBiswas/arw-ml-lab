@@ -6,7 +6,7 @@ export default function HomeTerminalPage() {
     <div className="space-y-6">
       <header className="terminal-header-luxe rounded-2xl p-6">
         <p className="section-kicker section-kicker-alive">Home Terminal</p>
-        <h1 className="section-title mt-2 text-3xl">Welcome to ARW ML Lab</h1>
+        <h1 className="section-title mt-2 text-3xl">Welcome to Machine Learning Lab</h1>
         <p className="mt-2 max-w-2xl text-sm text-[var(--fg-muted)]">
           Foundations shell is live. Dataset upload, EDA and modelling arrive in later phases.
           Seed defaults to 42. No fabricated metrics.

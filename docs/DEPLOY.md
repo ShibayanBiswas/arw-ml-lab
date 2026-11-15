@@ -1,27 +1,32 @@
-# Deploy guide — ARW ML Lab (ARCHITECTURE §39)
+# Deploy guide — Machine Learning Lab (ARCHITECTURE §39 + ADR-0005)
 
-Phase 8.1 hosted skeleton. Secrets never go in git or chat; set them in the vendor dashboards and GitHub Environment `production`.
+Secrets never go in git or chat; set them in the vendor dashboards and GitHub Environment `production`.
 
-## Live status (2026-11-15)
+## Auth (Phase 2 — BFF, not Supabase email OTP)
 
-| Piece | Status | ID / URL (non-secret) |
+Login is SP Workstation–style: password → **on-screen OTP** (nothing emailed). Roster = Rathi emails in `frontend/src/data/team.ts`.
+
+| Vercel env | Purpose |
+|---|---|
+| `JWT_SECRET` | Shared with Render `lab-api` (`AUTH_MODE=bff`) |
+| `SEED_DEFAULT_PASSWORD_MAP` | JSON `{"email@rathi.com":"…"}` for first seed |
+| `NEXT_PUBLIC_APP_URL` | `https://arw-ml-lab.vercel.app` (or new alias) |
+| `LAB_DEFAULT_WORKSPACE_ID` | default workspace UUID |
+| `NEXT_PUBLIC_LAB_API_URL` | `lab-api` URL when Render exists; else local |
+
+Supabase Auth magic-link redirects are **not** required for primary login (ADR-0005). Postgres/Storage still on Supabase free/Pro.
+
+## Live status
+
+| Piece | Status | Notes |
 |---|---|---|
-| GitHub | private repo on `main`; Environment `production` created | https://github.com/ShibayanBiswas/arw-ml-lab |
-| Branch protection | **blocked** — needs GitHub Pro (or public/org) | — |
-| Supabase | project healthy; migrations + buckets applied | ref `ushtfpelbpjfkjoppklz`, region `ap-south-1`, URL `https://ushtfpelbpjfkjoppklz.supabase.co` |
-| Global file size 2 GB | **manual** — Pro + Storage settings | — |
-| Auth redirect URLs | **manual** — add Vercel URLs below | — |
-| Render Blueprint | created; plan **failed** `need_payment_info` | Blueprint `exs-dbsnkbpsrm7s73drvi90` |
-| Vercel | Root Directory `frontend`; production ready | https://arw-ml-lab.vercel.app |
-| Hosted `/healthz` + DS1 EDA | **blocked** until Render services exist | use `scripts/smoke_hosted.sh` after hooks |
+| GitHub | private `arw-ml-lab` | https://github.com/ShibayanBiswas/arw-ml-lab |
+| Supabase | healthy | ref `ushtfpelbpjfkjoppklz` — apply migration `20261115180000_lab_bff_auth.sql` |
+| Render Blueprint | **blocked** `need_payment_info` | Free-tier path: run `lab-api` + workers via `docker compose` / local; no payment without your OK |
+| Vercel | Hobby OK | Project name display: **Machine Learning Lab**; Root Directory `frontend` |
+| Hosted API smoke | blocked until Render or self-host API | `scripts/smoke_hosted.sh` |
 
-**Auth redirect URLs to paste in Supabase → Authentication → URL configuration**
-
-- Site URL: `https://arw-ml-lab.vercel.app`
-- Redirect: `https://arw-ml-lab.vercel.app/auth/callback`
-- Preview (optional): `https://*-shibayan-biswas-projects.vercel.app/auth/callback`
-
-**Render unblock:** Billing → add payment method → Dashboard → Blueprint `arw-ml-lab` → Sync/Approve → fill `lab-shared` `sync: false` secrets → copy deploy hooks into GitHub Environment secrets → set `LAB_API_URL` var → update Vercel `NEXT_PUBLIC_LAB_API_URL` to the real `lab-api` URL.
+**Render:** Do **not** add a payment method unless you approve cost. Until then: Vercel frontend + local/`make dev` API.
 
 ## Topology
 

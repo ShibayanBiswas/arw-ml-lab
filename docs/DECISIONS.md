@@ -1,5 +1,14 @@
 # Architecture decision records
 
+## ADR-0005 — BFF auth primary (Phase 2, 2026-11-15)
+
+- ARCHITECTURE §39.5 lists Supabase Auth as primary; SP `jose`+OTP as fallback. **User request:** same login as SP Workstation, **no Supabase email/magic OTP**, same Rathi roster.
+- **Primary for this lab until Phase 7 SSO:** Next.js BFF (`jose` HS256 + `bcryptjs` + on-screen OTP), cookies `ml_session` / `ml_pending`, roster from `frontend/src/data/team.ts`.
+- Persist users/OTP in **Supabase Postgres** (`lab_app_users`, `lab_otps`) — not MongoDB — so the data platform stays one Postgres.
+- FastAPI accepts BFF JWTs when `AUTH_MODE=bff` (shared `JWT_SECRET`); `AUTH_TEST_BYPASS` remains for pytest only.
+- Supabase Auth magic-link UI is removed from the primary login path; Storage/RLS unchanged.
+- Thin Phase 2 ML slice: recipe + ≥10 algorithms + CV + leaderboard; full §41/§42 deferred to Phase 2-cont.
+
 ## ADR-0004 — Phase 1A intake rule-based only (2026-11-15)
 
 - LLM adjudicator (§33.9) deferred to Phase 6; Phase 1A ships detectors D1–D8 + validator behind the same proposal schema.

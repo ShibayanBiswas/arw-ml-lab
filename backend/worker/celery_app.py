@@ -32,6 +32,7 @@ celery_app = Celery(
         "backend.worker.tasks.ingest",
         "backend.worker.tasks.eda",
         "backend.worker.tasks.intake",
+        "backend.worker.tasks.train",
     ],
 )
 

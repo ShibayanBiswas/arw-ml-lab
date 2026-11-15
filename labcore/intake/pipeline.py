@@ -18,7 +18,6 @@ from labcore.intake.profile import extended_profile
 from labcore.intake.schemas import IntakeProposal
 from labcore.intake.validator import validate_proposal
 
-
 _DETECTOR_SAMPLE_CAP = 20_000
 
 

@@ -52,6 +52,7 @@ export async function getJob(jobId: string) {
     job_id: string;
     status: string;
     progress: number;
+    error?: string;
     result?: Record<string, unknown>;
   };
 }
@@ -153,4 +154,31 @@ export async function confirmIntake(proposalId: string, experimentName?: string)
     throw new Error(`intake confirm: ${res.status} ${detail}`);
   }
   return (await res.json()) as { experiment_id: string; task_spec: Record<string, unknown> };
+}
+
+export async function startTrain(body: {
+  dataset_id: string;
+  target: string;
+  task: string;
+  algorithm_keys?: string[];
+}) {
+  const res = await fetch(`${labApiBase()}/api/v1/experiments/train`, {
+    method: "POST",
+    headers: { ...labAuthHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`train: ${res.status}`);
+  return (await res.json()) as { job_id: string; experiment_id: string };
+}
+
+export async function getExperiment(experimentId: string) {
+  const res = await fetch(`${labApiBase()}/api/v1/experiments/${experimentId}`, {
+    headers: labAuthHeaders(),
+  });
+  if (!res.ok) throw new Error(`experiment: ${res.status}`);
+  return (await res.json()) as {
+    id: string;
+    status: string;
+    leaderboard: Array<Record<string, unknown>>;
+  };
 }
