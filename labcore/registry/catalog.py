@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 from pydantic import BaseModel, ConfigDict, Field
 
 from labcore.cv.schemes import list_cv_schemes
@@ -27,9 +29,23 @@ class Catalog(BaseModel):
     tuning_presets: list[dict[str, str | int]] = Field(default_factory=list)
 
 
+def _env_flag(name: str) -> bool:
+    return os.environ.get(name, "false").strip().lower() in {"1", "true", "yes"}
+
+
+def visible_algorithm_specs() -> list[AlgorithmSpec]:
+    """Filter licence-gated specs (TabPFN) unless their env flag is on."""
+    out: list[AlgorithmSpec] = []
+    for spec in thin_algorithm_specs():
+        if spec.enabled_env and not _env_flag(spec.enabled_env):
+            continue
+        out.append(spec)
+    return out
+
+
 def get_catalog() -> Catalog:
     return Catalog(
-        algorithms=thin_algorithm_specs(),
+        algorithms=visible_algorithm_specs(),
         encoders=[
             {"id": "one_hot", "name": "One-Hot"},
             {"id": "ordinal", "name": "Ordinal"},

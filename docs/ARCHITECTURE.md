@@ -4311,6 +4311,7 @@ Licence policy: permissive licences (MIT, BSD, Apache-2.0, NCSA, MPL-2.0 for tes
 | pythresh | 1.1.1 | BSD-2-Clause | contamination-free outlier thresholds | `unsupervised` | https://pypi.org/project/pythresh/ |
 | pytorch-forecasting | 1.8.0 | MIT | TFT, N-HiTS, DeepAR (Q11, F63) | `dl-cpu` | https://pypi.org/project/pytorch-forecasting/ |
 | pytorch-tabular | 1.2.0 | MIT | tabular DL T1, T3–T5, T7, T8, T10–T12, T14–T16 | `dl-cpu` | https://pypi.org/project/pytorch-tabular/ |
+| pytorch-tabnet | 4.1.0 | MIT | soft dep of pytorch-tabular TabNet (`create_group_matrix` / TabNet backbone) | `dl-cpu` | https://pypi.org/project/pytorch-tabnet/ |
 | pytorch-tcn | 1.2.3 | MIT | temporal convolutional network (Q7) | `dl-cpu` | https://pypi.org/project/pytorch-tcn/ |
 | pywavelets | 1.10.0 | MIT | wavelet transforms for TS EDA/denoising features (§43.10) | `ts` | https://pypi.org/project/pywavelets/ |
 | quantile-forest | 1.5.0 | Apache-2.0 | quantile regression forest (R56) | `ml-core` | https://pypi.org/project/quantile-forest/ |

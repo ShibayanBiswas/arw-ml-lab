@@ -2,11 +2,11 @@
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 2-cont-3 done — awaiting continue |
-| Last completed step | Phase 2-cont-3 SP Auth / UI parity |
-| Last green commit | `f9ee8b0` / `7b6fdfe` (`phase 2-cont-3: sp auth ui parity`) |
+| Current phase | Phase 2A done (thin) — awaiting continue |
+| Last completed step | Phase 2A Deep Learning thin smoke |
+| Last green commit | (this commit) `phase 2a: dl thin smoke` |
 | Open failures | Render Blueprint `need_payment_info`; optional Vercel `SUPABASE_SERVICE_ROLE_KEY` for durable password changes |
-| Next action | User **continue** → Phase 2A or more ML 2-cont |
+| Next action | User **continue** → Phase 2A-cont (full §34) or Phase 3 |
 
 ## Phase log
 | Phase | Status | Report | Commit |
@@ -19,3 +19,4 @@
 | 2-cont | done (Eval Core) | docs/PHASE_2_CONT_REPORT.md | phase 2-cont: eval core |
 | 2-cont-2 | done | docs/PHASE_2_CONT_2_REPORT.md | phase 2-cont-2: tune cv plots |
 | 2-cont-3 | done | docs/PHASE_2_CONT_3_REPORT.md | phase 2-cont-3: sp auth ui parity |
+| 2A | done (thin) | docs/PHASE_2A_REPORT.md | phase 2a: dl thin smoke |

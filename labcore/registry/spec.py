@@ -63,3 +63,6 @@ class AlgorithmSpec(BaseModel):
     handles_missing: bool = False
     edu_key: str
     tags: list[str] = Field(default_factory=list)
+    # Phase 2A+: Celery routing / licence gates (ARCHITECTURE §34.9)
+    resources: dict[str, Any] = Field(default_factory=dict)  # {gpu: bool, mem_gb, threads}
+    enabled_env: str | None = None  # e.g. TABPFN_ENABLED — hidden in catalog unless env true

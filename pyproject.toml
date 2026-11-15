@@ -77,7 +77,9 @@ ignore = [
 "labcore/eval/*" = ["E501", "E741"]
 "labcore/eval/**/*" = ["E501", "E741"]
 "labcore/registry/algorithms_extra.py" = ["E501"]
+"labcore/deep/*" = ["E501"]
 "tests/unit/test_phase2_cont_eval.py" = ["E501"]
+"tests/unit/test_phase2a_deep.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.12"
@@ -112,6 +114,16 @@ module = [
   "charset_normalizer",
   "charset_normalizer.*",
   "yaml",
+  "torch",
+  "torch.*",
+  "lightning",
+  "lightning.*",
+  "pytorch_lightning",
+  "pytorch_lightning.*",
+  "pytorch_tabular",
+  "pytorch_tabular.*",
+  "pytorch_tcn",
+  "pytorch_tcn.*",
 ]
 ignore_missing_imports = true
 
@@ -122,6 +134,7 @@ module = [
   "labcore.eda.run",
   "labcore.insights.rules",
   "labcore.intake.*",
+  "labcore.deep.*",
 ]
 # Thin library wrappers over untyped scientific APIs — keep runtime tests as the contract
 disallow_untyped_calls = false

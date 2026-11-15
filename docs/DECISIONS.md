@@ -1,5 +1,13 @@
 # Architecture decision records
 
+## ADR-0009 — Phase 2A Deep Learning thin smoke (2026-11-15)
+
+- Full §34 (all T*/Q*, DL.P catalogue, MC-dropout/ensembles) deferred to **2A-cont**; this stop is a thin smoke like Phase 2.
+- Engine: Lightning + pytorch-tabular (`CategoryEmbedding` / `TabNet` / `FTTransformer`) + `torch.nn.LSTM` + `pytorch-tcn`; AdamW defaults, early stopping, LR finder.
+- Specs: T1/T3/T4, Q2/Q7, T13 TabPFN (hidden unless `TABPFN_ENABLED=true`), Q12 xLSTM GPU stub (HTTP 422 without `LAB_GPU_WORKER=true`).
+- Soft dep: `pytorch-tabnet==4.1.0` added to `dl-cpu.txt` (TabNet `create_group_matrix`); `requests` pinned for pytorch-tabular import.
+- `AlgorithmSpec.resources` / `enabled_env` added; catalog filters licence-gated models; train/tune routes refuse GPU-only / disabled TabPFN with 422.
+
 ## ADR-0008 — Phase 2-cont-3 password-only SP auth UI + durable seed (2026-11-15)
 
 - Product request: **no OTP screen** — login is email+password → `ml_session` immediately (ADR-0005 OTP step removed).

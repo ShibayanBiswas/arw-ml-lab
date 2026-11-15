@@ -41,5 +41,11 @@ Thumbs.db
 # downloaded raw data used by scripts/make_predict_samples.py
 .cache/
 
+# Lightning / pytorch-tabular local artefact dirs (tests use tempdirs; stray cwd dumps)
+checkpoints/
+saved_models/
+.lr_find_*.ckpt
+.pt_tmp/
+
 .vercel
 .env*

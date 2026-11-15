@@ -42,11 +42,33 @@ class TuneBody(BaseModel):
     n_trials: int | None = None
 
 
+def _reject_gpu_or_hidden(algorithm_keys: list[str]) -> None:
+    """HTTP 422 when GPU-only model has no worker, or TabPFN requested while disabled."""
+    from labcore.deep.guards import assert_gpu_allowed, tabpfn_enabled
+    from labcore.registry.algorithms import thin_algorithm_specs
+
+    by_key = {s.key: s for s in thin_algorithm_specs()}
+    for key in algorithm_keys:
+        spec = by_key.get(key)
+        if spec is None:
+            continue
+        if spec.enabled_env == "TABPFN_ENABLED" and not tabpfn_enabled():
+            raise HTTPException(
+                status_code=422,
+                detail="TabPFN is disabled (TABPFN_ENABLED=false); commercial licence required.",
+            )
+        try:
+            assert_gpu_allowed(spec.resources)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
 @router.post("/api/v1/experiments/train")
 def start_train(body: TrainBody, user: AuthUser = Depends(require_write_role)) -> dict[str, str]:
     ds = DATASET_STORE.get(body.dataset_id)
     if ds is None:
         raise HTTPException(status_code=404, detail="dataset not found")
+    _reject_gpu_or_hidden(body.algorithm_keys)
     exp = EXPERIMENT_STORE.create(
         workspace_id=user.workspace_id or ds.workspace_id,
         dataset_id=body.dataset_id,
@@ -69,6 +91,7 @@ def start_tune(body: TuneBody, user: AuthUser = Depends(require_write_role)) -> 
     ds = DATASET_STORE.get(body.dataset_id)
     if ds is None:
         raise HTTPException(status_code=404, detail="dataset not found")
+    _reject_gpu_or_hidden([body.algorithm_key])
     exp = EXPERIMENT_STORE.create(
         workspace_id=user.workspace_id or ds.workspace_id,
         dataset_id=body.dataset_id,

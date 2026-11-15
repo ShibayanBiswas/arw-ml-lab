@@ -12,6 +12,7 @@ def _p(name: str, typ: str, default: Any, help_key: str, **kw: Any) -> ParamSpec
 
 
 def thin_algorithm_specs() -> list[AlgorithmSpec]:
+    from labcore.deep.registry import deep_algorithm_specs
     from labcore.registry.algorithms_extra import extra_algorithm_specs
 
     rs = _p("random_state", "int", 42, "seed")
@@ -243,19 +244,38 @@ def thin_algorithm_specs() -> list[AlgorithmSpec]:
             tags=["boosting"],
         ),
     ]
-    return base + extra_algorithm_specs()
+    return base + extra_algorithm_specs() + deep_algorithm_specs()
+
+
+_DEEP_LIBRARIES = frozenset(
+    {"pytorch-tabular", "pytorch-tcn", "torch", "tabpfn", "xlstm", "pytorch-forecasting"}
+)
+
+
+class DeepModelHandle:
+    """Placeholder for DL specs — fitted via labcore.deep runners, not sklearn __init__."""
+
+    def __init__(self, key: str, params: dict[str, Any]) -> None:
+        self.key = key
+        self.params = params
+
+    def get_params(self, deep: bool = True) -> dict[str, Any]:  # noqa: ARG002
+        return dict(self.params)
 
 
 def build_estimator(spec: AlgorithmSpec, params: dict[str, Any] | None = None) -> Any:
     """Instantiate estimator from AlgorithmSpec (import string)."""
     import importlib
 
-    mod_name, _, cls_name = spec.estimator.rpartition(".")
-    mod = importlib.import_module(mod_name)
-    cls = getattr(mod, cls_name)
     defaults = {p.name: p.default for p in spec.params}
     if params:
         defaults.update(params)
+    if spec.library in _DEEP_LIBRARIES or "deep" in spec.tags:
+        return DeepModelHandle(spec.key, defaults)
+
+    mod_name, _, cls_name = spec.estimator.rpartition(".")
+    mod = importlib.import_module(mod_name)
+    cls = getattr(mod, cls_name)
     # Drop None class_weight
     if defaults.get("class_weight") is None:
         defaults.pop("class_weight", None)
