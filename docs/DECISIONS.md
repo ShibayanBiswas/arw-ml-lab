@@ -8,6 +8,10 @@
 - `lab-beat` runs `python -m backend.worker.maintenance --all` with Phase 8.1 no-op stubs; real reaper/retention in Phase 8.2.
 - Default branch renamed to `main` to match CI/deploy triggers.
 - Secrets only in Render / Vercel / GitHub Environment `production` dashboards — never in the repo or chat.
+- **Branch protection:** GitHub Free on a **private** repo returns HTTP 403 for classic protection and rulesets (“Upgrade to GitHub Pro”). Documented in DEPLOY; enable after Pro or org-owned repo.
+- **Render Blueprint:** created (`exs-dbsnkbpsrm7s73drvi90`) with `autoSync=false`; first plan fails with `need_payment_info` until a payment method is on the Render workspace. Approve Blueprint only after payment + cost OK.
+- **Supabase:** project `ushtfpelbpjfkjoppklz` (`ap-south-1`); migrations applied via MCP (not CLI `db push`). Hosted global file-size 2 GB still requires Pro plan + dashboard toggle.
+- **Vercel:** project `arw-ml-lab`, Root Directory `frontend`, production `https://arw-ml-lab.vercel.app`.
 
 ## ADR-0002 — Phase 1 EDA without TradingLab (2026-11-15)
 

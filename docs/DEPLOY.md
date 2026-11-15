@@ -2,11 +2,32 @@
 
 Phase 8.1 hosted skeleton. Secrets never go in git or chat; set them in the vendor dashboards and GitHub Environment `production`.
 
+## Live status (2026-11-15)
+
+| Piece | Status | ID / URL (non-secret) |
+|---|---|---|
+| GitHub | private repo on `main`; Environment `production` created | https://github.com/ShibayanBiswas/arw-ml-lab |
+| Branch protection | **blocked** — needs GitHub Pro (or public/org) | — |
+| Supabase | project healthy; migrations + buckets applied | ref `ushtfpelbpjfkjoppklz`, region `ap-south-1`, URL `https://ushtfpelbpjfkjoppklz.supabase.co` |
+| Global file size 2 GB | **manual** — Pro + Storage settings | — |
+| Auth redirect URLs | **manual** — add Vercel URLs below | — |
+| Render Blueprint | created; plan **failed** `need_payment_info` | Blueprint `exs-dbsnkbpsrm7s73drvi90` |
+| Vercel | Root Directory `frontend`; production ready | https://arw-ml-lab.vercel.app |
+| Hosted `/healthz` + DS1 EDA | **blocked** until Render services exist | use `scripts/smoke_hosted.sh` after hooks |
+
+**Auth redirect URLs to paste in Supabase → Authentication → URL configuration**
+
+- Site URL: `https://arw-ml-lab.vercel.app`
+- Redirect: `https://arw-ml-lab.vercel.app/auth/callback`
+- Preview (optional): `https://*-shibayan-biswas-projects.vercel.app/auth/callback`
+
+**Render unblock:** Billing → add payment method → Dashboard → Blueprint `arw-ml-lab` → Sync/Approve → fill `lab-shared` `sync: false` secrets → copy deploy hooks into GitHub Environment secrets → set `LAB_API_URL` var → update Vercel `NEXT_PUBLIC_LAB_API_URL` to the real `lab-api` URL.
+
 ## Topology
 
 | Piece | Platform | Notes |
 |---|---|---|
-| UI | **Vercel** | Root Directory = `frontend`; region `sin1` |
+| UI | **Vercel** | Root Directory = `frontend`; prefer Singapore (`sin1` in `vercel.json`) |
 | API + SSE | **Render** `lab-api` | FastAPI; JWT from Supabase JWKS |
 | Light jobs | **Render** `lab-worker-light` | `q.ingest`, `q.eda`, … |
 | Train jobs | **Render** `lab-worker-train` | `q.train.cpu`, `q.tune`, … (later phases) |

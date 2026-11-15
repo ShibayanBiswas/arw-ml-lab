@@ -40,3 +40,6 @@ Thumbs.db
 
 # downloaded raw data used by scripts/make_predict_samples.py
 .cache/
+
+.vercel
+.env*
