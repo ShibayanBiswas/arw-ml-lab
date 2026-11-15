@@ -4228,6 +4228,7 @@ Licence policy: permissive licences (MIT, BSD, Apache-2.0, NCSA, MPL-2.0 for tes
 | duckdb | 2.0.0 | MIT | SQL over Parquet for large previews | `ml-core` | https://pypi.org/project/duckdb/ |
 | dython | 0.7.12 | MIT | Theil's U and correlation ratio | `eda` | https://pypi.org/project/dython/ |
 | evidently | 0.7.23 | Apache-2.0 | optional monitoring reports (isolated image) | `optional-monitoring` | https://pypi.org/project/evidently/ |
+| exchange-calendars | 4.11.1 | Apache-2.0 | trading-day frequency labels (XNSE/XBOM/XNYS) for intake D2 (§33.4) | `eda` | https://pypi.org/project/exchange-calendars/ |
 | factor-analyzer | 0.5.1 | GPL-2.0 | dev-only test oracle for KMO/Bartlett | `dev` | https://pypi.org/project/factor-analyzer/ |
 | fairlearn | 0.15.0 | MIT | metric-by-segment tables (MetricFrame) | `xai-uq` | https://pypi.org/project/fairlearn/ |
 | fastapi | 0.163.0 | MIT | REST API | `api` | https://pypi.org/project/fastapi/ |
@@ -4296,6 +4297,7 @@ Licence policy: permissive licences (MIT, BSD, Apache-2.0, NCSA, MPL-2.0 for tes
 | prophet | 1.5.0 | MIT | Prophet (F21) | `ts` | https://pypi.org/project/prophet/ |
 | psycopg | 3.3.9 | LGPL-3.0 | Postgres driver (dynamically linked; standard use) | `api` | https://pypi.org/project/psycopg/ |
 | pyale | 1.2.0 | MIT | ALE 1D/2D | `xai-uq` | https://pypi.org/project/pyale/ |
+| rapidfuzz | 3.14.1 | MIT | Jaro–Winkler rename detection for intake schema diff D7 (§33.11) | `eda` | https://pypi.org/project/rapidfuzz/ |
 | pyarrow | 26.0.1 | Apache-2.0 | Parquet artefacts and OOF predictions | `ml-core` | https://pypi.org/project/pyarrow/ |
 | pydantic | 2.14.3 | MIT | schemas | `api` | https://pypi.org/project/pydantic/ |
 | pydantic-settings | 2.16.3 | MIT | settings | `api` | https://pypi.org/project/pydantic-settings/ |

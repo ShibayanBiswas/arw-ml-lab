@@ -60,6 +60,7 @@ export const MODULES: ModuleGroup[] = [
       { id: "samples", label: "Sample Datasets" },
       { id: "explorer", label: "Explorer" },
       { id: "schema", label: "Schema & Types" },
+      { id: "intake-review", label: "Intake Review" },
       { id: "versions", label: "Versions" },
       { id: "joins", label: "Joins/Merge" },
     ]),

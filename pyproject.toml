@@ -70,6 +70,10 @@ ignore = [
 "labcore/data/task_detect.py" = ["E501"]
 "labcore/data/infer.py" = ["E501"]
 "labcore/data/readers.py" = ["E501"]
+"labcore/intake/*" = ["E501", "SIM102", "SIM108"]
+"backend/app/routers/intake.py" = ["E501"]
+"backend/worker/tasks/intake.py" = ["E501"]
+"tests/unit/test_intake_detectors.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.12"
@@ -113,12 +117,13 @@ module = [
   "labcore.eda.plots",
   "labcore.eda.run",
   "labcore.insights.rules",
+  "labcore.intake.*",
 ]
 # Thin library wrappers over untyped scientific APIs — keep runtime tests as the contract
 disallow_untyped_calls = false
 disallow_any_generics = false
 warn_return_any = false
-disable_error_code = ["arg-type", "operator", "union-attr", "assignment", "no-untyped-call", "call-overload"]
+disable_error_code = ["arg-type", "operator", "union-attr", "assignment", "no-untyped-call", "call-overload", "attr-defined", "import-untyped", "unused-ignore", "misc", "no-any-return"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

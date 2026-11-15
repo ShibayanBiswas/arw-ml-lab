@@ -9,4 +9,7 @@ pandera==0.36.0
 # Phase 1: sequential EDA on light worker (also in ts.txt for train image)
 arch==9.0.0
 ruptures==1.1.10
+# Phase 1A intake (§33); PyYAML already in ml-core
+exchange-calendars==4.11.1
+rapidfuzz==3.14.1
 

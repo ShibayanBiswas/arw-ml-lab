@@ -1,5 +1,13 @@
 # Architecture decision records
 
+## ADR-0004 — Phase 1A intake rule-based only (2026-11-15)
+
+- LLM adjudicator (§33.9) deferred to Phase 6; Phase 1A ships detectors D1–D8 + validator behind the same proposal schema.
+- Financial targets are JSON builders only (`triple_barrier`, `fwd_log_return`, …); TradingLab remains Phase 5 (extends ADR-0002).
+- `lab.intake.run` must not overwrite the Phase-1 `TaskSpec` on `DATASET_STORE`; confirmed `task_spec` attaches to the experiment via confirm.
+- Large-frame intake uses a ≤20k stride sample for detectors; full `n_rows` is preserved on the profile.
+- New pins: `exchange-calendars==4.11.1`, `rapidfuzz==3.14.1` (`eda.txt` / §44); `worker-light.lock.txt` recompiled for 3.12.
+
 ## ADR-0003 — Phase 8.1 hosted skeleton scope (2026-11-15)
 
 - Live path: private GitHub `arw-ml-lab`, Supabase Pro, Render Blueprint (`render.yaml`), Vercel Root Directory `frontend`.

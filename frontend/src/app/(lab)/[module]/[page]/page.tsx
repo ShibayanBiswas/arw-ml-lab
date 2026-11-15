@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { DataWorkbench } from "@/components/data/DataWorkbench";
+import { IntakeReview } from "@/components/data/IntakeReview";
 import { EdaWorkbench } from "@/components/eda/EdaWorkbench";
 import { LogicAtlas } from "@/components/learn/LogicAtlas";
 import { ModulePlaceholder } from "@/components/panels/ModulePlaceholder";
@@ -20,6 +22,12 @@ export default async function ModuleSubPage({ params }: Props) {
     if (page === "explorer" || page === "home" || page === "versions")
       return <DataWorkbench mode="explorer" />;
     if (page === "schema") return <DataWorkbench mode="schema" />;
+    if (page === "intake-review")
+      return (
+        <Suspense fallback={<p className="p-6 text-sm">Loading intake…</p>}>
+          <IntakeReview />
+        </Suspense>
+      );
   }
   if (slug === "eda") {
     return <EdaWorkbench section={page} />;

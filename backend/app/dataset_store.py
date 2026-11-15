@@ -22,6 +22,10 @@ class DatasetVersion:
     schema: list[dict[str, Any]] = field(default_factory=list)
     task: dict[str, Any] = field(default_factory=dict)
     meta: dict[str, Any] = field(default_factory=dict)
+    parent_version_id: str | None = None
+    update_mode: str | None = None  # append | replace | upsert | initial
+    dataset_group_id: str | None = None  # logical dataset id across versions
+    version: int = 1
     created_at: float = field(default_factory=time.time)
 
 

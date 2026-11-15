@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   getJob,
   listDatasets,
@@ -13,6 +14,7 @@ import {
 type Mode = "upload" | "samples" | "explorer" | "schema";
 
 export function DataWorkbench({ mode }: { mode: Mode }) {
+  const router = useRouter();
   const [samples, setSamples] = useState<Array<Record<string, unknown>>>([]);
   const [datasets, setDatasets] = useState<Array<Record<string, unknown>>>([]);
   const [preview, setPreview] = useState<Record<string, unknown> | null>(null);
@@ -52,7 +54,10 @@ export function DataWorkbench({ mode }: { mode: Mode }) {
       const dsId = String(job.result?.dataset_id ?? "");
       setStatus(`Loaded ${id} → ${dsId}`);
       await refresh();
-      if (dsId) setPreview(await previewDataset(dsId));
+      if (dsId) {
+        setPreview(await previewDataset(dsId));
+        router.push(`/data/intake-review?version=${dsId}`);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setStatus("");
@@ -73,6 +78,7 @@ export function DataWorkbench({ mode }: { mode: Mode }) {
       setStatus(`Ingested ${dataset_id}`);
       await refresh();
       setPreview(await previewDataset(dataset_id));
+      router.push(`/data/intake-review?version=${dataset_id}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }

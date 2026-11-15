@@ -86,6 +86,7 @@ def ingest_dataset(
             "n_cols": str(df.shape[1]),
             "task": task.task,
         }
+        _run_intake_sync(dataset_id)
         JOB_STORE.update(
             job_id,
             status="done",
@@ -103,6 +104,18 @@ def ingest_dataset(
             event={"type": "error", "message": str(exc)},
         )
         raise
+
+
+def _run_intake_sync(dataset_id: str) -> None:
+    """Eager-friendly intake after ingest (also enqueues when broker available)."""
+    from backend.app.jobs_store import JOB_STORE as _JS
+    from backend.worker.tasks.intake import run_intake_task
+
+    rec = _JS.create()
+    try:
+        run_intake_task.delay(rec.job_id, dataset_id)
+    except Exception:
+        run_intake_task.apply(args=(rec.job_id, dataset_id))
 
 
 @celery_app.task(name="lab.ingest.sample", bind=True, queue="q.ingest")
@@ -136,6 +149,7 @@ def ingest_sample(self, job_id: str, dataset_id: str, sample_id: str) -> dict[st
             "n_rows": str(payload["meta"]["n_rows"]),
             "n_cols": str(payload["meta"]["n_cols"]),
         }
+        _run_intake_sync(dataset_id)
         JOB_STORE.update(
             job_id,
             status="done",

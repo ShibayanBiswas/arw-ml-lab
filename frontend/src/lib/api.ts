@@ -112,3 +112,45 @@ export async function uploadDataset(file: File) {
   if (!res.ok) throw new Error(`upload: ${res.status}`);
   return (await res.json()) as { job_id: string; dataset_id: string };
 }
+
+export async function getIntake(versionId: string) {
+  const res = await fetch(`${labApiBase()}/api/v1/intake/${versionId}`, {
+    headers: labAuthHeaders(),
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`intake: ${res.status}`);
+  return (await res.json()) as Record<string, unknown> & { id: string };
+}
+
+export async function runIntake(versionId: string) {
+  const res = await fetch(`${labApiBase()}/api/v1/intake/${versionId}/run`, {
+    method: "POST",
+    headers: { ...labAuthHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ use_llm: false }),
+  });
+  if (!res.ok) throw new Error(`intake run: ${res.status}`);
+  return (await res.json()) as { job_id: string };
+}
+
+export async function patchIntake(proposalId: string, overrides: Record<string, unknown>) {
+  const res = await fetch(`${labApiBase()}/api/v1/intake/proposals/${proposalId}`, {
+    method: "PATCH",
+    headers: { ...labAuthHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ overrides }),
+  });
+  if (!res.ok) throw new Error(`intake patch: ${res.status}`);
+  return (await res.json()) as Record<string, unknown>;
+}
+
+export async function confirmIntake(proposalId: string, experimentName?: string) {
+  const res = await fetch(`${labApiBase()}/api/v1/intake/proposals/${proposalId}/confirm`, {
+    method: "POST",
+    headers: { ...labAuthHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ experiment_name: experimentName }),
+  });
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(`intake confirm: ${res.status} ${detail}`);
+  }
+  return (await res.json()) as { experiment_id: string; task_spec: Record<string, unknown> };
+}

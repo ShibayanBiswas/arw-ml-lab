@@ -1,0 +1,54 @@
+# Family logits — ARCHITECTURE §33.6 (rules_version intake-1.0)
+version: intake-1.0
+preselect_threshold: 0.55
+families:
+  time_series:
+    has_time: 2.5
+    regular: 1.5
+    few_cols_time: 1.5
+    autocorr: 1.0
+    wide_cross_section: -1.0
+  supervised_sequential:
+    has_time: 2.0
+    ohlcv: 2.0
+    target_named: 1.0
+    autocorr: 1.0
+    panel: 0.5
+    few_cols_time: -0.5
+  supervised_non_sequential:
+    target_named: 2.0
+    wide_cross_section: 1.5
+    has_time: -2.0
+    intercept: 0.5
+  unsupervised:
+    no_target_signal: 2.0
+    wide_cross_section: 1.0
+    target_named: -1.5
+target_name_hints:
+  - target
+  - label
+  - y
+  - class
+  - outcome
+  - result
+  - churn
+  - default
+  - fraud
+  - survived
+  - diagnosis
+  - price
+  - saleprice
+  - sales
+  - demand
+  - quantity
+  - quality
+  - revenue
+  - return
+  - cnt
+  - count
+  - ot
+  - passengers
+  - consumption
+  - load
+  - median_house_value
+  # note: generic "score"/"rating" omitted — too common in unsupervised mall-like data
