@@ -1,0 +1,15 @@
+---
+description: Every algorithm, encoder, metric, test and plot must come from a popular, maintained library pinned in backend/requirements and listed in the Library Matrix (ARCHITECTURE §44)
+globs: labcore/**/*.py,backend/**/*.py,backend/requirements/**
+alwaysApply: true
+---
+# Use established libraries (no from-scratch ML)
+
+- **Source of truth:** `docs/ARCHITECTURE.md` §44 (Library Matrix) and the pinned files in `backend/requirements/*.txt` with their `*.lock.txt` locks. Every catalogue table in ARCHITECTURE has a **Library** column; implement each entry with exactly that library.
+- **Allowed lab code = thin wrappers only:** mapping registry params to library arguments; arranging library outputs into tables/artefacts; simple arithmetic on library outputs (e.g. specificity/NPV/FPR from `confusion_matrix`, macro means of library per-class values); Plotly rendering of library-computed numbers; orchestration drivers (WFO, PBO/CSCV, CPCV paths, HorizonGuard) built on TradingLab / sktime / scikit-learn / `arch` primitives.
+- **Not allowed:** re-implementing an estimator, encoder, metric, statistical test, calibration method, splitter or explainer that a listed library provides (e.g. hand-written ROC-AUC, McNemar, KMeans, target encoding, SHAP, conformal). If a formula has no library (marked "thin" in §41–§43), keep it under 30 lines, cite the paper in the docstring and test it against an oracle.
+- **Adding a library:** only if popular and maintained (release in the last ~24 months, active maintainers, OSI licence compatible with commercial use). Write the reason, version, licence and PyPI link in the phase report, add it to the right `backend/requirements/*.txt`, re-run `uv pip compile` for Python 3.12 so the whole image still resolves, regenerate the lock, and add the row to §44.
+- **Licences:** do not import GPL/AGPL/BSL/BUSL or non-commercial packages in production code (alibi, alibi-detect, kmedoids, phate, pycatch22, minepy, pingouin, deepchecks, sdv, scikit-survival, tabpfn weights). `factor-analyzer` is allowed only in `dev.txt` as a test oracle. Items under "optional/off by default" in §43 stay off unless the user enables them after licence review.
+- **Isolated images:** `ydata-profiling` (optional-reports), `evidently` (optional-monitoring), AutoGluon/H2O (optional-automl), foundation forecasters (optional-foundation), GPU sequence models (optional-gpu) never go into the main worker image because they conflict with its pins (see docs/GAP_AUDIT.md §6).
+- **CI guard:** a test parses every `import` in `labcore/` and `backend/` and fails if the top-level package is not in `backend/requirements/*.txt`.
+- Never pin a different version in code or notebooks; never `pip install` at runtime.

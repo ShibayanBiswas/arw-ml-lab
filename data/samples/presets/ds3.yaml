@@ -1,0 +1,11 @@
+id: DS3
+name: "Titanic"
+file: data/samples/titanic.csv
+family: supervised
+task: binary
+target: "Survived"
+cv: stratified_kfold
+seed: 42
+notes: "inputs Pclass,Sex,Age,SibSp,Parch,Fare,Embarked"
+predict_sample: data/samples/predict/titanic_predict.csv
+feature_contract: data/samples/predict/contracts/titanic.feature_contract.json

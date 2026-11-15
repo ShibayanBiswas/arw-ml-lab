@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://arw-ml-lab/schemas/feature_contract-1.0.json",
+  "title": "Feature contract (ARCHITECTURE §45.2)",
+  "description": "Saved by every training job next to the model (Supabase table model_signatures + Storage models/{model_id}/feature_contract.json; also logged to MLflow as a model signature). Drives batch validation, the template download and the custom input form.",
+  "type": "object",
+  "required": ["contract_version", "dataset_id", "task", "features", "seed"],
+  "properties": {
+    "contract_version": {"const": "1.0"},
+    "dataset_id": {"type": "string"},
+    "model_id": {"type": "string", "description": "added by the training job"},
+    "task": {"type": "string"},
+    "target": {"type": ["string", "null"]},
+    "id_columns": {"type": "array", "items": {"type": "string"}, "description": "passed through to the output, never used as features"},
+    "time_column": {"type": ["string", "null"]},
+    "series_column": {"type": ["string", "null"]},
+    "frequency": {"type": ["string", "null"], "description": "pandas offset alias (MS, D, h, QS, ...)"},
+    "horizon_max": {"type": ["integer", "null"], "description": "HorizonGuard h_max at training time (§20)"},
+    "seed": {"type": "integer"},
+    "n_train_rows": {"type": ["integer", "null"]},
+    "features": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "kind"],
+        "properties": {
+          "name": {"type": "string"},
+          "kind": {"enum": ["numeric", "categorical", "boolean", "datetime", "identifier_like"]},
+          "dtype": {"type": "string"},
+          "nullable": {"type": "boolean"},
+          "min": {}, "max": {}, "median": {"type": ["number", "null"]},
+          "p01": {"type": ["number", "null"]}, "p99": {"type": ["number", "null"]},
+          "integer": {"type": "boolean"},
+          "categories": {"type": ["array", "null"], "items": {"type": "string"}},
+          "categories_truncated": {"type": "boolean"},
+          "n_categories": {"type": "integer"},
+          "mode": {"type": ["string", "null"]},
+          "role": {"enum": ["feature", "excluded_by_default", "derived", "passthrough"]}
+        }
+      }
+    },
+    "derived_features": {"type": "array", "description": "engineered columns computed by the saved pipeline (lags, ratios, date parts); never shown as inputs"},
+    "preprocessing_hash": {"type": "string"},
+    "library_versions": {"type": "object"},
+    "note": {"type": "string"}
+  }
+}

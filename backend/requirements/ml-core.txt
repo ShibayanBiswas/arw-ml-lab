@@ -1,0 +1,48 @@
+# Core numerics, supervised learning, preprocessing, evaluation, statistics, plotting
+numpy==2.4.6  # aeon 1.6 requires numpy<2.5
+scipy==1.17.1  # aeon 1.6 requires scipy<1.18
+pandas==2.3.3  # pandas 3 blocked by pytorch-tabular (<3.0) and others
+polars==2.1.0
+pyarrow==26.0.1
+duckdb==2.0.0
+scikit-learn==1.9.1
+xgboost==3.4.1
+lightgbm==4.7.0
+catboost==1.2.10
+ngboost==0.5.11  # 0.6.0 caps scikit-learn<1.7 on Python<3.14
+quantile-forest==1.5.0
+glum==3.4.1
+gpboost==1.8.0
+gplearn==0.4.3
+imbalanced-learn==0.14.2
+category-encoders==2.11.2
+feature-engine==1.9.4
+skrub==0.11.0
+optbinning==1.0.0
+boruta==0.4.3
+probatus==3.2.1
+mlxtend==0.25.0
+iterative-stratification==0.1.9
+statsmodels==0.15.0
+scikit-posthocs==0.18.0
+model-diagnostics==1.5.1
+MLstatkit==0.1.91  # DeLong AUC test and CI (confidenceinterval 1.0.5 pins setuptools~=68.2)
+optuna==5.0.0
+optuna-integration==5.0.0
+mlflow==3.18.0
+plotly==7.1.0
+kaleido==1.5.1
+scikit-plots==0.4.0.post11
+upsetplot==0.9.0
+kneed==0.9.0
+# Prediction Studio / file I/O (§45) and safe model persistence
+openpyxl==3.1.5        # XLSX upload parsing and XLSX download of prediction results
+python-calamine==0.9.1 # fast, read-only XLSX/XLS parsing (pandas engine="calamine")
+defusedxml==0.7.1      # hardens openpyxl against XML bombs / XXE in uploaded .xlsx
+skops==0.16.0          # safe (non-pickle) persistence of sklearn pipelines with a type allow-list
+# Round 4 (§45/§46): ingestion encoding detection, report and notebook exports
+charset-normalizer==3.5.2
+nbformat==5.11.1        # pipeline code export as a Jupyter notebook (§46.4)
+weasyprint==70.0        # PDF run reports; needs Pango in the Dockerfile (apt: libpango-1.0-0 libpangoft2-1.0-0)
+python-pptx==1.0.2      # PPTX report export (§25)
+python-docx==1.2.0      # DOCX report export (§25)

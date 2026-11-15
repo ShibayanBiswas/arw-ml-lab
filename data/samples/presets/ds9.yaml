@@ -1,0 +1,11 @@
+id: DS9
+name: "Heart Disease (Cleveland)"
+file: data/samples/heart_disease/processed.cleveland.data
+family: supervised
+task: binary
+target: "num (0 vs >0)"
+cv: stratified_kfold
+seed: 42
+notes: "'?' = missing; no header"
+predict_sample: data/samples/predict/heart_disease_cleveland_predict.csv
+feature_contract: data/samples/predict/contracts/heart_disease_cleveland.feature_contract.json

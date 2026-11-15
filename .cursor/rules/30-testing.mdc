@@ -1,0 +1,15 @@
+---
+description: Testing requirements and what must be tested before UI work
+globs: tests/**,labcore/**/*.py,backend/**/*.py,frontend/**/*.test.ts,frontend/**/*.test.tsx,supabase/tests/**
+alwaysApply: false
+---
+# Testing
+
+- Tests first for math: splitters/CV, labelers, metrics, horizon rules, suitability checks, decision guards and the insights validator get unit tests before UI.
+- Layers: `tests/unit` (pytest + hypothesis), `tests/contract_tradinglab` (re-run TradingLab's own tests), `tests/golden` (expected metric bands on DS* with seed 42), `tests/e2e` (Playwright), `tests/load` (Locust), `supabase/tests` (pgTAP RLS tests via `supabase test db`).
+- Every registry key needs an ExplainCard entry; a test fails if one is missing.
+- Run the tests yourself and paste real output into phase reports. Do not mark acceptance criteria as passed without running them.
+- CI (`.github/workflows/ci.yml`) must stay green; do not skip or delete failing tests to make CI pass — fix the cause or document it.
+- Evaluation golden tests (§41.15, §42.9): every CLE.M.* / REE.M.* value equals its library reference (sklearn, imbalanced-learn, statsmodels, mlxtend, MLstatkit) to 1e-9 on fixed fixtures; per-fold confusion matrices sum to the pooled OOF matrix; normalisations sum to 1; a spy proves threshold tuning and calibration never read the test split.
+- Library guard: a test fails if `labcore/` or `backend/` imports a package that is not pinned in `backend/requirements/*.txt` (rule 70).
+

@@ -1,0 +1,19 @@
+flowchart LR
+  A[Registered model @champion] --> B{Mode}
+  B --> B1[Single form auto-built from schema]
+  B --> B2[Batch file scoring - async job]
+  B --> B3[What-if sliders + sensitivity tornado]
+  B --> B4[Forecast within h_max]
+  B1 --> C[Schema check + OOD score]
+  B2 --> C
+  B3 --> C
+  B4 --> C
+  C --> D[Point prediction]
+  D --> E1[Classification: calibrated probabilities, conformal prediction set]
+  D --> E2[Regression: conformal / quantile / NGBoost / bootstrap / MC-dropout intervals]
+  D --> E3[Time series: fan chart with 80 / 95 percent intervals]
+  E1 --> F[Confidence score 0-100 + local SHAP / LIME + counterfactual]
+  E2 --> F
+  E3 --> F
+  F --> G[[AI Insights: what it means and how certain]]
+  F --> H[Download / REST API / monitoring drift]

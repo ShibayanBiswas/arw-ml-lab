@@ -1,0 +1,11 @@
+id: DS14
+name: "Auto MPG"
+file: data/samples/auto_mpg/auto-mpg.data
+family: supervised
+task: regression
+target: "mpg"
+cv: kfold
+seed: 42
+notes: "whitespace separated; '?' in horsepower"
+predict_sample: data/samples/predict/auto_mpg_predict.csv
+feature_contract: data/samples/predict/contracts/auto_mpg.feature_contract.json

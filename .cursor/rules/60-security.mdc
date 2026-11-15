@@ -1,0 +1,18 @@
+---
+description: Security and data-protection rules
+globs:
+alwaysApply: true
+---
+# Security
+
+- Never commit secrets, tokens, keys or `.env` files. Never print secrets in logs or chat.
+- RLS on every Supabase table and storage bucket; test it with pgTAP. The anon/publishable key is the only Supabase key in the browser.
+- PII columns are detected and redacted before any VLM/LLM call; dataset cell values never go into the instruction part of a prompt (prompt-injection defence).
+- Hosted AI calls (NVIDIA by default) receive only aggregate plots and FACTS, never raw rows; PII is redacted first. Workspace classification decides the providers: `public` → any enabled, `internal` → NVIDIA only, `restricted` → numbers-only. Fallback providers (Gemini, OpenRouter, Groq) stay disabled unless an admin enables them.
+- `NVIDIA_API_KEY` and other provider keys live only in the Render backend and local `.env`; never in frontend code, `NEXT_PUBLIC_*`, logs or chat.
+- TabPFN stays disabled (`TABPFN_ENABLED=false`) unless the user confirms a commercial licence.
+- Validate uploads (type, size, schema) and use signed URLs with short expiry.
+- Exports (CSV/XLSX) escape formula cells (`= + - @`, tab, CR) with a leading `'` (§46.3 SEC-04). XLSX is read with python-calamine; any XML with defusedxml; enforce size, row and decompression-ratio limits (SEC-05).
+- Load models only from the lab's own store after a sha256 check; prefer `skops` for sklearn pipelines; `torch.load(weights_only=True)`; never unpickle user uploads (SEC-06).
+- Users never write computed tables (metrics, results, audit, AI usage); only workers with the service role do (SEC-01). Storage policies use `public.try_uuid()` (SEC-02).
+- Feature contracts never store values of identifier-like columns (§45.2).

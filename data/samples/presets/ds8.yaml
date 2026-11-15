@@ -1,0 +1,11 @@
+id: DS8
+name: "Default of Credit Card Clients"
+file: "lazy: https://archive.ics.uci.edu/static/public/350/default+of+credit+card+clients.zip"
+family: supervised
+task: binary
+target: "default payment next month"
+cv: stratified_kfold
+seed: 42
+notes: "lazy-downloaded by the sample loader; predict sample source: downloaded (UCI 350)"
+predict_sample: data/samples/predict/credit_default_taiwan_predict.csv
+feature_contract: data/samples/predict/contracts/credit_default_taiwan.feature_contract.json

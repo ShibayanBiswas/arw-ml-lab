@@ -1,0 +1,102 @@
+{
+ "contract_version": "1.0",
+ "dataset_id": "DS14",
+ "task": "regression",
+ "target": "mpg",
+ "features": [
+  {
+   "name": "cylinders",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 3.0,
+   "max": 8.0,
+   "median": 4.0,
+   "p01": 3.17,
+   "p99": 8.0,
+   "integer": true
+  },
+  {
+   "name": "displacement",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 70.0,
+   "max": 455.0,
+   "median": 144.5,
+   "p01": 71.0,
+   "p99": 440.0,
+   "integer": false
+  },
+  {
+   "name": "horsepower",
+   "nullable": true,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 46.0,
+   "max": 225.0,
+   "median": 92.0,
+   "p01": 52.0,
+   "p99": 215.0,
+   "integer": true
+  },
+  {
+   "name": "weight",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 1613.0,
+   "max": 5140.0,
+   "median": 2797.5,
+   "p01": 1762.21,
+   "p99": 4943.349999999999,
+   "integer": true
+  },
+  {
+   "name": "acceleration",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 8.0,
+   "max": 24.8,
+   "median": 15.5,
+   "p01": 9.585,
+   "p99": 23.26199999999998,
+   "integer": false
+  },
+  {
+   "name": "model_year",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 70.0,
+   "max": 82.0,
+   "median": 76.0,
+   "p01": 70.0,
+   "p99": 82.0,
+   "integer": true
+  },
+  {
+   "name": "origin",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 1.0,
+   "max": 3.0,
+   "median": 1.0,
+   "p01": 1.0,
+   "p99": 3.0,
+   "integer": true
+  }
+ ],
+ "id_columns": [
+  "car_name"
+ ],
+ "time_column": null,
+ "frequency": null,
+ "series_column": null,
+ "horizon_max": null,
+ "seed": 42,
+ "n_train_rows": 318,
+ "note": "illustrative contract computed from the training split of the sample; the real one is saved by the training job (ARCHITECTURE \u00a745.2)"
+}

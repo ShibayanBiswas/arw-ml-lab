@@ -1,0 +1,17 @@
+flowchart LR
+  DEV[Developer + Cursor agent] -->|push / PR| GH[GitHub monorepo arw-ml-lab]
+  GH --> CI[GitHub Actions ci.yml - frontend lint, typecheck, vitest, build;<br/>backend ruff, mypy, pytest; supabase start + db reset + RLS tests]
+  CI -->|main, checks pass| DP[deploy.yml]
+  DP --> M1[1. supabase link + db push --remote --yes]
+  DP --> M2[2. Render deploy hooks or autoDeployTrigger checksPass]
+  DP --> M3[3. Vercel production deploy via Git integration]
+  DP --> M4[4. Smoke tests - healthz, auth round-trip, sample EDA job on DS1]
+  M1 --> SB[(Supabase - Postgres + RLS, Auth, Storage buckets)]
+  M2 --> RN[Render - lab-api web, lab-worker-light, lab-worker-train, lab-kv Key Value]
+  M3 --> VC[Vercel - Next.js frontend, Root Directory frontend]
+  RN --> SB
+  VC --> SB
+  VC --> RN
+  RN -->|HTTPS, NVIDIA_API_KEY Render secret| NV[NVIDIA API catalog - hosted VLM and LLM]
+  RN -.->|optional| GPU[External GPU worker - heavy DL only]
+  RN -.->|later scale-out| K8[Optional Kubernetes + KEDA for workers]

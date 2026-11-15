@@ -1,0 +1,11 @@
+id: DS24
+name: "Daily Min Temperatures (Melbourne)"
+file: data/samples/daily_min_temperatures.csv
+family: time_series
+task: forecast
+target: "Temp"
+cv: rolling_origin_expanding
+seed: 42
+notes: "daily, m=365"
+predict_sample: data/samples/predict/daily_min_temperatures_predict.csv
+feature_contract: data/samples/predict/contracts/daily_min_temperatures.feature_contract.json

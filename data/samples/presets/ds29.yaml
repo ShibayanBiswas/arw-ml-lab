@@ -1,0 +1,11 @@
+id: DS29
+name: "Electricity Load Diagrams"
+file: "lazy: https://archive.ics.uci.edu/static/public/321/electricityloaddiagrams20112014.zip"
+family: time_series
+task: forecast_global
+target: "y (kW, hourly sum of 15-min readings)"
+cv: rolling_origin_expanding
+seed: 42
+notes: "370 clients, 15-min readings 2011-2014 (aggregate to hourly); large archive lazy-downloaded; predict sample is schema-derived (ids + future timestamps only)"
+predict_sample: data/samples/predict/electricity_load_predict.csv
+feature_contract: data/samples/predict/contracts/electricity_load.feature_contract.json

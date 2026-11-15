@@ -1,0 +1,76 @@
+[project]
+name = "arw-ml-lab"
+version = "0.1.0"
+description = "ARW ML Lab — tabular ML workstation"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+  "pytest==9.2.0",
+  "pytest-cov==7.1.0",
+  "hypothesis==6.170.15",
+  "ruff==0.17.5",
+  "mypy==2.4.1",
+  "respx==0.23.1",
+  "jsonschema==4.26.0",
+  "pgserver==0.1.4",
+  "pandas==2.3.3",
+  "pyarrow==26.0.0",
+  "pyyaml==6.0.3",
+  "httpx==0.28.1",
+  "fastapi==0.163.0",
+  "pydantic==2.14.3",
+  "pydantic-settings==2.16.3",
+  "celery[redis]==5.7.0",
+  "redis==8.1.0",
+  "PyJWT==2.15.1",
+  "cryptography==50.0.2",
+  "slowapi==0.1.10",
+  "structlog==26.1.0",
+  "uvicorn[standard]==0.54.0",
+  "sqlalchemy==2.1.8",
+  "tenacity==9.2.1",
+]
+
+[tool.uv]
+package = false
+
+[tool.hatch.build.targets.wheel]
+packages = ["labcore", "backend"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["labcore", "backend", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = [
+  "B008",  # FastAPI Depends() / Header() in defaults is idiomatic
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/db_harness/*" = ["SIM115", "E501"]
+"tests/unit/test_predict_samples.py" = ["E501", "E741"]
+"tests/unit/test_api_phase0.py" = ["E501"]
+"backend/worker/tasks/demo.py" = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["labcore"]
+mypy_path = "."
+namespace_packages = true
+explicit_package_bases = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

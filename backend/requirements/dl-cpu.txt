@@ -1,0 +1,8 @@
+# Deep learning, CPU wheels on Render: pip install --extra-index-url https://download.pytorch.org/whl/cpu -r dl-cpu.txt
+torch==2.15.0
+lightning==2.6.6
+pytorch-tabular==1.2.0
+pytorch-forecasting==1.8.0
+captum==0.9.0
+torchmetrics==1.8.2  # pytorch-tabular 1.2.0 requires <1.9
+pytorch-tcn==1.2.3

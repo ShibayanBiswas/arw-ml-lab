@@ -1,0 +1,11 @@
+id: DS6
+name: "Credit Card Fraud"
+file: "lazy: https://www.openml.org/api/v1/json/data/1597"
+family: supervised
+task: binary
+target: "Class"
+cv: stratified_kfold
+seed: 42
+notes: "lazy-downloaded by the sample loader; predict sample source: downloaded (OpenML 1597 parquet)"
+predict_sample: data/samples/predict/credit_card_fraud_predict.csv
+feature_contract: data/samples/predict/contracts/credit_card_fraud.feature_contract.json

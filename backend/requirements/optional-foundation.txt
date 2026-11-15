@@ -1,0 +1,4 @@
+# Optional time-series foundation models (off by default; CPU inference of small checkpoints only)
+chronos-forecasting==2.3.2
+timesfm==3.0.2
+# uni2ts==2.0.0  # Moirai: requires torch<2.5, conflicts with torch 2.15 — needs its own image if ever enabled

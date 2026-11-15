@@ -1,0 +1,13 @@
+---
+description: Frontend conventions for the Next.js app
+globs: frontend/**/*.ts,frontend/**/*.tsx,frontend/**/*.css
+alwaysApply: false
+---
+# Frontend conventions
+
+- Match the SP Workstation look: 280 px collapsible sidebar (76 px collapsed, persisted), `panel-luxe` cards, gold accents, light/dark tokens, `modules.ts` registry with 13 modules.
+- Forms are generated from backend ParamSpec JSON Schema (Defaults vs Customise toggle). Never hand-code per-algorithm forms.
+- Plots render from Artefact Plotly JSON; numbers shown in tables come from the artefact `numbers`, never recomputed in the browser.
+- No heavy computation in Route Handlers / Server Actions (Vercel limits: 4.5 MB body, short durations). Uploads go browser → Supabase Storage via signed/resumable URLs; SSE connects directly to `lab-api`.
+- Only `NEXT_PUBLIC_*` env vars may reach the client; never expose the Supabase service-role key.
+- `eslint` and `tsc --noEmit` must pass; components accessible (WCAG AA, keyboard).

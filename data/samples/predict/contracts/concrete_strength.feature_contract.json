@@ -1,0 +1,112 @@
+{
+ "contract_version": "1.0",
+ "dataset_id": "DS15",
+ "task": "regression",
+ "target": "Concrete compressive strength",
+ "features": [
+  {
+   "name": "Cement",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 102.0,
+   "max": 540.0,
+   "median": 274.0,
+   "p01": 116.0,
+   "p99": 531.3,
+   "integer": false
+  },
+  {
+   "name": "Blast Furnace Slag",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 0.0,
+   "max": 359.4,
+   "median": 22.0,
+   "p01": 0.0,
+   "p99": 288.0,
+   "integer": false
+  },
+  {
+   "name": "Fly Ash",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 0.0,
+   "max": 200.1,
+   "median": 0.0,
+   "p01": 0.0,
+   "p99": 189.30999999999995,
+   "integer": false
+  },
+  {
+   "name": "Water",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 121.75,
+   "max": 246.9,
+   "median": 185.7,
+   "p01": 126.761,
+   "p99": 228.0,
+   "integer": false
+  },
+  {
+   "name": "Superplasticizer",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 0.0,
+   "max": 32.2,
+   "median": 6.4350000000000005,
+   "p01": 0.0,
+   "p99": 23.4,
+   "integer": false
+  },
+  {
+   "name": "Coarse Aggregate",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 801.0,
+   "max": 1145.0,
+   "median": 968.0,
+   "p01": 818.23,
+   "p99": 1125.0,
+   "integer": false
+  },
+  {
+   "name": "Fine Aggregate",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 594.0,
+   "max": 992.6,
+   "median": 778.0,
+   "p01": 594.0,
+   "p99": 943.1,
+   "integer": false
+  },
+  {
+   "name": "Age",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 1.0,
+   "max": 365.0,
+   "median": 28.0,
+   "p01": 3.0,
+   "p99": 365.0,
+   "integer": true
+  }
+ ],
+ "id_columns": [],
+ "time_column": null,
+ "frequency": null,
+ "series_column": null,
+ "horizon_max": null,
+ "seed": 42,
+ "n_train_rows": 824,
+ "note": "illustrative contract computed from the training split of the sample; the real one is saved by the training job (ARCHITECTURE \u00a745.2)"
+}

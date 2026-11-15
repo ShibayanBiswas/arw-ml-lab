@@ -1,0 +1,26 @@
+# lab-api (Render web service) — pins checked on PyPI 15 Nov 2026 (IST)
+fastapi==0.163.0
+uvicorn[standard]==0.54.0
+pydantic==2.14.3
+pydantic-settings==2.16.3
+python-multipart==0.0.33
+sqlalchemy==2.1.8
+psycopg[binary]==3.3.9
+supabase==2.34.1
+celery[redis]==5.7.0
+redis==8.1.0
+httpx==0.28.1
+openai==3.51.0
+tenacity==9.2.1
+pillow==13.0.0
+structlog==26.1.0
+sentry-sdk==2.75.0
+jinja2==3.1.6
+# JWT verification against Supabase JWKS (ARCHITECTURE §39.5); already a transitive of supabase
+PyJWT==2.15.1
+# Round 4 (§46): rate limiting and tracing
+slowapi==0.1.10
+opentelemetry-sdk==1.45.2
+opentelemetry-instrumentation-fastapi==0.66b2
+opentelemetry-instrumentation-celery==0.66b2
+

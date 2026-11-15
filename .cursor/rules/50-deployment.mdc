@@ -1,0 +1,15 @@
+---
+description: Deployment rules for Vercel, Render and Supabase
+globs: render.yaml,frontend/vercel.json,supabase/**,.github/workflows/**,backend/Dockerfile,.env.example
+alwaysApply: false
+---
+# Deployment (docs/ARCHITECTURE.md §39)
+
+- GitHub monorepo (private). Vercel builds `frontend/` only. Render builds `backend/Dockerfile` for `lab-api` and both workers from `render.yaml`. Supabase schema changes only through new files in `supabase/migrations/` (never edit an applied migration).
+- Render Key Value must use `maxmemoryPolicy: noeviction` and `ipAllowList: []` (internal only) because it is the Celery broker.
+- Worker sizing defaults: lab-api `1c-2g`, lab-worker-light `2c-4g`, lab-worker-train `4c-16g` (upgrade to `8c-32g` for Thorough tuning). Set Celery soft/hard time limits per queue.
+- Secrets: `sync: false` in render.yaml, Vercel/Render/GitHub settings, local `.env`. Keep `.env.example` in sync with the env matrix (§39.10).
+- CI order on main: migrations (`supabase db push --remote --yes`) → Render deploy → Vercel deploy → smoke tests.
+- No model is hosted anywhere by this project. AI calls go from Render (lab-api, workers) to the NVIDIA API catalog; `NVIDIA_API_KEY` is a `sync: false` Render secret and must never be set in Vercel. Keep the numbers-only fallback working when the key is missing or the provider is down.
+- Kubernetes/KEDA is an optional later scale-out for workers only; do not add it unless asked.
+- Ask the user before creating projects, connecting accounts, buying plans or deploying.

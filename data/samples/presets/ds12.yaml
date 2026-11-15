@@ -1,0 +1,11 @@
+id: DS12
+name: "California Housing"
+file: "lazy: https://www.openml.org/api/v1/json/data/537"
+family: supervised
+task: regression
+target: "median_house_value"
+cv: stratified_kfold
+seed: 42
+notes: "lazy-downloaded by the sample loader; predict sample source: downloaded (OpenML 537)"
+predict_sample: data/samples/predict/california_housing_predict.csv
+feature_contract: data/samples/predict/contracts/california_housing.feature_contract.json

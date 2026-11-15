@@ -1,0 +1,4 @@
+# Optional one-click "full profile" HTML export in a separate image (lab-worker-reports).
+# ydata-profiling 4.18.4 pins numpy<2.4, scipy<1.17 and matplotlib<=3.10, which conflict with the core stack,
+# so it is isolated. The lab's own EDA (§10, §43.10) does not depend on it.
+ydata-profiling==4.18.4

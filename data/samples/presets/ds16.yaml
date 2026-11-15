@@ -1,0 +1,11 @@
+id: DS16
+name: "Bike Sharing"
+file: data/samples/bike_sharing/day.csv
+family: supervised
+task: regression
+target: "cnt"
+cv: kfold
+seed: 42
+notes: "hour.csv also included; TS with exog"
+predict_sample: data/samples/predict/bike_sharing_day_predict.csv
+feature_contract: data/samples/predict/contracts/bike_sharing_day.feature_contract.json

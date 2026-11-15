@@ -1,0 +1,11 @@
+id: DS15
+name: "Concrete Compressive Strength"
+file: data/samples/concrete/Concrete_Data.xls
+family: supervised
+task: regression
+target: "Concrete compressive strength"
+cv: kfold
+seed: 42
+notes: "Excel .xls"
+predict_sample: data/samples/predict/concrete_strength_predict.csv
+feature_contract: data/samples/predict/contracts/concrete_strength.feature_contract.json

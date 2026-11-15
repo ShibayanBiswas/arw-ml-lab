@@ -1,0 +1,18 @@
+flowchart TD
+  A[Series + datetime index from Intake] --> B[TS EDA - summary, line, rolling stats, decompositions classical / STL / MSTL / X-13,<br/>ACF/PACF, lag, seasonal and subseries plots, periodogram, spectrogram]
+  B --> C[Test tables - ADF, KPSS, PP, Zivot-Andrews, DF-GLS, OCSB/CH, breaks CUSUM / Bai-Perron,<br/>ARCH-LM, normality, Ljung-Box, Granger, CCF, cointegration]
+  C --> D[Stationarity verdict matrix - d, D, Box-Cox lambda - VLM VD6 proposal]
+  D --> H[HorizonGuard - h cap from frequency, length and backtest windows - VLM VD5 proposal]
+  H --> X{Exogenous?}
+  X -->|static / historic / known-future / generated| XE[Exog checks - leakage lag rules, future coverage]
+  X -->|none| M
+  XE --> M[Model families F1-F54<br/>baselines, ETS, ARIMA family, Theta, CES, TBATS, MSTL, Prophet, VAR/VECM, GARCH,<br/>intermittent, ML lag models, RNN/LSTM/TCN, N-BEATS/N-HiTS, TFT, PatchTST, iTransformer, foundation, ensembles]
+  M --> S[Multi-step strategy - recursive, direct, DirRec, MIMO, DIRMO, rectify]
+  S --> BT[Backtesting - rolling origin expanding or sliding, n_windows, step, refit policy, gap]
+  BT --> HR{Hierarchy?}
+  HR -->|yes| REC[Reconciliation - BottomUp, TopDown, MiddleOut, MinTrace, ERM]
+  HR -->|no| MET
+  REC --> MET[Metrics - MAE, RMSE, MAPE, sMAPE, WAPE, MASE, RMSSE, MSIS, coverage, pinball, CRPS,<br/>Theil U1/U2, directional accuracy, QLIKE, VaR tests]
+  MET --> RD[Residual diagnostics - Ljung-Box, JB, ARCH-LM, residual ACF, Q-Q]
+  RD --> LB[Leaderboards - overall, by horizon, by window, by series, Diebold-Mariano, ensemble]
+  LB --> F[Forecast with fan chart, dashed beyond useful horizon h*]

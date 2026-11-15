@@ -1,0 +1,13 @@
+---
+description: Approved technology stack and where each part runs
+globs:
+alwaysApply: true
+---
+# Stack (change only with a written ADR in docs/DECISIONS.md)
+
+- Frontend: Next.js 16 App Router, React 19, TypeScript 5, Tailwind CSS 4 with SP Workstation tokens (gold #c9a227, Cormorant Garamond / DM Sans / IBM Plex Mono), Radix, TanStack Query/Table/Virtual, zustand, react-hook-form + zod, Plotly.js, lightweight-charts, KaTeX. Deployed on **Vercel** (Root Directory `frontend`).
+- Backend: Python 3.12, FastAPI + Pydantic v2 (`backend/app`), Celery 5 (`backend/worker`), library code in `labcore/`. Deployed on **Render** via `render.yaml` (web service `lab-api`, background workers `lab-worker-light` and `lab-worker-train`, Key Value `lab-kv`).
+- Data platform: **Supabase** Postgres 17 (schema via `supabase/migrations`, RLS on every table), Supabase Auth (email OTP / magic link), Supabase Storage (buckets datasets, artefacts, models, reports, plots). No MinIO, no Alembic.
+- ML: exact pins in `backend/requirements/*.txt` (Python 3.12; numpy 2.4, scipy 1.17, pandas 2.3, scikit-learn 1.9.1) and the Library Matrix in ARCHITECTURE §44. Core: imbalanced-learn, category_encoders, feature-engine, XGBoost, LightGBM, CatBoost, PyTorch 2 + Lightning, pytorch-tabular, pytorch-forecasting, statsmodels, statsforecast, mlforecast, neuralforecast, sktime, darts, aeon, arch, Prophet, umap-learn, hdbscan, openTSNE, pyod, prince, Optuna 5, shap, lime, PyALE, dice-ml, MAPIE, netcal, mlxtend, MLstatkit, plotly + kaleido. Rule 70 forbids from-scratch implementations.
+- AI (hosted, no self-hosting): `labcore/ai` OpenAI-compatible client → **NVIDIA API catalog** `https://integrate.api.nvidia.com/v1` with `NVIDIA_API_KEY` (Render backend only). Primary VLM `nvidia/nemotron-3.5-super-vl-120b-a12b`; fallbacks `google/gemma-4-31b-it`, `meta/llama-3.2-90b-vision-instruct`; fast tier `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning`; text LLM `nvidia/nemotron-3-super-120b-a12b`. Model IDs only in `labcore/ai/providers.yaml`. Gemini / OpenRouter / Groq are optional fallbacks, off by default. Numbers-only mode always available.
+- Package managers: `pnpm` (frontend), `uv` (Python).

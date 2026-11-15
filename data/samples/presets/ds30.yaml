@@ -1,0 +1,11 @@
+id: DS30
+name: "NIFTY 50 daily (^NSEI) 5y"
+file: data/samples/nifty50_daily_5y.csv
+family: supervised_sequential_financial
+task: triple_barrier / returns
+target: "derived (forward return or triple-barrier label)"
+cv: purged_kfold
+seed: 42
+notes: "1236 rows, 15 Nov 2021 to 13 Nov 2026; expected suitability: Suitable (FS checks)"
+predict_sample: data/samples/predict/nifty50_daily_predict.csv
+feature_contract: data/samples/predict/contracts/nifty50_daily.feature_contract.json

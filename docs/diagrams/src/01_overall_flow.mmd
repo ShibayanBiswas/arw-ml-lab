@@ -1,0 +1,42 @@
+flowchart TD
+  A([Login - email + OTP / SSO]) --> B[Home Terminal]
+  B --> C[Data: upload CSV / Excel / Parquet or Load sample DS1-DS33]
+  C --> D[Type inference + profiling + dataset version]
+  D --> E{Choose family}
+  E -->|Supervised| F[Pick inputs X and output y]
+  F --> G{Auto task detection}
+  G -->|numeric many unique| G1[Regression]
+  G -->|categorical / few unique| G2[Classification binary / multiclass / multilabel]
+  F --> H{Sequential?}
+  H -->|No| H1[Non-sequential: KFold / Stratified / Group / Repeated / Nested]
+  H -->|Yes, financial| H2[Sequential: walk-forward / Purged K-fold / CPCV + TradingLab labeling]
+  E -->|Unsupervised| U[Pick features]
+  U --> U1[Dimensionality reduction]
+  U --> U2[Clustering]
+  U --> U3[Anomaly detection]
+  E -->|Time Series| T[Pick time index, target, exog, frequency]
+  T --> T1[Analysis: decomposition, ACF/PACF, stationarity tests]
+  T1 --> T2[HorizonGuard computes h_max]
+  D --> X[EDA: tables + interactive plots]
+  X --> AI1[[AI Insights: EDA interpretation + preprocessing advice]]
+  AI1 --> P[Preprocess recipe: impute, encode, scale, transform, outliers, select, imbalance]
+  P --> M[Model selection: defaults or customise every hyperparameter]
+  G1 --> M
+  G2 --> M
+  H1 --> M
+  H2 --> M
+  U1 --> M
+  U2 --> M
+  U3 --> M
+  T2 --> M
+  M --> Q[Job queue: Celery workers, tuning with Optuna / Grid / Random / Halving]
+  Q --> L[Leaderboard + metrics + diagnostic plots + statistical comparison]
+  L --> AI2[[AI Insights: per-model + leaderboard commentary]]
+  L --> XP[Explain: SHAP, LIME, PDP, ICE, ALE, permutation]
+  XP --> AI3[[AI Insights: explainability narrative]]
+  L --> R[Register best model in MLflow registry]
+  R --> PR[Predict: single, batch, what-if, forecast + intervals + confidence]
+  PR --> AI4[[AI Insights: prediction and uncertainty explanation]]
+  PR --> MON[Monitoring: drift PSI / KS]
+  L --> RP[Reports: PDF / HTML / PPTX / XLSX]
+  R --> EX[Export: ONNX, pipeline, script, Docker, REST endpoint]

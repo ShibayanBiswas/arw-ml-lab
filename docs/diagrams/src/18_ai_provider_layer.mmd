@@ -1,0 +1,25 @@
+flowchart TD
+  R[Insight or decision request from q.insights] --> C{Cache hit? hash of prompt version + FACTS + image hashes}
+  C -->|yes| OUT[Return cached validated JSON]
+  C -->|no| CL{Workspace classification}
+  CL -->|restricted| NO[Numbers-only - rule engine / rule baseline]
+  CL -->|internal or public| B{Budget left? per workspace and per user}
+  B -->|no| NO
+  B -->|yes| IMG[Image prep - kaleido 1024x640, palette PNG, JPEG q85, shrink until base64 le 170 KB, tile big grids]
+  IMG --> CH[Pick chain - vision_fast, vision_standard, text_reasoning, text_deep]
+  CH --> TB[Token bucket per provider - NVIDIA 35 RPM shared via Key Value]
+  TB --> CALL[POST integrate.api.nvidia.com/v1/chat/completions<br/>image_url data URIs + response_format json_schema]
+  CALL -->|200| VAL{Validate - schema, numbers vs FACTS, citations}
+  CALL -->|429 / 5xx / timeout| BO[Back-off with jitter, honour Retry-After, max 4 attempts]
+  BO --> CALL
+  CALL -->|404 / 403 model not available| NX[Mark model down 1 h - next model in chain]
+  CALL -->|413 too large| IMG
+  NX --> TB
+  BO -->|attempts exhausted or circuit open| NX
+  NX -->|chain empty| FB{Fallback provider enabled and allowed?}
+  FB -->|yes - Gemini / OpenRouter / Groq| TB
+  FB -->|no| NO
+  VAL -->|fail after one repair| NO
+  VAL -->|pass| ST[Store in insights / decisions + ai_usage row, stream to UI]
+  ST --> OUT
+  NO --> OUT

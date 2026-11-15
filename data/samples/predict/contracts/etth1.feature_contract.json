@@ -1,0 +1,96 @@
+{
+ "contract_version": "1.0",
+ "dataset_id": "DS28",
+ "task": "forecast",
+ "target": "OT",
+ "features": [
+  {
+   "name": "date",
+   "nullable": false,
+   "kind": "datetime",
+   "dtype": "datetime64[ns]",
+   "min": "2016-07-01 00:00:00",
+   "max": "2018-06-24 19:00:00"
+  },
+  {
+   "name": "HUFL",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": -22.70599937438965,
+   "max": 23.643999099731445,
+   "median": 8.77400016784668,
+   "p01": -15.270999908447266,
+   "p99": 18.773429546356258,
+   "integer": false
+  },
+  {
+   "name": "HULL",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": -4.75600004196167,
+   "max": 10.11400032043457,
+   "median": 2.2100000381469727,
+   "p01": -2.009000062942505,
+   "p99": 6.89900016784668,
+   "integer": false
+  },
+  {
+   "name": "MUFL",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": -25.08799934387207,
+   "max": 17.340999603271484,
+   "median": 5.96999979019165,
+   "p01": -18.194000244140625,
+   "p99": 13.717000007629395,
+   "integer": false
+  },
+  {
+   "name": "MULL",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": -5.934000015258789,
+   "max": 7.747000217437744,
+   "median": 0.9240000247955322,
+   "p01": -2.9489998817443848,
+   "p99": 4.796999931335449,
+   "integer": false
+  },
+  {
+   "name": "LUFL",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": -1.187999963760376,
+   "max": 8.498000144958496,
+   "median": 2.8329999446868896,
+   "p01": 1.156999945640564,
+   "p99": 7.144689955711418,
+   "integer": false
+  },
+  {
+   "name": "LULL",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": -1.371000051498413,
+   "max": 3.0460000038146973,
+   "median": 0.975000023841858,
+   "p01": -1.0360000133514404,
+   "p99": 1.919000029563904,
+   "integer": false
+  }
+ ],
+ "id_columns": [],
+ "time_column": "date",
+ "frequency": "h",
+ "series_column": null,
+ "horizon_max": 48,
+ "seed": 42,
+ "n_train_rows": 17372,
+ "note": "illustrative contract computed from the training split of the sample; the real one is saved by the training job (ARCHITECTURE \u00a745.2)"
+}

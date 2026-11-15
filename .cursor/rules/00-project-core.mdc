@@ -1,0 +1,15 @@
+---
+description: Core context and non-negotiables for the ARW ML Lab project
+globs:
+alwaysApply: true
+---
+# ARW ML Lab — core rules
+
+- This repo builds the ARW ML Lab: a general-purpose ML lab for **tabular** data (no NLP) with Supervised (incl. sequential/financial), Unsupervised and Time Series families, EDA, explainability, uncertainty, an AI Insights layer and a VLM decision agent.
+- The spec is `docs/ARCHITECTURE.md` (sections §1–§39) and `docs/FLOWCHART.md` + `docs/diagrams/`. The build plan is `CURSOR_PROMPT.md`. Implement IDs exactly (R*, C*, S*, T*, Q*, D*, K*, A*, F*, DS*, FS*, VD*). If you deviate, write why in `docs/DECISIONS.md`.
+- Work phase by phase in the order given in `CURSOR_PROMPT.md`. Plan each phase in Plan mode with the strongest reasoning model at its highest effort, then build. Stop after each phase with `docs/PHASE_<n>_REPORT.md`.
+- Never hand-code a form per algorithm: everything is registry-driven (`AlgorithmSpec`/`ParamSpec`, `GET /catalog`).
+- Every plot is an Artefact (Plotly JSON + PNG + numbers JSON). Every computation is an idempotent Celery job cached by content hash.
+- Ask the user before any action outside this folder: creating/pushing the GitHub repo, connecting or changing Vercel/Render/Supabase, buying plans, setting production secrets, running migrations against a hosted project.
+- Do not commit code copied from the private reference repos (sp-workstation, blackcarbon-saas, ml-for-trading); `refs/` is git-ignored. TradingLab is used only as a pinned submodule in `vendor/tradinglab`.
+- Display times in Asia/Kolkata (IST) by default.

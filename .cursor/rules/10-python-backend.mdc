@@ -1,0 +1,16 @@
+---
+description: Python conventions for backend/ and labcore/
+globs: backend/**/*.py,labcore/**/*.py,tests/**/*.py
+alwaysApply: false
+---
+# Python conventions
+
+- Type hints everywhere; `mypy --strict` on `labcore/`; `ruff` (lint + format) must pass.
+- Pydantic v2 models for all API I/O; JSON Schema exported for the frontend.
+- `labcore` is pure library code: no FastAPI, no Celery, no global state. Workers call `labcore`; the API only validates and enqueues.
+- All fitted transforms live inside sklearn/imblearn Pipelines fitted per CV fold on train rows only. Sequential data never shuffles.
+- Every function that uses randomness takes `seed: int = 42` (or `random_state`) and passes it down; no module-level RNGs.
+- Wrap TradingLab through `labcore/finance/` adapters; do not re-implement it. Force `num_threads=1` inside Celery tasks.
+- Heavy jobs check estimated memory first and refuse with a clear message instead of crashing.
+- Store artefacts in Supabase Storage (`{workspace_id}/{entity}/{id}/{file}`); never rely on local disk on Render.
+- Use the service-role key only in backend code; always filter by `workspace_id`.

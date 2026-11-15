@@ -1,0 +1,42 @@
+# secrets
+.env
+.env.*
+!.env.example
+# private reference repos (never commit)
+refs/
+# python
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+# node
+node_modules/
+.next/
+out/
+.vercel/
+*.tsbuildinfo
+pnpm-debug.log*
+# supabase local
+supabase/.branches/
+supabase/.temp/
+# ML artefacts / local runs
+mlruns/
+artifacts/
+*.ckpt
+*.joblib
+*.onnx
+lightning_logs/
+optuna*.db
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# downloaded raw data used by scripts/make_predict_samples.py
+.cache/

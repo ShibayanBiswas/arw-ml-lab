@@ -1,0 +1,11 @@
+id: DS28
+name: "ETTh1"
+file: data/samples/etth1.csv
+family: time_series
+task: multivariate
+target: "OT"
+cv: rolling_origin_expanding
+seed: 42
+notes: "hourly; DL benchmark"
+predict_sample: data/samples/predict/etth1_predict.csv
+feature_contract: data/samples/predict/contracts/etth1.feature_contract.json

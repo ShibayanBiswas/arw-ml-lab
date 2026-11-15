@@ -1,0 +1,17 @@
+id: DS17
+name: "sklearn built-ins"
+file: "sklearn.datasets.load_diabetes / load_digits / load_wine"
+family: supervised
+task: regression (diabetes) / multiclass (digits, wine)
+target: "target"
+cv: kfold (diabetes) / stratified_kfold
+seed: 42
+notes: "bundled with scikit-learn (sklearn.datasets.load_*); no download"
+predict_samples:
+  - data/samples/predict/sklearn_diabetes_predict.csv
+  - data/samples/predict/sklearn_digits_predict.csv
+  - data/samples/predict/sklearn_wine_predict.csv
+feature_contracts:
+  - data/samples/predict/contracts/sklearn_diabetes.feature_contract.json
+  - data/samples/predict/contracts/sklearn_digits.feature_contract.json
+  - data/samples/predict/contracts/sklearn_wine.feature_contract.json

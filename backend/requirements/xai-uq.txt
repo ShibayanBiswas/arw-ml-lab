@@ -1,0 +1,18 @@
+# Explainability, uncertainty, calibration, fairness slices, label quality
+shap==0.54.1
+lime==0.2.0.1
+dice-ml==0.12
+PyALE==1.2.0
+interpret==0.7.8
+imodels==3.0.4
+dtreeviz==2.3.2
+shapiq==1.8.0
+mapie==1.6.0
+crepes==0.9.1
+venn-abers==1.5.4
+netcal==1.4.0
+scoringrules==0.12.0
+properscoring==0.1
+fairlearn==0.15.0
+cleanlab==2.9.0
+wittgenstein==0.3.5  # RIPPER rule learner (C42, optional)

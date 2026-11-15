@@ -1,0 +1,72 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: frontend } }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Skip until the Next.js app exists (Phase 0)
+        id: has_app
+        run: test -f package.json && echo "ok=true" >> "$GITHUB_OUTPUT" || echo "ok=false" >> "$GITHUB_OUTPUT"
+      - uses: pnpm/action-setup@v4
+        if: steps.has_app.outputs.ok == 'true'
+      - uses: actions/setup-node@v4
+        if: steps.has_app.outputs.ok == 'true'
+        with: { node-version: 22, cache: pnpm, cache-dependency-path: frontend/pnpm-lock.yaml }
+      - if: steps.has_app.outputs.ok == 'true'
+        run: pnpm install --frozen-lockfile
+      - if: steps.has_app.outputs.ok == 'true'
+        run: pnpm lint && pnpm exec tsc --noEmit && pnpm test --run && pnpm build
+      - name: No AI provider secrets in the client bundle
+        if: steps.has_app.outputs.ok == 'true'
+        run: "! grep -R -E 'NVIDIA_API_KEY|nvapi-|SUPABASE_SERVICE_ROLE_KEY' .next/static || (echo 'secret found in bundle' && exit 1)"
+
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { submodules: recursive }
+      - uses: astral-sh/setup-uv@v6
+      - name: Skip until pyproject exists (Phase 0)
+        id: has_py
+        run: test -f pyproject.toml && echo "ok=true" >> "$GITHUB_OUTPUT" || echo "ok=false" >> "$GITHUB_OUTPUT"
+      - if: steps.has_py.outputs.ok == 'true'
+        run: uv sync --all-extras --frozen
+      - if: steps.has_py.outputs.ok == 'true'
+        run: uv run ruff check . && uv run ruff format --check . && uv run mypy labcore
+      - if: steps.has_py.outputs.ok == 'true'
+        env:
+          LAB_DEFAULT_SEED: "42"
+          AI_ENABLED: "false"          # CI uses mocked AI providers only
+        run: uv run pytest tests/unit tests/contract_tradinglab tests/golden -q
+
+  kit-checks:
+    # Runs from day one (before Phase 0 creates pyproject.toml): sample files, contracts, migrations parse.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install pandas==2.3.3 pyarrow==26.0.1 jsonschema==4.26.0 pytest pyyaml
+      - run: pytest tests/unit/test_predict_samples.py -q
+      - name: render.yaml parses
+        run: python -c "import yaml; yaml.safe_load(open('render.yaml'))"
+
+  supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with: { version: "3.1.0" }  # pinned Phase 0 (ST-OPS-10); bump deliberately
+      - run: supabase start
+      - run: supabase db reset
+      - run: supabase test db
+      - if: always()
+        run: supabase stop

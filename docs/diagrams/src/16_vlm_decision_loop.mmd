@@ -1,0 +1,20 @@
+flowchart TD
+  A[Decision point reached VD1-VD12] --> O[OBSERVE - render plots to PNG with kaleido, build FACTS JSON with fact_ids]
+  O --> B[BASELINE - deterministic rule engine proposal + reasons]
+  B --> P[PROPOSE - hosted VLM via NVIDIA API catalog, vision_standard chain<br/>images + FACTS + options + baseline, JSON schema constrained, temp 0.2, seed 42]
+  P --> VF{VERIFY - schema valid, numbers match FACTS, option in action space}
+  VF -->|fail after one repair| B2[Use baseline - labelled numbers-only]
+  VF -->|ok| GD{GUARD - hard rules, e.g. h le h_max, no shuffled CV on sequential,<br/>financial labels only if suitable, champion rule DSR / PBO}
+  GD -->|violated| BL[Mark BLOCKED, show reasons, offer baseline]
+  GD -->|pass| RV[REVIEW - decision card: baseline vs proposal, images, cited facts, confidence, config diff]
+  B2 --> RV
+  BL --> RV
+  RV -->|Approve / Edit / Use baseline| AP[APPLY - new versioned config, enqueue downstream jobs]
+  RV -->|Reject| LG
+  RV -.auto-apply only if policy on, guards pass, confidence high.-> AP
+  AP --> LG[LOG - decisions table: inputs hash, prompt version, model, raw output, guards, user action, diff]
+  LG --> RF{Reflection enabled?}
+  RF -->|yes, max 2 iterations| CK[Check expected effect on new plots - propose revert if not achieved]
+  RF -->|no| N[Next decision point]
+  CK --> N
+  NV[Provider unreachable, 429 exhausted, budget cap or restricted workspace] -.-> B2

@@ -1,0 +1,31 @@
+flowchart TD
+  A[Experiment: recipe + algorithm + WFO spec] --> B[Window planner: anchored / rolling / calendar / event; IS, OOS, step, gap = label horizon]
+  B --> C[Purge IS labels overlapping OOS - ml_get_train_times; embargo pct 1 percent]
+  C --> D{For each window k - Celery chord}
+  D --> E[Fit recipe on IS_k only; FFD d* per window - frac_diff_ffd; weights - uniqueness x return x decay]
+  E --> F{Retune policy fires?}
+  F -->|yes| G[Optuna study on IS_k: inner PurgedKFold + ml_cross_val_score; warm start from k-1; plateau selection; store every trial]
+  F -->|no| H[Reuse previous params]
+  G --> I{Retrain policy fires?}
+  H --> I
+  I -->|yes| J[Train model on IS_k]
+  I -->|no| K[Reuse previous fitted model]
+  J --> L[Predict OOS_k: point, proba, calibrated proba]
+  K --> L
+  L --> M[Strategy: signal or bet_size_probability; positions]
+  M --> N[P and L with costs: commission, slippage, half-spread, STT, sqrt impact, borrow]
+  N --> O[Per-window metrics: IS vs OOS, WFE, params, turnover, cost drag]
+  O --> D
+  O --> P[Stitch OOS windows: predictions, positions, gross and net equity]
+  P --> Q[Stats: Sharpe, PSR, DSR with N = all trials, MinTRL, drawdown, Campbell haircut]
+  P --> R[Monte Carlo: stationary block bootstrap, permutation test, trade shuffle, SPA]
+  P --> S[PBO via CSCV on shared top-n candidates]
+  P --> T[CPCV cross-check: WF Sharpe percentile among CombinatorialPurgedKFold paths]
+  O --> U[Parameter stability heatmap, drift lines, surfaces]
+  Q --> V[Summary table + verdict: DSR > 0.95, PBO < 0.2, WFE >= 0.5, 60 percent profitable windows, MC p < 0.05]
+  R --> V
+  S --> V
+  T --> V
+  U --> V
+  V --> W[[AI Insights: edge, robustness, param stability, costs, retraining value]]
+  W --> X[Promote: retrain on latest IS window, register with WFO report]

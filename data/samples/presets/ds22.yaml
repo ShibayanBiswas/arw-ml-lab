@@ -1,0 +1,11 @@
+id: DS22
+name: "Airline Passengers"
+file: data/samples/airline_passengers.csv
+family: time_series
+task: forecast
+target: "Passengers"
+cv: rolling_origin_expanding
+seed: 42
+notes: "monthly, m=12, n=144, h_max=24"
+predict_sample: data/samples/predict/airline_passengers_predict.csv
+feature_contract: data/samples/predict/contracts/airline_passengers.feature_contract.json

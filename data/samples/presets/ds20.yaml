@@ -1,0 +1,11 @@
+id: DS20
+name: "Online Retail II"
+file: "lazy: https://archive.ics.uci.edu/static/public/502/online+retail+ii.zip"
+family: unsupervised
+task: clustering
+target: "-"
+cv: bootstrap_stability
+seed: 42
+notes: "RFM per customer derived from transactions; lazy-downloaded (large)"
+predict_sample: data/samples/predict/online_retail_rfm_predict.csv
+feature_contract: data/samples/predict/contracts/online_retail_rfm.feature_contract.json

@@ -1,0 +1,11 @@
+id: DS11
+name: "Wine Quality (red)"
+file: data/samples/wine_quality_red.csv
+family: supervised
+task: regression
+target: "quality"
+cv: kfold
+seed: 42
+notes: "sep=';'; also ordinal classification; DR demo (KMO/Bartlett)"
+predict_sample: data/samples/predict/wine_quality_red_predict.csv
+feature_contract: data/samples/predict/contracts/wine_quality_red.feature_contract.json

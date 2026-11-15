@@ -1,0 +1,12 @@
+flowchart TD
+  A[Numeric / mixed features after recipe] --> K[Suitability - KMO overall and MSA per variable, Bartlett sphericity]
+  K -->|KMO lt 0.5 or Bartlett p ge 0.05| W[Warn - linear DR not advised, offer manifold methods]
+  K -->|ok| L[Linear and factor methods - PCA, Incremental, Kernel, Sparse PCA, Truncated SVD,<br/>FA with rotation, ICA, NMF, LDA, PLS, MCA/FAMD]
+  A --> N[Manifold methods - t-SNE, UMAP, Isomap, LLE, MDS, Spectral, PaCMAP, autoencoder / VAE]
+  L --> E[Eigen table, scree, cumulative variance, Kaiser, broken-stick, parallel analysis]
+  E --> V[VLM VD7 proposes k - guard: Bartlett significant, k in range - human approves]
+  V --> O[Outputs - loadings table and heatmap, communalities, contributions and cos2,<br/>biplot, correlation circle, factor diagram, scores export]
+  N --> Q[Quality - trustworthiness and continuity at k = 5,10,30, Shepard diagram and correlation,<br/>stress, reconstruction error, k-NN accuracy]
+  O --> Q
+  Q --> C[Method comparison table and 2D / 3D embeddings coloured by target or cluster]
+  C --> D[Use as features for supervised models or input to clustering]

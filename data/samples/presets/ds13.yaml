@@ -1,0 +1,11 @@
+id: DS13
+name: "Ames House Prices"
+file: "lazy: https://www.openml.org/api/v1/json/data/42165"
+family: supervised
+task: regression
+target: "SalePrice"
+cv: stratified_kfold
+seed: 42
+notes: "lazy-downloaded by the sample loader; predict sample source: downloaded (OpenML 42165)"
+predict_sample: data/samples/predict/ames_house_prices_predict.csv
+feature_contract: data/samples/predict/contracts/ames_house_prices.feature_contract.json

@@ -1,0 +1,16 @@
+flowchart TD
+  A[Scaled features or DR embedding] --> S[k-scan k = 2..15 for partitioning and model-based algorithms]
+  S --> I[Internal indices - inertia elbow with knee, silhouette, Calinski-Harabasz, Davies-Bouldin,<br/>Dunn, gap statistic, GMM BIC / AIC]
+  A --> DB[Density methods - k-distance plot for eps, OPTICS reachability, HDBSCAN condensed tree]
+  I --> ST[Bootstrap stability - ARI / Jaccard over B = 50 resamples]
+  DB --> ST
+  ST --> V[VLM VD8 reads elbow, silhouette, gap and UMAP plots - proposes k and algorithm<br/>guards: stability ge 0.6, no cluster lt 2 percent - human approves]
+  V --> F[Final clustering]
+  F --> P[Profiles - sizes, centroids or medoids, z-scored profile heatmap, distinguishing features,<br/>surrogate tree rules, radar, parallel coordinates, box plots by cluster]
+  F --> G[Geometry - silhouette knife plot, dendrogram + cophenetic, cluster scatter on PCA / UMAP / t-SNE]
+  F --> X{Labels known?}
+  X -->|yes| EXT[External indices - ARI, AMI, NMI, homogeneity, completeness, V-measure, FMI, purity]
+  X -->|no| R
+  EXT --> R[Algorithm comparison table and agreement heatmap, Sankey across k]
+  P --> R
+  G --> R

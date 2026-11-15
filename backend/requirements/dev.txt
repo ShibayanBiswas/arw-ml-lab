@@ -1,0 +1,11 @@
+pytest==9.2.0
+pytest-cov==7.1.0
+hypothesis==6.170.15
+ruff==0.17.5
+mypy==2.4.1
+respx==0.23.1
+locust==2.47.0
+pandas-stubs==3.1.0.261029
+factor-analyzer==0.5.1  # GPL-2.0: test oracle only (KMO/Bartlett golden values); never imported by labcore
+jsonschema==4.26.0     # validates feature contracts in tests (docs/contracts)
+pgserver==0.1.4        # throw-away Postgres for tests/db_harness when Docker/supabase CLI is unavailable

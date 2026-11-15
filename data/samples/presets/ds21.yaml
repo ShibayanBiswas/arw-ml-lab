@@ -1,0 +1,11 @@
+id: DS21
+name: "Credit Card Fraud (unlabelled view)"
+file: "lazy: https://www.openml.org/api/v1/json/data/1597"
+family: unsupervised
+task: anomaly_detection
+target: "- (Class hidden)"
+cv: bootstrap_stability
+seed: 42
+notes: "lazy-downloaded by the sample loader; predict sample source: downloaded (OpenML 1597 parquet)"
+predict_sample: data/samples/predict/credit_card_fraud_unlabelled_predict.csv
+feature_contract: data/samples/predict/contracts/credit_card_fraud_unlabelled.feature_contract.json

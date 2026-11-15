@@ -1,0 +1,11 @@
+id: DS31
+name: "S&P 500 / NIFTY constituents"
+file: "lazy: https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=5y&interval=1d"
+family: supervised_sequential_financial
+task: portfolio / sequential
+target: "derived (returns)"
+cv: purged_kfold
+seed: 42
+notes: "lazy-downloaded by the sample loader; predict sample source: downloaded (Yahoo chart API, 3 months)"
+predict_sample: data/samples/predict/multi_asset_prices_predict.csv
+feature_contract: data/samples/predict/contracts/multi_asset_prices.feature_contract.json

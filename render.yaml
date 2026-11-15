@@ -1,0 +1,163 @@
+# Render Blueprint for ARW ML Lab (docs/ARCHITECTURE.md §39.7)
+# backend/Dockerfile is created in Phase 0. Secrets use `sync: false` and are entered in the Render Dashboard.
+# Plans checked Nov 2026; re-check pricing before applying. Region: Singapore (closest to India).
+services:
+  - type: web
+    name: lab-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    dockerCommand: uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT --workers 2
+    plan: 1c-2g                 # upgrade to 2c-4g for team use
+    region: singapore
+    healthCheckPath: /healthz
+    autoDeployTrigger: "off"          # deploys are triggered by deploy.yml AFTER migrations (ST-OPS-04)
+    maxShutdownDelaySeconds: 60
+    envVars:
+      - fromGroup: lab-shared
+      - key: SERVICE_ROLE
+        value: api
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: lab-kv
+          property: connectionString
+
+  - type: worker
+    name: lab-worker-light
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    dockerCommand: celery -A backend.worker.celery_app worker -Q q.ingest,q.eda,q.insights,q.report,q.predict.batch --concurrency 2 --prefetch-multiplier 1 --max-tasks-per-child 20
+    plan: 2c-4g
+    region: singapore
+    autoDeployTrigger: "off"          # deploys are triggered by deploy.yml AFTER migrations (ST-OPS-04)
+    maxShutdownDelaySeconds: 300
+    envVars:
+      - fromGroup: lab-shared
+      - key: SERVICE_ROLE
+        value: worker-light
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: lab-kv
+          property: connectionString
+
+  - type: worker
+    name: lab-worker-train
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    dockerCommand: celery -A backend.worker.celery_app worker -Q q.train.cpu,q.tune,q.explain,q.forecast,q.predict.heavy --concurrency 1 --prefetch-multiplier 1 --max-tasks-per-child 20
+    plan: 4c-16g                # 8c-32g for Thorough tuning / large CPCV
+    region: singapore
+    autoDeployTrigger: "off"          # deploys are triggered by deploy.yml AFTER migrations (ST-OPS-04)
+    maxShutdownDelaySeconds: 300
+    envVars:
+      - fromGroup: lab-shared
+      - key: SERVICE_ROLE
+        value: worker-train
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: lab-kv
+          property: connectionString
+
+  - type: cron
+    name: lab-beat
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    schedule: "15 * * * *"        # hourly (UTC): retention cleanup, stale-heartbeat reaper, storage lifecycle (§46.2)
+    dockerCommand: python -m backend.worker.maintenance --all
+    plan: 0.5c-512mb
+    region: singapore
+    envVars:
+      - fromGroup: lab-shared
+      - key: SERVICE_ROLE
+        value: maintenance
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: lab-kv
+          property: connectionString
+
+  - type: keyvalue
+    name: lab-kv
+    plan: 1g
+    region: singapore
+    maxmemoryPolicy: noeviction   # required: Celery broker must not evict keys
+    ipAllowList: []               # internal connections only
+
+envVarGroups:
+  - name: lab-shared
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: LAB_DEFAULT_SEED
+        value: "42"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_JWKS_URL
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_URL_SESSION
+        sync: false
+      - key: SUPABASE_S3_ENDPOINT
+        sync: false
+      - key: SUPABASE_S3_REGION
+        sync: false
+      - key: SUPABASE_S3_ACCESS_KEY_ID
+        sync: false
+      - key: SUPABASE_S3_SECRET_ACCESS_KEY
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      # Hosted AI (docs/ARCHITECTURE.md §40) — backend only, never in Vercel
+      - key: AI_ENABLED
+        value: "true"
+      - key: AI_PROVIDER_PRIMARY
+        value: nvidia
+      - key: AI_BASE_URL
+        value: https://integrate.api.nvidia.com/v1
+      - key: AI_RPM_LIMIT
+        value: "35"
+      - key: AI_DAILY_REQUEST_CAP
+        value: "500"
+      - key: NVIDIA_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: AI_USER_DAILY_REQUEST_CAP
+        value: "150"
+      - key: AI_IMAGE_MAX_B64_BYTES
+        value: "170000"
+      # Model chains: defaults live in code (§40.3); set AI_VISION_CHAIN / AI_TEXT_CHAIN etc. here only to override
+      - key: LAB_MAX_ROWS
+        value: "5000000"
+      - key: LAB_JOB_SOFT_LIMIT_TRAIN_MIN
+        value: "90"
+      - key: LAB_JOB_HARD_LIMIT_TRAIN_MIN
+        value: "120"
+      # Prediction Studio (§45.8)
+      - key: STORAGE_BUCKET_PREDICTIONS
+        value: predictions
+      - key: LAB_PREDICT_MAX_MB
+        value: "50"
+      - key: LAB_PREDICT_MAX_ROWS
+        value: "1000000"
+      - key: LAB_PREDICT_CHUNK_ROWS
+        value: "50000"
+      - key: LAB_PREDICT_RETENTION_DAYS
+        value: "30"
+      - key: TABPFN_ENABLED
+        value: "false"
+      - key: SENTRY_DSN
+        sync: false

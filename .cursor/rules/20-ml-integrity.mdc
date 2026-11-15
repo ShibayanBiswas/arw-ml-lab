@@ -1,0 +1,30 @@
+---
+description: ML integrity - never fabricate metrics, seeds, leakage safety
+globs:
+alwaysApply: true
+---
+# ML integrity (non-negotiable)
+
+- **Never fabricate metrics, scores, plot values, benchmark numbers or test results.** Every number in code comments, reports, phase reports, UI copy or AI insights must come from an actual run. If a value is unknown, say "not computed" and leave it out.
+- Default seed is **42** for numpy, random, torch, sklearn `random_state`, Optuna samplers and CV shuffles; record seed, library versions and data hash on every run.
+- Leakage-safe by construction: fit imputers/encoders/scalers/selectors/resamplers/FFD d* inside CV folds; purging + embargo for financial labels; no future-dated features; known-future exog only when declared.
+- Financial labels (triple barrier, meta-labelling, fixed horizon, trend scanning) only after the suitability report (`labcore/suitability`, FS1–FS20) allows them; otherwise offer the fallback target.
+- Forecast horizons never exceed HorizonGuard h_max (§20).
+- AI insights and VLM decisions must cite FACTS; numbers are verified against FACTS; deterministic guards override the VLM; the user approves changes.
+- Model selection uses CV/backtest scores, never the test set; financial champions must pass DSR/PBO rules.
+
+## Evaluation integrity (ARCHITECTURE §41 classification, §42 regression)
+- Every artefact states its prediction source/split: `oof` (CV out-of-fold, default), `fold k`, `cv_agg` (mean ± std and pooled OOF), `test` (hold-out with bootstrap CI) or `train` (only for the train−CV gap).
+- Thresholds, calibrators and cost-based decisions are fitted on **training OOF only** (`TunedThresholdClassifierCV` or the §41.6 methods inside CV); the test split is never read by tuning, calibration, model selection or early stopping.
+- Every metric is reported as CV mean ± std (with per-fold values) plus the test value with its 95% bootstrap CI; never a single number without its split and variability.
+- Averaging mode is always stated (binary/positive label, macro, micro, weighted, samples); ROC-AUC states OvR/OvO.
+- Under class imbalance (minority share < 20% or imbalance ratio > 4), accuracy is never the headline: lead with balanced accuracy, MCC, PR-AUC/AP and per-class recall, and show the class distribution and naive baselines.
+- Undefined ratios (zero division) display "—" / "not computed", never 0 or 1 (`zero_division=np.nan`).
+- Confusion matrices always show counts plus the selected normalisation (row/true, column/pred, all) and the threshold used; per-fold matrices sum to the pooled OOF matrix.
+- Model comparisons use paired tests on the same folds (McNemar, DeLong, 5×2cv, corrected resampled t, Friedman–Nemenyi) with multiple-testing correction; "no significant difference" is reported as such.
+- Regression residual diagnostics report the test, statistic, p-value and verdict; residual plots are drawn from OOF predictions, not training fits.
+
+
+## Hardening guarantees (ARCHITECTURE §46.1, MI-01…MI-18)
+- Target encoding only inside the pipeline (sklearn `TargetEncoder` cross-fitting); nested CV on by default for n < 2 000; TS target transforms fitted per backtest window; duplicates grouped across splits; constant/all-NaN columns dropped with a warning; ambiguous dates require a user choice; the hold-out test set is locked and every re-use is logged.
+- Prediction (§45) uses the saved pipeline and the feature contract from training; it never refits, and every output states its interval method, level and calibration status.

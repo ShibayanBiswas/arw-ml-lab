@@ -1,0 +1,91 @@
+{
+ "contract_version": "1.0",
+ "dataset_id": "DS10",
+ "task": "multiclass",
+ "target": "species",
+ "features": [
+  {
+   "name": "island",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "Biscoe",
+    "Dream",
+    "Torgersen"
+   ],
+   "n_categories": 3,
+   "mode": "Biscoe",
+   "categories_truncated": false
+  },
+  {
+   "name": "bill_length_mm",
+   "nullable": true,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 32.1,
+   "max": 59.6,
+   "median": 45.1,
+   "p01": 33.86,
+   "p99": 55.827999999999996,
+   "integer": false
+  },
+  {
+   "name": "bill_depth_mm",
+   "nullable": true,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 13.1,
+   "max": 21.5,
+   "median": 17.3,
+   "p01": 13.372,
+   "p99": 20.883999999999993,
+   "integer": false
+  },
+  {
+   "name": "flipper_length_mm",
+   "nullable": true,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 172.0,
+   "max": 231.0,
+   "median": 197.0,
+   "p01": 178.0,
+   "p99": 230.0,
+   "integer": true
+  },
+  {
+   "name": "body_mass_g",
+   "nullable": true,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 2850.0,
+   "max": 6050.0,
+   "median": 4050.0,
+   "p01": 2900.0,
+   "p99": 5891.999999999996,
+   "integer": true
+  },
+  {
+   "name": "sex",
+   "nullable": true,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "FEMALE",
+    "MALE"
+   ],
+   "n_categories": 2,
+   "mode": "FEMALE",
+   "categories_truncated": false
+  }
+ ],
+ "id_columns": [],
+ "time_column": null,
+ "frequency": null,
+ "series_column": null,
+ "horizon_max": null,
+ "seed": 42,
+ "n_train_rows": 275,
+ "note": "illustrative contract computed from the training split of the sample; the real one is saved by the training job (ARCHITECTURE \u00a745.2)"
+}

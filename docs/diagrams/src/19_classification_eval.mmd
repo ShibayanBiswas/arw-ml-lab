@@ -1,0 +1,28 @@
+flowchart TD
+  RUN[Classification run - binary, multiclass or multilabel] --> SRC{Prediction sources}
+  SRC --> OOF[CV out-of-fold predictions per fold and repeat - default]
+  SRC --> TEST[Hold-out test predictions - bootstrap 95% CI]
+  SRC --> TRN[Train predictions - only for the train minus CV gap]
+  OOF --> THR[Threshold optimisation on training OOF only<br/>Youden, F-beta max, cost, precision at recall, 13 methods - TunedThresholdClassifierCV]
+  OOF --> CAL[Calibration on training OOF only<br/>sigmoid, isotonic, temperature, Venn-Abers - sklearn, netcal, venn-abers]
+  THR --> CM[Confusion-matrix suite - sklearn confusion_matrix<br/>counts, row, column and all normalised, per fold, CV-aggregated,<br/>cost- and sample-weighted, multilabel per label, default vs tuned, model delta]
+  CAL --> CM
+  TEST --> CM
+  CM --> DER[Derived TP FP TN FN table - specificity, NPV, FPR, FNR per class]
+  CM --> REP[Full classification report - per class P, R, F1, F-beta, support,<br/>specificity, NPV, FPR, FNR + macro, micro, weighted, samples, accuracy, balanced accuracy]
+  REP --> MET[55 scalar metrics - MCC, kappa, QWK, Youden J, informedness, markedness,<br/>G-mean, log loss, Brier + decomposition, ROC-AUC OvR and OvO, PR-AUC, KS, Gini,<br/>top-k, Hamming, Jaccard, ECE, expected cost]
+  MET --> CURVES[Curves - ROC per class + micro and macro, PR with iso-F1, DET, gains, lift, KS,<br/>threshold vs metric, discrimination threshold, cost curves]
+  MET --> CALP[Calibration plots - reliability diagram with histogram, calibration comparison]
+  MET --> IMB[Imbalance reporting - class distribution, naive baselines, prior correction,<br/>imbalanced report - imbalanced-learn]
+  MET --> CVT[CLE.T.CV_METRICS - mean, std, SEM, min, max, 95% CI, pooled OOF, train gap, test CI]
+  CVT --> CMP[Model comparison tables and statistical tests<br/>McNemar, Cochran Q, DeLong, 5x2cv t and F, corrected t, Wilcoxon, Friedman-Nemenyi, Holm]
+  REP --> ERR[Error analysis - most confident wrong predictions, top confusions, slices - fairlearn, cleanlab]
+  CURVES --> ART[Artefacts - Plotly JSON + PNG + numbers JSON]
+  CALP --> ART
+  IMB --> ART
+  CMP --> ART
+  ERR --> ART
+  DER --> ART
+  ART --> AI[AI insights - 8 evaluation templates, numbers checked against FACTS]
+  ART --> VD[VLM decision VD11 - calibrator and threshold proposal, guards and user approval]
+  ART --> UI[Evaluation tab - Overview, Confusion, Report, Curves, Calibration, Threshold, Errors, Imbalance, Compare]

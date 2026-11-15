@@ -1,0 +1,11 @@
+id: DS18
+name: "Mall Customers"
+file: data/samples/mall_customers.csv
+family: unsupervised
+task: clustering
+target: "-"
+cv: bootstrap_stability
+seed: 42
+notes: "expected k = 5 on Annual Income + Spending Score"
+predict_sample: data/samples/predict/mall_customers_predict.csv
+feature_contract: data/samples/predict/contracts/mall_customers.feature_contract.json

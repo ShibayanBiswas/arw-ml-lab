@@ -1,0 +1,112 @@
+{
+ "contract_version": "1.0",
+ "dataset_id": "DS12",
+ "task": "regression",
+ "target": "median_house_value",
+ "features": [
+  {
+   "name": "median_income",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 0.4999,
+   "max": 15.0001,
+   "median": 3.5417,
+   "p01": 1.064999,
+   "p99": 10.597659999999998,
+   "integer": false
+  },
+  {
+   "name": "housing_median_age",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 1.0,
+   "max": 52.0,
+   "median": 29.0,
+   "p01": 4.0,
+   "p99": 52.0,
+   "integer": true
+  },
+  {
+   "name": "total_rooms",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 6.0,
+   "max": 37937.0,
+   "median": 2115.0,
+   "p01": 152.22000000000003,
+   "p99": 11149.709999999977,
+   "integer": true
+  },
+  {
+   "name": "total_bedrooms",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 1.0,
+   "max": 6445.0,
+   "median": 434.0,
+   "p01": 35.0,
+   "p99": 2211.8899999999994,
+   "integer": true
+  },
+  {
+   "name": "population",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 3.0,
+   "max": 35682.0,
+   "median": 1165.0,
+   "p01": 86.11000000000001,
+   "p99": 5818.899999999994,
+   "integer": true
+  },
+  {
+   "name": "households",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 1.0,
+   "max": 6082.0,
+   "median": 408.5,
+   "p01": 30.0,
+   "p99": 1952.6699999999983,
+   "integer": true
+  },
+  {
+   "name": "latitude",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 32.55,
+   "max": 41.95,
+   "median": 34.25,
+   "p01": 32.69,
+   "p99": 40.59889999999999,
+   "integer": false
+  },
+  {
+   "name": "longitude",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": -124.35,
+   "max": -114.31,
+   "median": -118.49,
+   "p01": -123.21,
+   "p99": -116.29,
+   "integer": false
+  }
+ ],
+ "id_columns": [],
+ "time_column": null,
+ "frequency": null,
+ "series_column": null,
+ "horizon_max": null,
+ "seed": 42,
+ "n_train_rows": 16512,
+ "note": "illustrative contract computed from the training split of the sample; the real one is saved by the training job (ARCHITECTURE \u00a745.2)"
+}

@@ -1,0 +1,24 @@
+flowchart TD
+  A[Dataset version + task spec] --> B[Train / test split - stratified or time-ordered hold-out]
+  B --> C[Recipe fitted inside each CV fold only - sklearn Pipeline / ColumnTransformer]
+  C --> C1[Imputation: simple, KNN, iterative, missing indicators]
+  C --> C2[Encoding: one-hot, ordinal, target, WOE, CatBoost, hashing, ... 22 encoders]
+  C --> C3[Scaling and transforms: standard, robust, quantile, Yeo-Johnson, log]
+  C --> C4[Outliers, feature selection, SMOTE family - fold-internal]
+  C1 --> D
+  C2 --> D
+  C3 --> D
+  C4 --> D
+  D{Regression or classification}
+  D -->|Regression R1-R51| E1[Linear, regularised, GLM, SVR, kNN, trees, RF, ET, GBM, XGB, LGBM, CatBoost, NGBoost, GP, MLP, TabNet, FT-Transformer, stacking]
+  D -->|Classification C1-C35| E2[LogReg, NB, LDA/QDA, SVC, kNN, trees, ensembles, boosters, MLP, TabNet, TabPFN, stacking, calibrated]
+  E1 --> F[CV strategy: KFold / Repeated / Group / Nested / Walk-forward / Purged / CPCV]
+  E2 --> F
+  F --> G[Tuning: Grid, Random, Halving, Optuna TPE / CMA-ES / ASHA pruning - preset Quick / Balanced / Thorough / Exhaustive]
+  G --> H[Refit best on full train, evaluate on hold-out]
+  H --> I[Metrics + CIs, OOF predictions, fold table]
+  I --> J[Plots: residuals, pred vs actual, Q-Q, ROC, PR, confusion, calibration, lift, gain, learning and validation curves]
+  J --> K[Leaderboard + Friedman / Nemenyi CD diagram + corrected t-test]
+  K --> L[Explainability + Uncertainty: conformal, quantile, NGBoost, bootstrap, calibration]
+  L --> M[[AI Insights per model + leaderboard]]
+  M --> N[Register champion / challenger]

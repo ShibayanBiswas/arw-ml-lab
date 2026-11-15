@@ -1,0 +1,52 @@
+name: Deploy
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  migrate:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with: { version: "3.1.0" }  # pinned Phase 0 (ST-OPS-10); bump deliberately
+      - run: supabase link --project-ref "$SUPABASE_PROJECT_ID"
+      - run: supabase db push --remote --yes
+
+  render:
+    needs: migrate
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Trigger Render deploys (skip if services use autoDeployTrigger checksPass)
+        env:
+          HOOK_API: ${{ secrets.RENDER_DEPLOY_HOOK_API }}
+          HOOK_LIGHT: ${{ secrets.RENDER_DEPLOY_HOOK_WORKER_LIGHT }}
+          HOOK_TRAIN: ${{ secrets.RENDER_DEPLOY_HOOK_WORKER_TRAIN }}
+        run: |
+          for h in "$HOOK_API" "$HOOK_LIGHT" "$HOOK_TRAIN"; do
+            if [ -n "$h" ]; then curl -fsS -X POST "$h" > /dev/null; fi
+          done
+
+  # Vercel deploys through its Git integration (Root Directory = frontend). No step needed here.
+
+  smoke:
+    needs: render
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Wait for lab-api health
+        env: { LAB_API_URL: "${{ vars.LAB_API_URL }}" }
+        run: |
+          for i in $(seq 1 30); do
+            curl -fsS "$LAB_API_URL/healthz" && exit 0 || sleep 20
+          done
+          exit 1

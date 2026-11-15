@@ -1,0 +1,15 @@
+flowchart TD
+  A[Select features] --> B[Preprocess: impute, encode - one-hot / FAMD for mixed, scale]
+  B --> C{Goal}
+  C -->|Reduce| D[DR D1-D22: PCA, Kernel PCA, SVD, ICA, NMF, FA, MCA, FAMD, LDA, Isomap, LLE, MDS, t-SNE, UMAP, PaCMAP, autoencoder]
+  D --> D1[Scree, cumulative variance, loadings, biplot, 2D / 3D embedding, trustworthiness, reconstruction error]
+  C -->|Group| E[Clustering K1-K19: K-Means, MiniBatch, K-Medoids, K-Prototypes, K-Modes, GMM, Bayesian GMM, Agglomerative, BIRCH, DBSCAN, HDBSCAN, OPTICS, Mean-shift, Spectral, Affinity propagation, SOM]
+  E --> E1[Choose k: elbow, silhouette, gap, Calinski-Harabasz, Davies-Bouldin, BIC / AIC, dendrogram, stability via bootstrap ARI]
+  E1 --> E2[Profiles: cluster means, radar, parallel coords, sizes, silhouette plot, embedding coloured by cluster]
+  C -->|Detect| F[Anomaly A1-A14: Isolation Forest, LOF, One-class SVM, Elliptic envelope, ECOD, COPOD, HBOS, kNN, autoencoder, PyOD suite]
+  F --> F1[Score distribution, threshold by contamination, top anomalies table, embedding overlay, precision at k if labels]
+  D1 --> G[Best-config selection by internal indices + stability]
+  E2 --> G
+  F1 --> G
+  G --> H[[AI Insights: cluster personas, k rationale, anomaly narrative]]
+  H --> I[Export labels / scores / transformer]

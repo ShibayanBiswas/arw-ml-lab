@@ -1,0 +1,3 @@
+# Optional monitoring-report image (drift dashboards). evidently 0.7.23 requires plotly<6, so it is isolated;
+# the core drift metrics (PSI, KS, chi-square, Wasserstein, Jensen-Shannon) come from scipy in the main workers.
+evidently==0.7.23

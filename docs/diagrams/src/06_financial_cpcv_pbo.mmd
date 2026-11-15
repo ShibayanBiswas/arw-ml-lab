@@ -1,0 +1,25 @@
+flowchart TD
+  A[OHLCV or tick upload] --> B[Bars: time / tick / volume / dollar / imbalance / run - data_structures]
+  B --> C[Event sampling: cusum_filter - filters/event_filters.py]
+  C --> D[Volatility target: get_daily_vol - util/volatility.py]
+  D --> E[Triple barrier: add_vertical_barrier, get_events, get_bins - labeling/triple_barrier_labeling.py]
+  E --> E1[Meta-labelling: side from primary model, get_bins gives 0/1 bet-or-not]
+  E --> F[samples_info_sets = t1 label end times]
+  F --> G[Concurrency + uniqueness: sampling/concurrent.py, seq_bootstrap in sampling/bootstrapping.py]
+  G --> H[Sample weights: return attribution + time decay - sample_weights/attribution.py]
+  B --> I[Features: frac_diff_ffd with d* chosen on train only - features/fractional_differentiation.py, microstructure, volatility, structural breaks]
+  I --> J[Feature importance: MDI / MDA / SFI, clustered with ONC, orthogonal PCA]
+  F --> K{Validation}
+  K --> K1[PurgedKFold + embargo, ml_get_train_times, ml_cross_val_score - cross_validation/time_series_cv.py]
+  K --> K2[CombinatorialPurgedKFold N, k - cross_validation/combinatorial.py, phi = k/N x C N,k backtest paths]
+  H --> K1
+  H --> K2
+  J --> K1
+  K2 --> L[Per-path OOS returns for every config / trial]
+  L --> M[PBO via CSCV S=16 - new labcore/finance/pbo.py]
+  L --> N[Strategy stats: Sharpe, PSR, DSR, drawdown, Campbell haircut - backtest_statistics/]
+  K1 --> O[Bet sizing: probability to size, EF3M - bet_sizing/]
+  M --> P[[AI Insights: overfitting risk narrative]]
+  N --> P
+  O --> P
+  P --> Q[Champion only if PBO low and DSR significant]

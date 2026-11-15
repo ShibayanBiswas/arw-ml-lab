@@ -1,0 +1,11 @@
+id: DS10
+name: "Palmer Penguins"
+file: data/samples/penguins.csv
+family: supervised
+task: multiclass
+target: "species"
+cv: stratified_kfold
+seed: 42
+notes: "also unsupervised demo"
+predict_sample: data/samples/predict/penguins_predict.csv
+feature_contract: data/samples/predict/contracts/penguins.feature_contract.json

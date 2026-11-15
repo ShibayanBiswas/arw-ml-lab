@@ -1,0 +1,14 @@
+---
+description: Rules for the hosted AI provider layer (labcore/ai, insights, decisions)
+globs: labcore/ai/**,labcore/insights/**,labcore/decisions/**,backend/**/ai*.py
+alwaysApply: false
+---
+# Hosted AI provider layer (docs/ARCHITECTURE.md §40)
+
+- All model calls go through `labcore/ai/client.py` (OpenAI SDK, `base_url` from `providers.yaml`). Never call a provider SDK directly from feature code; never hard-code model IDs.
+- Order of operations: cache lookup → workspace classification → budget check → image prep → chain/rate limit → call → validate → store + `ai_usage` row. Any failure path ends in numbers-only, never in an exception shown to the user.
+- Images: PNG/JPEG data URIs, base64 length ≤ 170,000 bytes (NVIDIA inline limit is 180 KB), image parts before text, tile large grids.
+- Retries: exponential back-off with jitter, max 4 attempts, honour `Retry-After`; no retry on 400/401/403/404/422; 404/403 → mark model down and use the next in the chain; 413 → shrink and retry once.
+- Rate limit with a shared token bucket (NVIDIA default 35 RPM). Assume the free NVIDIA key is a trial (dev/test); do not build features that only work above ~40 RPM.
+- Use `response_format` JSON schema where supported and always validate locally (numbers must match FACTS, every claim cites a fact or artefact).
+- Tests use mocked providers (respx); live calls only in a manual/nightly job using the user's key.

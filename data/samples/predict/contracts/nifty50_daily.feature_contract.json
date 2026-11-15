@@ -1,0 +1,84 @@
+{
+ "contract_version": "1.0",
+ "dataset_id": "DS30",
+ "task": "triple_barrier / returns",
+ "target": null,
+ "features": [
+  {
+   "name": "date",
+   "nullable": false,
+   "kind": "datetime",
+   "dtype": "datetime64[ns]",
+   "min": "2021-11-15 00:00:00",
+   "max": "2026-09-29 00:00:00"
+  },
+  {
+   "name": "open",
+   "nullable": true,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 15272.650390625,
+   "max": 26333.69921875,
+   "median": 22371.25,
+   "p01": 15758.1321875,
+   "p99": 26142.659609375,
+   "integer": false
+  },
+  {
+   "name": "high",
+   "nullable": true,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 15382.5,
+   "max": 26373.19921875,
+   "median": 22476.44921875,
+   "p01": 15886.304375,
+   "p99": 26214.648359375,
+   "integer": false
+  },
+  {
+   "name": "low",
+   "nullable": true,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 15183.400390625,
+   "max": 26210.05078125,
+   "median": 22245.849609375,
+   "p01": 15684.1519921875,
+   "p99": 26052.02328125,
+   "integer": false
+  },
+  {
+   "name": "close",
+   "nullable": true,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 15293.5,
+   "max": 26328.55078125,
+   "median": 22356.30078125,
+   "p01": 15782.828359375,
+   "p99": 26171.36640625,
+   "integer": false
+  },
+  {
+   "name": "volume",
+   "nullable": true,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 0.0,
+   "max": 1198000.0,
+   "median": 282100.0,
+   "p01": 142304.0,
+   "p99": 646788.0000000002,
+   "integer": true
+  }
+ ],
+ "id_columns": [],
+ "time_column": "date",
+ "frequency": null,
+ "series_column": null,
+ "horizon_max": null,
+ "seed": 42,
+ "n_train_rows": 1206,
+ "note": "illustrative contract computed from the training split of the sample; the real one is saved by the training job (ARCHITECTURE \u00a745.2)"
+}

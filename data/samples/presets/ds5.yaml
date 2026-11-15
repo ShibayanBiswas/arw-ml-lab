@@ -1,0 +1,11 @@
+id: DS5
+name: "German Credit"
+file: "lazy: https://www.openml.org/api/v1/json/data/31"
+family: supervised
+task: binary
+target: "class"
+cv: stratified_kfold
+seed: 42
+notes: "lazy-downloaded by the sample loader; predict sample source: downloaded (OpenML 31)"
+predict_sample: data/samples/predict/german_credit_predict.csv
+feature_contract: data/samples/predict/contracts/german_credit.feature_contract.json

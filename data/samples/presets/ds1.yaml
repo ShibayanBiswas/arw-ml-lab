@@ -1,0 +1,11 @@
+id: DS1
+name: "Iris"
+file: data/samples/iris.data
+family: supervised
+task: multiclass
+target: "class (col 5)"
+cv: stratified_kfold
+seed: 42
+notes: "no header; columns sepal_length,sepal_width,petal_length,petal_width,class"
+predict_sample: data/samples/predict/iris_predict.csv
+feature_contract: data/samples/predict/contracts/iris.feature_contract.json

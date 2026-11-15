@@ -1,0 +1,297 @@
+{
+ "contract_version": "1.0",
+ "dataset_id": "DS5",
+ "task": "binary",
+ "target": "class",
+ "features": [
+  {
+   "name": "checking_status",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "0<=X<200",
+    "<0",
+    ">=200",
+    "no checking"
+   ],
+   "n_categories": 4,
+   "mode": "no checking",
+   "categories_truncated": false
+  },
+  {
+   "name": "duration",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 4.0,
+   "max": 72.0,
+   "median": 18.0,
+   "p01": 6.0,
+   "p99": 60.0,
+   "integer": true
+  },
+  {
+   "name": "credit_history",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "all paid",
+    "critical/other existing credit",
+    "delayed previously",
+    "existing paid",
+    "no credits/all paid"
+   ],
+   "n_categories": 5,
+   "mode": "existing paid",
+   "categories_truncated": false
+  },
+  {
+   "name": "purpose",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "business",
+    "domestic appliance",
+    "education",
+    "furniture/equipment",
+    "new car",
+    "other",
+    "radio/tv",
+    "repairs",
+    "retraining",
+    "used car"
+   ],
+   "n_categories": 10,
+   "mode": "radio/tv",
+   "categories_truncated": false
+  },
+  {
+   "name": "credit_amount",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 250.0,
+   "max": 18424.0,
+   "median": 2290.0,
+   "p01": 427.98,
+   "p99": 14180.39,
+   "integer": true
+  },
+  {
+   "name": "savings_status",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "100<=X<500",
+    "500<=X<1000",
+    "<100",
+    ">=1000",
+    "no known savings"
+   ],
+   "n_categories": 5,
+   "mode": "<100",
+   "categories_truncated": false
+  },
+  {
+   "name": "employment",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "1<=X<4",
+    "4<=X<7",
+    "<1",
+    ">=7",
+    "unemployed"
+   ],
+   "n_categories": 5,
+   "mode": "1<=X<4",
+   "categories_truncated": false
+  },
+  {
+   "name": "installment_commitment",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 1.0,
+   "max": 4.0,
+   "median": 3.0,
+   "p01": 1.0,
+   "p99": 4.0,
+   "integer": true
+  },
+  {
+   "name": "personal_status",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "female div/dep/mar",
+    "male div/sep",
+    "male mar/wid",
+    "male single"
+   ],
+   "n_categories": 4,
+   "mode": "male single",
+   "categories_truncated": false
+  },
+  {
+   "name": "other_parties",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "co applicant",
+    "guarantor",
+    "none"
+   ],
+   "n_categories": 3,
+   "mode": "none",
+   "categories_truncated": false
+  },
+  {
+   "name": "residence_since",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 1.0,
+   "max": 4.0,
+   "median": 3.0,
+   "p01": 1.0,
+   "p99": 4.0,
+   "integer": true
+  },
+  {
+   "name": "property_magnitude",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "car",
+    "life insurance",
+    "no known property",
+    "real estate"
+   ],
+   "n_categories": 4,
+   "mode": "car",
+   "categories_truncated": false
+  },
+  {
+   "name": "age",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 19.0,
+   "max": 75.0,
+   "median": 33.0,
+   "p01": 20.0,
+   "p99": 68.0,
+   "integer": true
+  },
+  {
+   "name": "other_payment_plans",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "bank",
+    "none",
+    "stores"
+   ],
+   "n_categories": 3,
+   "mode": "none",
+   "categories_truncated": false
+  },
+  {
+   "name": "housing",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "for free",
+    "own",
+    "rent"
+   ],
+   "n_categories": 3,
+   "mode": "own",
+   "categories_truncated": false
+  },
+  {
+   "name": "existing_credits",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 1.0,
+   "max": 4.0,
+   "median": 1.0,
+   "p01": 1.0,
+   "p99": 3.0,
+   "integer": true
+  },
+  {
+   "name": "job",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "high qualif/self emp/mgmt",
+    "skilled",
+    "unemp/unskilled non res",
+    "unskilled resident"
+   ],
+   "n_categories": 4,
+   "mode": "skilled",
+   "categories_truncated": false
+  },
+  {
+   "name": "num_dependents",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 1.0,
+   "max": 2.0,
+   "median": 1.0,
+   "p01": 1.0,
+   "p99": 2.0,
+   "integer": true
+  },
+  {
+   "name": "own_telephone",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "none",
+    "yes"
+   ],
+   "n_categories": 2,
+   "mode": "none",
+   "categories_truncated": false
+  },
+  {
+   "name": "foreign_worker",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "no",
+    "yes"
+   ],
+   "n_categories": 2,
+   "mode": "yes",
+   "categories_truncated": false
+  }
+ ],
+ "id_columns": [],
+ "time_column": null,
+ "frequency": null,
+ "series_column": null,
+ "horizon_max": null,
+ "seed": 42,
+ "n_train_rows": 800,
+ "note": "illustrative contract computed from the training split of the sample; the real one is saved by the training job (ARCHITECTURE \u00a745.2)"
+}

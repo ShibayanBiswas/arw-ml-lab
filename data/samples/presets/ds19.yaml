@@ -1,0 +1,11 @@
+id: DS19
+name: "Wholesale Customers"
+file: data/samples/wholesale_customers.csv
+family: unsupervised
+task: clustering+anomaly
+target: "-"
+cv: bootstrap_stability
+seed: 42
+notes: "log-transform spend columns"
+predict_sample: data/samples/predict/wholesale_customers_predict.csv
+feature_contract: data/samples/predict/contracts/wholesale_customers.feature_contract.json

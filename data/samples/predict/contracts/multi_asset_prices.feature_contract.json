@@ -1,0 +1,100 @@
+{
+ "contract_version": "1.0",
+ "dataset_id": "DS31",
+ "task": "portfolio / sequential",
+ "target": null,
+ "features": [
+  {
+   "name": "symbol",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "HDFCBANK.NS",
+    "INFY.NS",
+    "RELIANCE.NS",
+    "TCS.NS",
+    "^GSPC"
+   ],
+   "n_categories": 5,
+   "mode": "^GSPC",
+   "categories_truncated": false
+  },
+  {
+   "name": "date",
+   "nullable": false,
+   "kind": "datetime",
+   "dtype": "datetime64[ns]",
+   "min": "2026-08-13 00:00:00",
+   "max": "2026-11-13 00:00:00"
+  },
+  {
+   "name": "open",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 674.1500244140625,
+   "max": 7813.0400390625,
+   "median": 1252.5,
+   "p01": 684.4120166015625,
+   "p99": 7794.90361328125,
+   "integer": false
+  },
+  {
+   "name": "high",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 686.7999877929688,
+   "max": 7844.52001953125,
+   "median": 1267.4000244140625,
+   "p01": 693.9119897460937,
+   "p99": 7813.48748046875,
+   "integer": false
+  },
+  {
+   "name": "low",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 669.2000122070312,
+   "max": 7805.9599609375,
+   "median": 1240.0,
+   "p01": 681.0179833984375,
+   "p99": 7778.855078125,
+   "integer": false
+  },
+  {
+   "name": "close",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 680.2000122070312,
+   "max": 7818.93017578125,
+   "median": 1257.5,
+   "p01": 687.2519775390625,
+   "p99": 7804.8613671875,
+   "integer": false
+  },
+  {
+   "name": "volume",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 1349758.0,
+   "max": 8858350000.0,
+   "median": 14847874.0,
+   "p01": 1717360.84,
+   "p99": 6138433999.999998,
+   "integer": true
+  }
+ ],
+ "id_columns": [],
+ "time_column": "date",
+ "frequency": null,
+ "series_column": "symbol",
+ "horizon_max": null,
+ "seed": 42,
+ "n_train_rows": 317,
+ "note": "illustrative contract computed from the training split of the sample; the real one is saved by the training job (ARCHITECTURE \u00a745.2)"
+}

@@ -1,0 +1,21 @@
+flowchart TD
+  A[Task spec + recipe from Phase 2 - tabular or sequential] --> B{Data type}
+  B -->|Tabular| T[Tabular DL registry T1-T16<br/>MLP, ResNet-MLP, TabNet, FT-Transformer, TabTransformer, SAINT, NODE,<br/>AutoInt, DCN-v2, GANDALF, GATE, DANet, TabPFN off by default, MDN, Stacked, SSL]
+  B -->|Sequential| S[Window builder - lookback L, horizon h, stride, purge/embargo]
+  S --> Q[Sequential DL registry Q1-Q13<br/>RNN, LSTM, GRU, BiLSTM guarded, attention-LSTM, CNN-1D, TCN,<br/>CNN-LSTM, Transformer, Patch encoder, TFT, xLSTM/Mamba, seq-bootstrap bagging]
+  T --> P[Hyperparameters - Default preset or Customise every field<br/>search space for Optuna Quick 8 / Balanced 60 / Thorough 200]
+  Q --> P
+  P --> R{Resources}
+  R -->|CPU worker 4c-16g| C[Small and medium models, batch tuning, threads = vCPU]
+  R -->|GPU worker available| G[Large models, AMP bf16, larger batch]
+  R -->|GPU-only model, no GPU| X[Refuse with clear message - suggest smaller preset]
+  C --> E[Training engine - LR finder, AdamW, OneCycle/cosine, grad clipping, early stopping,<br/>checkpoint best epoch, seed 42, deterministic flags]
+  G --> E
+  E --> CV[CV folds - KFold / stratified / purged / CPCV for financial]
+  CV --> PL[Training plots DL.P - loss, metric, LR finder, LR trace, grad norms, weight and activation histograms,<br/>attention maps, TabNet masks, embeddings, latent space, trials, fold curves, saliency, architecture]
+  CV --> TB[DL tables DL.T - ARCH, HPARAMS, EPOCHS, EARLYSTOP, FOLDS, TRIALS, UNCERT, RESOURCES, ATTENTION]
+  CV --> U[Uncertainty - MC dropout T=50, deep ensembles M=5 seeds 42-46, quantile / NLL heads,<br/>conformal intervals, temperature scaling]
+  PL --> L[Leaderboard together with classical models]
+  TB --> L
+  U --> L
+  L --> V[VLM reads loss curves and leaderboard - VD10 champion proposal - human approves]

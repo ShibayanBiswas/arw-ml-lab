@@ -1,0 +1,28 @@
+%%{init: {"flowchart": {"wrappingWidth": 420, "nodeSpacing": 30, "rankSpacing": 40}}}%%
+flowchart TD
+  TRAIN[Training job - train split only] --> FC[Feature contract v1.0<br/>features, kinds, ranges, categories, id and time columns,<br/>horizon_max, derived features, reference histograms, hashes]
+  FC --> STORE[(model_signatures table + Storage feature_contract.json + MLflow signature)]
+  STORE --> PICK[Predict module - pick model or alias]
+  PICK --> MODE{Prediction Studio - choose mode}
+  MODE -->|A Batch upload| TPL[Download template - CSV or XLSX<br/>exact columns, dtype hints, example row]
+  TPL --> UP[Upload CSV, XLSX or Parquet - signed URL to bucket predictions<br/>max 50 MB and 1 M rows]
+  UP --> JOB[POST /predict/batch - prediction_jobs row, idempotency key]
+  JOB --> VAL[Validate PV01-PV16 - type, size, zip bomb, encoding, missing and extra columns,<br/>target dropped, dtypes, unseen categories, ranges, NaN, OOD, drift PSI KS,<br/>sequential order, horizon cap, CSV injection, PII masking]
+  VAL -->|blocking issue| FAIL[failed - validation report + fix and re-upload]
+  VAL -->|warnings| REV[needs_review - user confirms]
+  VAL -->|clean| RUN
+  REV --> RUN[Score in 50k-row chunks on q.predict.batch or q.predict.heavy<br/>saved pipeline, progress over SSE, cancel between chunks]
+  RUN --> OUT[Outputs per task<br/>regression - value + conformal or quantile interval<br/>classification - class, calibrated probabilities, confidence, margin, entropy, threshold, conformal set<br/>TS - forecast + intervals per step<br/>clustering and DR - cluster, distance or membership, coordinates<br/>all - OOD and range flags, SHAP top-k]
+  OUT --> FILES[CSV always + XLSX up to 1,048,576 rows, formula-safe<br/>summary.json + summary plots]
+  OUT --> GRID[Results grid - first 1,000 rows in prediction_results, rest paged from file]
+  MODE -->|B Custom input| FORM[Form generated from the contract<br/>slider + number box, dropdown, toggle, date picker,<br/>lookback window editor or pick a date from history]
+  FORM --> BTN[Fill from a random training row / Reset to defaults / Add to batch]
+  BTN --> FORM
+  FORM -->|300 ms debounce| SINGLE[POST /predict/single - same validation and pipeline]
+  SINGLE --> CARD[Result card - value with interval or probability bars,<br/>gauge, confidence badges, OOD flags]
+  CARD --> SHAP[Local SHAP waterfall]
+  CARD --> WHAT[What-if sliders for top-5 features + ICE + tornado]
+  WHAT --> SINGLE
+  GRID --> AI[AI explanation - NVIDIA VLM via labcore ai, FACTS-checked,<br/>numbers-only fallback, no identifiers sent]
+  CARD --> AI
+  FILES --> AUD[(audit_log + retention 30 days via lab-beat)]

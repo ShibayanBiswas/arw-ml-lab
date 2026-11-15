@@ -1,0 +1,28 @@
+flowchart TD
+  A[Upload / new version append, replace, upsert / sample load] --> B[Parse to Parquet + extended column profile]
+  B --> C[D1 index and datetime detection: parse rate, epoch, Excel serial, composite, name hints, monotonic, panel entity]
+  B --> D[D3 column roles: row id, entity, OHLCV, volume, return, exog, weight, text, PII, constant, duplicate]
+  C --> E[D2 frequency inference: infer_freq, mode delta, regularity, trading calendar XNSE, intraday session, seasonal m]
+  E --> F[D4 family scores with softmax confidence: time series, sequential, non-sequential, unsupervised; financial flag]
+  D --> F
+  D --> G[D5 target ranking + feature recommendation; financial derived targets: triple barrier, forward return]
+  D --> H[D6 leakage suspects: near-perfect predictor, target identity, post-outcome names, later dates, lead-lag, group leakage]
+  F --> I[Detector proposal]
+  G --> I
+  H --> I
+  I --> J{LLM available?}
+  J -->|yes| K[LLM adjudicator: profile JSON, no raw rows, intake prompt, JSON schema decoding]
+  J -->|no| L[Rule-based proposal]
+  K --> M[Validator: columns exist, hard rules win, family change within 0.15, h_max within HorizonGuard]
+  M -->|fail| L
+  M -->|pass| N[Merged proposal with confidences and reasons]
+  L --> N
+  N --> O[Intake Review UI: editable roles, family cards, target choice, leakage panel, CV and WFO presets]
+  O --> P[User confirms - task spec saved; overrides logged as feedback]
+  B --> Q{Parent version exists?}
+  Q -->|yes| R[D7 schema diff: added, removed, renamed, type, levels, ranges, time overlap; D8 drift PSI, KS, chi2]
+  R --> S{Breaking?}
+  S -->|no| T[Carry task spec forward + drift badge]
+  S -->|yes| O
+  R --> U[Impact list: EDA refresh, retrain models, extend WFO windows, refresh forecasts]
+  P --> V[EDA target sections, preprocessing auto-policy, CV default, HorizonGuard]

@@ -1,0 +1,11 @@
+id: DS33
+name: "Synthetic generators"
+file: "generated: sklearn make_classification / make_regression / make_blobs, TradingLab get_classification_data"
+family: supervised
+task: binary
+target: "target"
+cv: stratified_kfold
+seed: 42
+notes: "synthetic by design; predict sample from make_classification(random_state=42)"
+predict_sample: data/samples/predict/synthetic_classification_predict.csv
+feature_contract: data/samples/predict/contracts/synthetic_classification.feature_contract.json

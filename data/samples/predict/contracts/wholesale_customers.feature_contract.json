@@ -1,0 +1,112 @@
+{
+ "contract_version": "1.0",
+ "dataset_id": "DS19",
+ "task": "clustering+anomaly",
+ "target": null,
+ "features": [
+  {
+   "name": "Channel",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 1.0,
+   "max": 2.0,
+   "median": 1.0,
+   "p01": 1.0,
+   "p99": 2.0,
+   "integer": true
+  },
+  {
+   "name": "Region",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 1.0,
+   "max": 3.0,
+   "median": 3.0,
+   "p01": 1.0,
+   "p99": 3.0,
+   "integer": true
+  },
+  {
+   "name": "Fresh",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 3.0,
+   "max": 112151.0,
+   "median": 8645.5,
+   "p01": 20.55,
+   "p99": 56082.49,
+   "integer": true
+  },
+  {
+   "name": "Milk",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 55.0,
+   "max": 73498.0,
+   "median": 3611.5,
+   "p01": 272.28000000000003,
+   "p99": 41103.69000000005,
+   "integer": true
+  },
+  {
+   "name": "Grocery",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 3.0,
+   "max": 92780.0,
+   "median": 4592.5,
+   "p01": 298.81,
+   "p99": 38057.92000000003,
+   "integer": true
+  },
+  {
+   "name": "Frozen",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 25.0,
+   "max": 36534.0,
+   "median": 1538.0,
+   "p01": 54.14,
+   "p99": 17945.38,
+   "integer": true
+  },
+  {
+   "name": "Detergents_Paper",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 3.0,
+   "max": 40827.0,
+   "median": 772.0,
+   "p01": 8.02,
+   "p99": 19733.400000000005,
+   "integer": true
+  },
+  {
+   "name": "Delicassen",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 3.0,
+   "max": 47943.0,
+   "median": 946.5,
+   "p01": 9.530000000000001,
+   "p99": 7339.1000000000095,
+   "integer": true
+  }
+ ],
+ "id_columns": [],
+ "time_column": null,
+ "frequency": null,
+ "series_column": null,
+ "horizon_max": null,
+ "seed": 42,
+ "n_train_rows": 352,
+ "note": "illustrative contract computed from the training split of the sample; the real one is saved by the training job (ARCHITECTURE \u00a745.2)"
+}

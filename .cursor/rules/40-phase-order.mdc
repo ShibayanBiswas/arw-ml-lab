@@ -1,0 +1,20 @@
+---
+description: Phase order and the stop-after-each-phase workflow
+globs:
+alwaysApply: true
+---
+# Phase order
+
+0 → 1 → 8.1 (hosted skeleton) → 1A → 2 → 2A → 3 → 3A (Prediction Studio) → 4 → 4A → 5B → 5 → 5A → 6 → 6A → 6B → 7 → 8.2  (18 phases)
+
+For every phase:
+1. Plan mode with the strongest reasoning model (highest effort) → `docs/plans/PHASE_<n>_PLAN.md`; get user approval.
+2. Build in Agent mode; small commits with clear messages.
+3. Run all acceptance criteria from `CURSOR_PROMPT.md`; fix until green.
+4. Write `docs/PHASE_<n>_REPORT.md` (built, real test output, deviations, TODOs), update `docs/DECISIONS.md`.
+5. Update `docs/PROGRESS.md` (phase, last green commit, open failures, next action) and commit `phase <n>: <summary>`.
+6. Run the self-verification checklist in `CURSOR_PROMPT.md` §000 and paste it into the report.
+7. Stop and wait for the user to say "continue".
+
+Resume after an interruption: read `docs/PROGRESS.md` and the last phase report, run `git status` and `make test`, continue from "next action". Never redo a finished phase unless a test proves it broken.
+Never stub, skip or weaken tests to go green (`CURSOR_PROMPT.md` §000).

@@ -1,0 +1,11 @@
+id: DS4
+name: "Adult"
+file: "lazy: https://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data"
+family: supervised
+task: binary
+target: "income"
+cv: stratified_kfold
+seed: 42
+notes: "lazy-downloaded by the sample loader; predict sample source: downloaded (UCI adult.test)"
+predict_sample: data/samples/predict/adult_predict.csv
+feature_contract: data/samples/predict/contracts/adult.feature_contract.json

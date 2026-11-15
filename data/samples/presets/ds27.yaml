@@ -1,0 +1,11 @@
+id: DS27
+name: "US Macrodata (statsmodels)"
+file: data/samples/statsmodels_macrodata.csv
+family: time_series
+task: multivariate
+target: "realgdp / infl"
+cv: rolling_origin_expanding
+seed: 42
+notes: "quarterly; VAR/VECM, Granger"
+predict_sample: data/samples/predict/us_macrodata_predict.csv
+feature_contract: data/samples/predict/contracts/us_macrodata.feature_contract.json

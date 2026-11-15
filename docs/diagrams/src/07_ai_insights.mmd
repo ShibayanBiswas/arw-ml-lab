@@ -1,0 +1,29 @@
+sequenceDiagram
+  participant UI as Module page + AI Insights panel
+  participant API as Next.js BFF + FastAPI lab-core
+  participant R as Redis / Celery q.insights
+  participant CB as Context builder
+  participant RE as Rule engine
+  participant V as Hosted VLM - NVIDIA API catalog (Nemotron 3.5 Super VL, fallbacks)
+  participant VAL as Validator
+  participant DB as Postgres insights cache
+  UI->>API: POST /insights scope, artefact_ids, stage, depth
+  API->>DB: lookup input_hash + model + prompt_version
+  alt cache hit
+    DB-->>UI: cached JSON
+  else miss
+    API->>R: enqueue job
+    R->>CB: collect PNGs, numbers JSON, tables, task spec
+    CB->>RE: deterministic findings
+    RE-->>CB: rule_findings
+    CB->>V: system + stage template + FACTS with fact_ids + images, JSON schema decoding
+    V-->>UI: token stream via SSE
+    V->>VAL: draft JSON
+    VAL->>VAL: schema, numbers match FACTS, every claim cites id
+    alt invalid
+      VAL->>V: one repair round with errors
+      V->>VAL: revised JSON
+    end
+    VAL->>DB: store validated insight
+    DB-->>UI: final JSON with citation chips and Apply buttons
+  end

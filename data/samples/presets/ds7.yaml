@@ -1,0 +1,11 @@
+id: DS7
+name: "Bank Marketing"
+file: "lazy: https://archive.ics.uci.edu/static/public/222/bank+marketing.zip"
+family: supervised
+task: binary
+target: "y"
+cv: stratified_kfold
+seed: 42
+notes: "lazy-downloaded by the sample loader; predict sample source: downloaded (UCI 222)"
+predict_sample: data/samples/predict/bank_marketing_predict.csv
+feature_contract: data/samples/predict/contracts/bank_marketing.feature_contract.json

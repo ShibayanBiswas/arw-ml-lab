@@ -1,0 +1,12 @@
+# Dimensionality reduction, clustering, anomaly detection
+umap-learn==0.6.0
+hdbscan==0.8.44
+openTSNE==1.0.4
+pacmap==0.9.1
+trimap==1.2.0
+prince==0.23.1
+minisom==2.3.6
+kmodes==0.12.2
+scikit-fuzzy==0.5.0
+pyod==3.6.8
+pythresh==1.1.1

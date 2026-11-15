@@ -1,0 +1,231 @@
+{
+ "contract_version": "1.0",
+ "dataset_id": "DS7",
+ "task": "binary",
+ "target": "y",
+ "features": [
+  {
+   "name": "age",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 18.0,
+   "max": 93.0,
+   "median": 39.0,
+   "p01": 23.0,
+   "p99": 71.31999999999971,
+   "integer": true
+  },
+  {
+   "name": "job",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "admin.",
+    "blue-collar",
+    "entrepreneur",
+    "housemaid",
+    "management",
+    "retired",
+    "self-employed",
+    "services",
+    "student",
+    "technician",
+    "unemployed",
+    "unknown"
+   ],
+   "n_categories": 12,
+   "mode": "blue-collar",
+   "categories_truncated": false
+  },
+  {
+   "name": "marital",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "divorced",
+    "married",
+    "single"
+   ],
+   "n_categories": 3,
+   "mode": "married",
+   "categories_truncated": false
+  },
+  {
+   "name": "education",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "primary",
+    "secondary",
+    "tertiary",
+    "unknown"
+   ],
+   "n_categories": 4,
+   "mode": "secondary",
+   "categories_truncated": false
+  },
+  {
+   "name": "default",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "no",
+    "yes"
+   ],
+   "n_categories": 2,
+   "mode": "no",
+   "categories_truncated": false
+  },
+  {
+   "name": "balance",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": -8019.0,
+   "max": 102127.0,
+   "median": 449.0,
+   "p01": -612.0,
+   "p99": 13273.639999999992,
+   "integer": true
+  },
+  {
+   "name": "housing",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "no",
+    "yes"
+   ],
+   "n_categories": 2,
+   "mode": "yes",
+   "categories_truncated": false
+  },
+  {
+   "name": "loan",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "no",
+    "yes"
+   ],
+   "n_categories": 2,
+   "mode": "no",
+   "categories_truncated": false
+  },
+  {
+   "name": "contact",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "cellular",
+    "telephone",
+    "unknown"
+   ],
+   "n_categories": 3,
+   "mode": "cellular",
+   "categories_truncated": false
+  },
+  {
+   "name": "day",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 1.0,
+   "max": 31.0,
+   "median": 16.0,
+   "p01": 2.0,
+   "p99": 31.0,
+   "integer": true
+  },
+  {
+   "name": "month",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "apr",
+    "aug",
+    "dec",
+    "feb",
+    "jan",
+    "jul",
+    "jun",
+    "mar",
+    "may",
+    "nov",
+    "oct",
+    "sep"
+   ],
+   "n_categories": 12,
+   "mode": "may",
+   "categories_truncated": false
+  },
+  {
+   "name": "campaign",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 1.0,
+   "max": 63.0,
+   "median": 2.0,
+   "p01": 1.0,
+   "p99": 16.0,
+   "integer": true
+  },
+  {
+   "name": "pdays",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": -1.0,
+   "max": 871.0,
+   "median": -1.0,
+   "p01": -1.0,
+   "p99": 370.0,
+   "integer": true
+  },
+  {
+   "name": "previous",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 0.0,
+   "max": 275.0,
+   "median": 0.0,
+   "p01": 0.0,
+   "p99": 9.0,
+   "integer": true
+  },
+  {
+   "name": "poutcome",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "failure",
+    "other",
+    "success",
+    "unknown"
+   ],
+   "n_categories": 4,
+   "mode": "unknown",
+   "categories_truncated": false
+  }
+ ],
+ "id_columns": [],
+ "time_column": null,
+ "frequency": null,
+ "series_column": null,
+ "horizon_max": null,
+ "seed": 42,
+ "n_train_rows": 36169,
+ "note": "illustrative contract computed from the training split of the sample; the real one is saved by the training job (ARCHITECTURE \u00a745.2)"
+}

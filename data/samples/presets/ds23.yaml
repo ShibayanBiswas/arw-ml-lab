@@ -1,0 +1,11 @@
+id: DS23
+name: "Shampoo Sales"
+file: data/samples/shampoo.csv
+family: time_series
+task: forecast
+target: "Sales"
+cv: rolling_origin_expanding
+seed: 42
+notes: "n=36, h_max<=9"
+predict_sample: data/samples/predict/shampoo_sales_predict.csv
+feature_contract: data/samples/predict/contracts/shampoo_sales.feature_contract.json

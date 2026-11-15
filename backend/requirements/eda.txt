@@ -1,0 +1,8 @@
+# EDA and data validation (lab-worker-light)
+sweetviz==2.3.3
+missingno==0.5.2
+phik==0.12.5
+dython==0.7.12
+dcor==0.7
+nolds==0.6.3
+pandera==0.36.0

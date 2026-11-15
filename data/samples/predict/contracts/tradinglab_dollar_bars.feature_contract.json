@@ -1,0 +1,108 @@
+{
+ "contract_version": "1.0",
+ "dataset_id": "DS32",
+ "task": "labeling / sequential",
+ "target": null,
+ "features": [
+  {
+   "name": "date_time",
+   "nullable": false,
+   "kind": "datetime",
+   "dtype": "datetime64[ns]",
+   "min": "2026-11-02 09:15:39",
+   "max": "2026-11-02 10:24:47"
+  },
+  {
+   "name": "open",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 1297.1,
+   "max": 1305.58,
+   "median": 1300.6399999999999,
+   "p01": 1297.1232,
+   "p99": 1305.4901,
+   "integer": false
+  },
+  {
+   "name": "high",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 1298.88,
+   "max": 1306.24,
+   "median": 1302.63,
+   "p01": 1298.8858,
+   "p99": 1306.1646,
+   "integer": false
+  },
+  {
+   "name": "low",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 1296.16,
+   "max": 1304.89,
+   "median": 1299.895,
+   "p01": 1296.2035,
+   "p99": 1304.6725000000001,
+   "integer": false
+  },
+  {
+   "name": "close",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 1297.1,
+   "max": 1305.58,
+   "median": 1301.425,
+   "p01": 1297.1232,
+   "p99": 1305.4901,
+   "integer": false
+  },
+  {
+   "name": "cum_vol",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 587.0,
+   "max": 4561.0,
+   "median": 2650.5,
+   "p01": 665.01,
+   "p99": 4500.97,
+   "integer": true
+  },
+  {
+   "name": "cum_dollar",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 764189.78,
+   "max": 5922137.92,
+   "median": 3458554.745,
+   "p01": 864585.8863,
+   "p99": 5850527.8256,
+   "integer": false
+  },
+  {
+   "name": "cum_ticks",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 57.0,
+   "max": 396.0,
+   "median": 200.5,
+   "p01": 59.03,
+   "p99": 392.81,
+   "integer": true
+  }
+ ],
+ "id_columns": [],
+ "time_column": "date_time",
+ "frequency": null,
+ "series_column": null,
+ "horizon_max": null,
+ "seed": 42,
+ "n_train_rows": 30,
+ "note": "illustrative contract computed from the training split of the sample; the real one is saved by the training job (ARCHITECTURE \u00a745.2)"
+}

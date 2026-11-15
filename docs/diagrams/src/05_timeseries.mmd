@@ -1,0 +1,20 @@
+flowchart TD
+  A[Time index, target, exog, frequency] --> B[Regularise: fill gaps, resample, holidays]
+  B --> C[Analysis: line, seasonal plot, STL / MSTL / X-13 decomposition, ACF / PACF, periodogram]
+  C --> D[Tests: ADF, KPSS, PP, Zivot-Andrews, ARCH-LM, Ljung-Box, Granger, Johansen]
+  D --> E[HorizonGuard: frequency cap, data feasibility, seasonality min obs, empirical MASE truncation h*]
+  E --> F{Model families F1-F54}
+  F --> F1[Baselines: naive, seasonal naive, drift, mean]
+  F --> F2[Statistical: ETS, ARIMA, SARIMA, auto-ARIMA, Theta, TBATS, Croston, VAR, VECM, GARCH family, Prophet]
+  F --> F3[ML: lag / window features with LightGBM, XGB, RF via mlforecast or skforecast]
+  F --> F4[DL: RNN, LSTM, GRU, TCN, DeepAR, N-BEATS, N-HiTS, TFT, PatchTST, iTransformer, TimesNet, TiDE via neuralforecast]
+  F1 --> G[Rolling-origin backtest: expanding / sliding window, step, refit policy]
+  F2 --> G
+  F3 --> G
+  F4 --> G
+  G --> H[Metrics by horizon: MAE, RMSE, MAPE, sMAPE, MASE, RMSSE, CRPS, pinball, coverage, Winkler]
+  H --> I[Residual diagnostics: Ljung-Box, ACF of residuals, normality, heteroscedasticity]
+  I --> J[Intervals: model-based, bootstrap, conformal, quantile]
+  J --> K[Leaderboard + Diebold-Mariano tests + ensemble]
+  K --> L[[AI Insights: structure, adequacy, useful horizon, interval reliability]]
+  L --> M[Forecast fan chart within h_max, register, schedule re-forecast]

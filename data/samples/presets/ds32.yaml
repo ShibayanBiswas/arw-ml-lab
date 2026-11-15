@@ -1,0 +1,11 @@
+id: DS32
+name: "TradingLab samples"
+file: "vendor/tradinglab datasets/sample_loaders.py (private repo)"
+family: supervised_sequential_financial
+task: labeling / sequential
+target: "derived (triple-barrier label)"
+cv: purged_kfold
+seed: 42
+notes: "from the private TradingLab repo; predict sample is synthetic but schema-correct (dollar bars)"
+predict_sample: data/samples/predict/tradinglab_dollar_bars_predict.csv
+feature_contract: data/samples/predict/contracts/tradinglab_dollar_bars.feature_contract.json

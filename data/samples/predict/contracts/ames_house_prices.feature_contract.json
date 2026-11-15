@@ -1,0 +1,1174 @@
+{
+ "contract_version": "1.0",
+ "dataset_id": "DS13",
+ "task": "regression",
+ "target": "SalePrice",
+ "features": [
+  {
+   "name": "MSSubClass",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 20.0,
+   "max": 190.0,
+   "median": 50.0,
+   "p01": 20.0,
+   "p99": 190.0,
+   "integer": true
+  },
+  {
+   "name": "MSZoning",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "C (all)",
+    "FV",
+    "RH",
+    "RL",
+    "RM"
+   ],
+   "n_categories": 5,
+   "mode": "RL",
+   "categories_truncated": false
+  },
+  {
+   "name": "LotFrontage",
+   "nullable": true,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 21.0,
+   "max": 313.0,
+   "median": 69.0,
+   "p01": 21.0,
+   "p99": 138.7199999999998,
+   "integer": true
+  },
+  {
+   "name": "LotArea",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 1300.0,
+   "max": 63887.0,
+   "median": 9528.0,
+   "p01": 1680.0,
+   "p99": 31998.68999999995,
+   "integer": true
+  },
+  {
+   "name": "Street",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "Grvl",
+    "Pave"
+   ],
+   "n_categories": 2,
+   "mode": "Pave",
+   "categories_truncated": false
+  },
+  {
+   "name": "Alley",
+   "nullable": true,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "Grvl",
+    "Pave"
+   ],
+   "n_categories": 2,
+   "mode": "Grvl",
+   "categories_truncated": false
+  },
+  {
+   "name": "LotShape",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "IR1",
+    "IR2",
+    "IR3",
+    "Reg"
+   ],
+   "n_categories": 4,
+   "mode": "Reg",
+   "categories_truncated": false
+  },
+  {
+   "name": "LandContour",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "Bnk",
+    "HLS",
+    "Low",
+    "Lvl"
+   ],
+   "n_categories": 4,
+   "mode": "Lvl",
+   "categories_truncated": false
+  },
+  {
+   "name": "Utilities",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "AllPub",
+    "NoSeWa"
+   ],
+   "n_categories": 2,
+   "mode": "AllPub",
+   "categories_truncated": false
+  },
+  {
+   "name": "LotConfig",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "Corner",
+    "CulDSac",
+    "FR2",
+    "FR3",
+    "Inside"
+   ],
+   "n_categories": 5,
+   "mode": "Inside",
+   "categories_truncated": false
+  },
+  {
+   "name": "LandSlope",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "Gtl",
+    "Mod",
+    "Sev"
+   ],
+   "n_categories": 3,
+   "mode": "Gtl",
+   "categories_truncated": false
+  },
+  {
+   "name": "Neighborhood",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "Blmngtn",
+    "Blueste",
+    "BrDale",
+    "BrkSide",
+    "ClearCr",
+    "CollgCr",
+    "Crawfor",
+    "Edwards",
+    "Gilbert",
+    "IDOTRR",
+    "MeadowV",
+    "Mitchel",
+    "NAmes",
+    "NPkVill",
+    "NWAmes",
+    "NoRidge",
+    "NridgHt",
+    "OldTown",
+    "SWISU",
+    "Sawyer",
+    "SawyerW",
+    "Somerst",
+    "StoneBr",
+    "Timber",
+    "Veenker"
+   ],
+   "n_categories": 25,
+   "mode": "NAmes",
+   "categories_truncated": false
+  },
+  {
+   "name": "Condition1",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "Artery",
+    "Feedr",
+    "Norm",
+    "PosA",
+    "PosN",
+    "RRAe",
+    "RRAn",
+    "RRNe",
+    "RRNn"
+   ],
+   "n_categories": 9,
+   "mode": "Norm",
+   "categories_truncated": false
+  },
+  {
+   "name": "Condition2",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "Artery",
+    "Feedr",
+    "Norm",
+    "PosA",
+    "PosN",
+    "RRAn",
+    "RRNn"
+   ],
+   "n_categories": 7,
+   "mode": "Norm",
+   "categories_truncated": false
+  },
+  {
+   "name": "BldgType",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "1Fam",
+    "2fmCon",
+    "Duplex",
+    "Twnhs",
+    "TwnhsE"
+   ],
+   "n_categories": 5,
+   "mode": "1Fam",
+   "categories_truncated": false
+  },
+  {
+   "name": "HouseStyle",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "1.5Fin",
+    "1.5Unf",
+    "1Story",
+    "2.5Fin",
+    "2.5Unf",
+    "2Story",
+    "SFoyer",
+    "SLvl"
+   ],
+   "n_categories": 8,
+   "mode": "1Story",
+   "categories_truncated": false
+  },
+  {
+   "name": "OverallQual",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 1.0,
+   "max": 10.0,
+   "median": 6.0,
+   "p01": 3.0,
+   "p99": 10.0,
+   "integer": true
+  },
+  {
+   "name": "OverallCond",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 1.0,
+   "max": 9.0,
+   "median": 5.0,
+   "p01": 3.0,
+   "p99": 9.0,
+   "integer": true
+  },
+  {
+   "name": "YearBuilt",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 1872.0,
+   "max": 2010.0,
+   "median": 1973.0,
+   "p01": 1897.69,
+   "p99": 2009.0,
+   "integer": true
+  },
+  {
+   "name": "YearRemodAdd",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 1950.0,
+   "max": 2010.0,
+   "median": 1994.0,
+   "p01": 1950.0,
+   "p99": 2009.0,
+   "integer": true
+  },
+  {
+   "name": "RoofStyle",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "Flat",
+    "Gable",
+    "Gambrel",
+    "Hip",
+    "Mansard",
+    "Shed"
+   ],
+   "n_categories": 6,
+   "mode": "Gable",
+   "categories_truncated": false
+  },
+  {
+   "name": "RoofMatl",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "ClyTile",
+    "CompShg",
+    "Membran",
+    "Metal",
+    "Roll",
+    "Tar&Grv",
+    "WdShake",
+    "WdShngl"
+   ],
+   "n_categories": 8,
+   "mode": "CompShg",
+   "categories_truncated": false
+  },
+  {
+   "name": "Exterior1st",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "AsbShng",
+    "AsphShn",
+    "BrkComm",
+    "BrkFace",
+    "CBlock",
+    "CemntBd",
+    "HdBoard",
+    "ImStucc",
+    "MetalSd",
+    "Plywood",
+    "Stone",
+    "Stucco",
+    "VinylSd",
+    "Wd Sdng",
+    "WdShing"
+   ],
+   "n_categories": 15,
+   "mode": "VinylSd",
+   "categories_truncated": false
+  },
+  {
+   "name": "Exterior2nd",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "AsbShng",
+    "AsphShn",
+    "Brk Cmn",
+    "BrkFace",
+    "CBlock",
+    "CmentBd",
+    "HdBoard",
+    "ImStucc",
+    "MetalSd",
+    "Other",
+    "Plywood",
+    "Stone",
+    "Stucco",
+    "VinylSd",
+    "Wd Sdng",
+    "Wd Shng"
+   ],
+   "n_categories": 16,
+   "mode": "VinylSd",
+   "categories_truncated": false
+  },
+  {
+   "name": "MasVnrType",
+   "nullable": true,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "BrkCmn",
+    "BrkFace",
+    "None",
+    "Stone"
+   ],
+   "n_categories": 4,
+   "mode": "None",
+   "categories_truncated": false
+  },
+  {
+   "name": "MasVnrArea",
+   "nullable": true,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 0.0,
+   "max": 1600.0,
+   "median": 0.0,
+   "p01": 0.0,
+   "p99": 803.800000000002,
+   "integer": true
+  },
+  {
+   "name": "ExterQual",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "Ex",
+    "Fa",
+    "Gd",
+    "TA"
+   ],
+   "n_categories": 4,
+   "mode": "TA",
+   "categories_truncated": false
+  },
+  {
+   "name": "ExterCond",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "Ex",
+    "Fa",
+    "Gd",
+    "Po",
+    "TA"
+   ],
+   "n_categories": 5,
+   "mode": "TA",
+   "categories_truncated": false
+  },
+  {
+   "name": "Foundation",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "BrkTil",
+    "CBlock",
+    "PConc",
+    "Slab",
+    "Stone",
+    "Wood"
+   ],
+   "n_categories": 6,
+   "mode": "PConc",
+   "categories_truncated": false
+  },
+  {
+   "name": "BsmtQual",
+   "nullable": true,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "Ex",
+    "Fa",
+    "Gd",
+    "TA"
+   ],
+   "n_categories": 4,
+   "mode": "TA",
+   "categories_truncated": false
+  },
+  {
+   "name": "BsmtCond",
+   "nullable": true,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "Fa",
+    "Gd",
+    "Po",
+    "TA"
+   ],
+   "n_categories": 4,
+   "mode": "TA",
+   "categories_truncated": false
+  },
+  {
+   "name": "BsmtExposure",
+   "nullable": true,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "Av",
+    "Gd",
+    "Mn",
+    "No"
+   ],
+   "n_categories": 4,
+   "mode": "No",
+   "categories_truncated": false
+  },
+  {
+   "name": "BsmtFinType1",
+   "nullable": true,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "ALQ",
+    "BLQ",
+    "GLQ",
+    "LwQ",
+    "Rec",
+    "Unf"
+   ],
+   "n_categories": 6,
+   "mode": "Unf",
+   "categories_truncated": false
+  },
+  {
+   "name": "BsmtFinSF1",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 0.0,
+   "max": 5644.0,
+   "median": 382.0,
+   "p01": 0.0,
+   "p99": 1548.909999999998,
+   "integer": true
+  },
+  {
+   "name": "BsmtFinType2",
+   "nullable": true,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "ALQ",
+    "BLQ",
+    "GLQ",
+    "LwQ",
+    "Rec",
+    "Unf"
+   ],
+   "n_categories": 6,
+   "mode": "Unf",
+   "categories_truncated": false
+  },
+  {
+   "name": "BsmtFinSF2",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 0.0,
+   "max": 1474.0,
+   "median": 0.0,
+   "p01": 0.0,
+   "p99": 869.9899999999998,
+   "integer": true
+  },
+  {
+   "name": "BsmtUnfSF",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 0.0,
+   "max": 2336.0,
+   "median": 484.0,
+   "p01": 0.0,
+   "p99": 1811.8799999999974,
+   "integer": true
+  },
+  {
+   "name": "TotalBsmtSF",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 0.0,
+   "max": 6110.0,
+   "median": 984.5,
+   "p01": 0.0,
+   "p99": 2141.6099999999988,
+   "integer": true
+  },
+  {
+   "name": "Heating",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "Floor",
+    "GasA",
+    "GasW",
+    "Grav",
+    "OthW",
+    "Wall"
+   ],
+   "n_categories": 6,
+   "mode": "GasA",
+   "categories_truncated": false
+  },
+  {
+   "name": "HeatingQC",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "Ex",
+    "Fa",
+    "Gd",
+    "Po",
+    "TA"
+   ],
+   "n_categories": 5,
+   "mode": "Ex",
+   "categories_truncated": false
+  },
+  {
+   "name": "CentralAir",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "N",
+    "Y"
+   ],
+   "n_categories": 2,
+   "mode": "Y",
+   "categories_truncated": false
+  },
+  {
+   "name": "Electrical",
+   "nullable": true,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "FuseA",
+    "FuseF",
+    "FuseP",
+    "Mix",
+    "SBrkr"
+   ],
+   "n_categories": 5,
+   "mode": "SBrkr",
+   "categories_truncated": false
+  },
+  {
+   "name": "1stFlrSF",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 372.0,
+   "max": 4692.0,
+   "median": 1086.0,
+   "p01": 520.0,
+   "p99": 2212.279999999999,
+   "integer": true
+  },
+  {
+   "name": "2ndFlrSF",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 0.0,
+   "max": 1872.0,
+   "median": 0.0,
+   "p01": 0.0,
+   "p99": 1399.2599999999984,
+   "integer": true
+  },
+  {
+   "name": "LowQualFinSF",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 0.0,
+   "max": 572.0,
+   "median": 0.0,
+   "p01": 0.0,
+   "p99": 360.0,
+   "integer": true
+  },
+  {
+   "name": "GrLivArea",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 480.0,
+   "max": 5642.0,
+   "median": 1473.5,
+   "p01": 696.68,
+   "p99": 3012.3199999999924,
+   "integer": true
+  },
+  {
+   "name": "BsmtFullBath",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 0.0,
+   "max": 3.0,
+   "median": 0.0,
+   "p01": 0.0,
+   "p99": 2.0,
+   "integer": true
+  },
+  {
+   "name": "BsmtHalfBath",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 0.0,
+   "max": 2.0,
+   "median": 0.0,
+   "p01": 0.0,
+   "p99": 1.0,
+   "integer": true
+  },
+  {
+   "name": "FullBath",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 0.0,
+   "max": 3.0,
+   "median": 2.0,
+   "p01": 1.0,
+   "p99": 3.0,
+   "integer": true
+  },
+  {
+   "name": "HalfBath",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 0.0,
+   "max": 2.0,
+   "median": 0.0,
+   "p01": 0.0,
+   "p99": 1.0,
+   "integer": true
+  },
+  {
+   "name": "BedroomAbvGr",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 0.0,
+   "max": 8.0,
+   "median": 3.0,
+   "p01": 1.0,
+   "p99": 5.0,
+   "integer": true
+  },
+  {
+   "name": "KitchenAbvGr",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 0.0,
+   "max": 3.0,
+   "median": 1.0,
+   "p01": 1.0,
+   "p99": 2.0,
+   "integer": true
+  },
+  {
+   "name": "KitchenQual",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "Ex",
+    "Fa",
+    "Gd",
+    "TA"
+   ],
+   "n_categories": 4,
+   "mode": "TA",
+   "categories_truncated": false
+  },
+  {
+   "name": "TotRmsAbvGrd",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 3.0,
+   "max": 14.0,
+   "median": 6.0,
+   "p01": 3.0,
+   "p99": 11.0,
+   "integer": true
+  },
+  {
+   "name": "Functional",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "Maj1",
+    "Maj2",
+    "Min1",
+    "Min2",
+    "Mod",
+    "Sev",
+    "Typ"
+   ],
+   "n_categories": 7,
+   "mode": "Typ",
+   "categories_truncated": false
+  },
+  {
+   "name": "Fireplaces",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 0.0,
+   "max": 3.0,
+   "median": 1.0,
+   "p01": 0.0,
+   "p99": 2.0,
+   "integer": true
+  },
+  {
+   "name": "FireplaceQu",
+   "nullable": true,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "Ex",
+    "Fa",
+    "Gd",
+    "Po",
+    "TA"
+   ],
+   "n_categories": 5,
+   "mode": "Gd",
+   "categories_truncated": false
+  },
+  {
+   "name": "GarageType",
+   "nullable": true,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "2Types",
+    "Attchd",
+    "Basment",
+    "BuiltIn",
+    "CarPort",
+    "Detchd"
+   ],
+   "n_categories": 6,
+   "mode": "Attchd",
+   "categories_truncated": false
+  },
+  {
+   "name": "GarageYrBlt",
+   "nullable": true,
+   "kind": "numeric",
+   "dtype": "float64",
+   "min": 1906.0,
+   "max": 2010.0,
+   "median": 1981.0,
+   "p01": 1917.96,
+   "p99": 2009.0,
+   "integer": true
+  },
+  {
+   "name": "GarageFinish",
+   "nullable": true,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "Fin",
+    "RFn",
+    "Unf"
+   ],
+   "n_categories": 3,
+   "mode": "Unf",
+   "categories_truncated": false
+  },
+  {
+   "name": "GarageCars",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 0.0,
+   "max": 4.0,
+   "median": 2.0,
+   "p01": 0.0,
+   "p99": 3.0,
+   "integer": true
+  },
+  {
+   "name": "GarageArea",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 0.0,
+   "max": 1418.0,
+   "median": 480.0,
+   "p01": 0.0,
+   "p99": 1001.2699999999986,
+   "integer": true
+  },
+  {
+   "name": "GarageQual",
+   "nullable": true,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "Ex",
+    "Fa",
+    "Gd",
+    "Po",
+    "TA"
+   ],
+   "n_categories": 5,
+   "mode": "TA",
+   "categories_truncated": false
+  },
+  {
+   "name": "GarageCond",
+   "nullable": true,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "Ex",
+    "Fa",
+    "Gd",
+    "Po",
+    "TA"
+   ],
+   "n_categories": 5,
+   "mode": "TA",
+   "categories_truncated": false
+  },
+  {
+   "name": "PavedDrive",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "N",
+    "P",
+    "Y"
+   ],
+   "n_categories": 3,
+   "mode": "Y",
+   "categories_truncated": false
+  },
+  {
+   "name": "WoodDeckSF",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 0.0,
+   "max": 857.0,
+   "median": 0.0,
+   "p01": 0.0,
+   "p99": 488.96999999999935,
+   "integer": true
+  },
+  {
+   "name": "OpenPorchSF",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 0.0,
+   "max": 547.0,
+   "median": 25.0,
+   "p01": 0.0,
+   "p99": 278.28999999999905,
+   "integer": true
+  },
+  {
+   "name": "EnclosedPorch",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 0.0,
+   "max": 552.0,
+   "median": 0.0,
+   "p01": 0.0,
+   "p99": 265.3199999999997,
+   "integer": true
+  },
+  {
+   "name": "3SsnPorch",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 0.0,
+   "max": 407.0,
+   "median": 0.0,
+   "p01": 0.0,
+   "p99": 163.97999999999956,
+   "integer": true
+  },
+  {
+   "name": "ScreenPorch",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 0.0,
+   "max": 480.0,
+   "median": 0.0,
+   "p01": 0.0,
+   "p99": 279.6299999999992,
+   "integer": true
+  },
+  {
+   "name": "PoolArea",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 0.0,
+   "max": 738.0,
+   "median": 0.0,
+   "p01": 0.0,
+   "p99": 0.0,
+   "integer": true
+  },
+  {
+   "name": "PoolQC",
+   "nullable": true,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "Ex",
+    "Fa",
+    "Gd"
+   ],
+   "n_categories": 3,
+   "mode": "Gd",
+   "categories_truncated": false
+  },
+  {
+   "name": "Fence",
+   "nullable": true,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "GdPrv",
+    "GdWo",
+    "MnPrv",
+    "MnWw"
+   ],
+   "n_categories": 4,
+   "mode": "MnPrv",
+   "categories_truncated": false
+  },
+  {
+   "name": "MiscFeature",
+   "nullable": true,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "Gar2",
+    "Othr",
+    "Shed",
+    "TenC"
+   ],
+   "n_categories": 4,
+   "mode": "Shed",
+   "categories_truncated": false
+  },
+  {
+   "name": "MiscVal",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 0.0,
+   "max": 15500.0,
+   "median": 0.0,
+   "p01": 0.0,
+   "p99": 732.9999999999927,
+   "integer": true
+  },
+  {
+   "name": "MoSold",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 1.0,
+   "max": 12.0,
+   "median": 6.0,
+   "p01": 1.0,
+   "p99": 12.0,
+   "integer": true
+  },
+  {
+   "name": "YrSold",
+   "nullable": false,
+   "kind": "numeric",
+   "dtype": "int64",
+   "min": 2006.0,
+   "max": 2010.0,
+   "median": 2008.0,
+   "p01": 2006.0,
+   "p99": 2010.0,
+   "integer": true
+  },
+  {
+   "name": "SaleType",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "COD",
+    "CWD",
+    "Con",
+    "ConLD",
+    "ConLI",
+    "ConLw",
+    "New",
+    "Oth",
+    "WD"
+   ],
+   "n_categories": 9,
+   "mode": "WD",
+   "categories_truncated": false
+  },
+  {
+   "name": "SaleCondition",
+   "nullable": false,
+   "kind": "categorical",
+   "dtype": "string",
+   "categories": [
+    "Abnorml",
+    "AdjLand",
+    "Alloca",
+    "Family",
+    "Normal",
+    "Partial"
+   ],
+   "n_categories": 6,
+   "mode": "Normal",
+   "categories_truncated": false
+  }
+ ],
+ "id_columns": [
+  "Id"
+ ],
+ "time_column": null,
+ "frequency": null,
+ "series_column": null,
+ "horizon_max": null,
+ "seed": 42,
+ "n_train_rows": 1168,
+ "note": "illustrative contract computed from the training split of the sample; the real one is saved by the training job (ARCHITECTURE \u00a745.2)"
+}

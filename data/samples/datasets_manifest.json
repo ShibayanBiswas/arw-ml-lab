@@ -1,0 +1,575 @@
+{
+ "seed_default": 42,
+ "note": "Bundled files are in this folder; 'lazy' datasets are downloaded on first use by the sample loader. See docs/ARCHITECTURE.md \u00a727.",
+ "bundled": [
+  {
+   "id": "DS1",
+   "name": "Iris",
+   "file": "iris.data",
+   "family": "supervised",
+   "task": "multiclass",
+   "target": "class (col 5)",
+   "seed": 42,
+   "source_url": "https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data",
+   "licence": "CC BY 4.0 (UCI)",
+   "notes": "no header; columns sepal_length,sepal_width,petal_length,petal_width,class",
+   "bytes": 4551,
+   "predict_samples": [
+    "data/samples/predict/iris_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/iris.feature_contract.json"
+   ],
+   "predict_source": "bundled"
+  },
+  {
+   "id": "DS2",
+   "name": "Breast Cancer Wisconsin (WDBC)",
+   "file": "breast_cancer_wdbc.data",
+   "family": "supervised",
+   "task": "binary",
+   "target": "diagnosis (col 2)",
+   "seed": 42,
+   "source_url": "https://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer-wisconsin/wdbc.data",
+   "licence": "CC BY 4.0 (UCI)",
+   "notes": "no header; id, diagnosis, 30 features",
+   "bytes": 124103,
+   "predict_samples": [
+    "data/samples/predict/breast_cancer_wdbc_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/breast_cancer_wdbc.feature_contract.json"
+   ],
+   "predict_source": "bundled"
+  },
+  {
+   "id": "DS3",
+   "name": "Titanic",
+   "file": "titanic.csv",
+   "family": "supervised",
+   "task": "binary",
+   "target": "Survived",
+   "seed": 42,
+   "source_url": "https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv",
+   "licence": "public domain (historical data); repo copy",
+   "notes": "inputs Pclass,Sex,Age,SibSp,Parch,Fare,Embarked",
+   "bytes": 60302,
+   "predict_samples": [
+    "data/samples/predict/titanic_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/titanic.feature_contract.json"
+   ],
+   "predict_source": "bundled"
+  },
+  {
+   "id": "DS9",
+   "name": "Heart Disease (Cleveland)",
+   "file": "heart_disease/processed.cleveland.data",
+   "family": "supervised",
+   "task": "binary",
+   "target": "num (0 vs >0)",
+   "seed": 42,
+   "source_url": "https://archive.ics.uci.edu/static/public/45/heart+disease.zip",
+   "licence": "CC BY 4.0 (UCI)",
+   "notes": "'?' = missing; no header",
+   "bytes": 18461,
+   "predict_samples": [
+    "data/samples/predict/heart_disease_cleveland_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/heart_disease_cleveland.feature_contract.json"
+   ],
+   "predict_source": "bundled"
+  },
+  {
+   "id": "DS10",
+   "name": "Palmer Penguins",
+   "file": "penguins.csv",
+   "family": "supervised",
+   "task": "multiclass",
+   "target": "species",
+   "seed": 42,
+   "source_url": "https://raw.githubusercontent.com/mwaskom/seaborn-data/master/penguins.csv",
+   "licence": "CC0 (palmerpenguins)",
+   "notes": "also unsupervised demo",
+   "bytes": 13478,
+   "predict_samples": [
+    "data/samples/predict/penguins_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/penguins.feature_contract.json"
+   ],
+   "predict_source": "bundled"
+  },
+  {
+   "id": "DS11",
+   "name": "Wine Quality (red)",
+   "file": "wine_quality_red.csv",
+   "family": "supervised",
+   "task": "regression",
+   "target": "quality",
+   "seed": 42,
+   "source_url": "https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-red.csv",
+   "licence": "CC BY 4.0 (UCI)",
+   "notes": "sep=';'; also ordinal classification; DR demo (KMO/Bartlett)",
+   "bytes": 84199,
+   "predict_samples": [
+    "data/samples/predict/wine_quality_red_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/wine_quality_red.feature_contract.json"
+   ],
+   "predict_source": "bundled"
+  },
+  {
+   "id": "DS14",
+   "name": "Auto MPG",
+   "file": "auto_mpg/auto-mpg.data",
+   "family": "supervised",
+   "task": "regression",
+   "target": "mpg",
+   "seed": 42,
+   "source_url": "https://archive.ics.uci.edu/static/public/9/auto+mpg.zip",
+   "licence": "CC BY 4.0 (UCI)",
+   "notes": "whitespace separated; '?' in horsepower",
+   "bytes": 30286,
+   "predict_samples": [
+    "data/samples/predict/auto_mpg_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/auto_mpg.feature_contract.json"
+   ],
+   "predict_source": "bundled"
+  },
+  {
+   "id": "DS15",
+   "name": "Concrete Compressive Strength",
+   "file": "concrete/Concrete_Data.xls",
+   "family": "supervised",
+   "task": "regression",
+   "target": "Concrete compressive strength",
+   "seed": 42,
+   "source_url": "https://archive.ics.uci.edu/static/public/165/concrete+compressive+strength.zip",
+   "licence": "CC BY 4.0 (UCI)",
+   "notes": "Excel .xls",
+   "bytes": 124928,
+   "predict_samples": [
+    "data/samples/predict/concrete_strength_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/concrete_strength.feature_contract.json"
+   ],
+   "predict_source": "bundled"
+  },
+  {
+   "id": "DS16",
+   "name": "Bike Sharing",
+   "file": "bike_sharing/day.csv",
+   "family": "supervised",
+   "task": "regression",
+   "target": "cnt",
+   "seed": 42,
+   "source_url": "https://archive.ics.uci.edu/static/public/275/bike+sharing+dataset.zip",
+   "licence": "CC BY 4.0 (UCI)",
+   "notes": "hour.csv also included; TS with exog",
+   "bytes": 57569,
+   "predict_samples": [
+    "data/samples/predict/bike_sharing_day_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/bike_sharing_day.feature_contract.json"
+   ],
+   "predict_source": "bundled"
+  },
+  {
+   "id": "DS18",
+   "name": "Mall Customers",
+   "file": "mall_customers.csv",
+   "family": "unsupervised",
+   "task": "clustering",
+   "target": "-",
+   "seed": 42,
+   "source_url": "https://raw.githubusercontent.com/SteffiPeTaffy/machineLearningAZ/master/Machine%20Learning%20A-Z%20Template%20Folder/Part%204%20-%20Clustering/Section%2025%20-%20Hierarchical%20Clustering/Mall_Customers.csv",
+   "licence": "educational sample (course material); internal use",
+   "notes": "expected k = 5 on Annual Income + Spending Score",
+   "bytes": 4286,
+   "predict_samples": [
+    "data/samples/predict/mall_customers_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/mall_customers.feature_contract.json"
+   ],
+   "predict_source": "bundled"
+  },
+  {
+   "id": "DS19",
+   "name": "Wholesale Customers",
+   "file": "wholesale_customers.csv",
+   "family": "unsupervised",
+   "task": "clustering+anomaly",
+   "target": "-",
+   "seed": 42,
+   "source_url": "https://archive.ics.uci.edu/ml/machine-learning-databases/00292/Wholesale%20customers%20data.csv",
+   "licence": "CC BY 4.0 (UCI)",
+   "notes": "log-transform spend columns",
+   "bytes": 15021,
+   "predict_samples": [
+    "data/samples/predict/wholesale_customers_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/wholesale_customers.feature_contract.json"
+   ],
+   "predict_source": "bundled"
+  },
+  {
+   "id": "DS22",
+   "name": "Airline Passengers",
+   "file": "airline_passengers.csv",
+   "family": "time_series",
+   "task": "forecast",
+   "target": "Passengers",
+   "seed": 42,
+   "source_url": "https://raw.githubusercontent.com/jbrownlee/Datasets/master/airline-passengers.csv",
+   "licence": "public (Box-Jenkins classic)",
+   "notes": "monthly, m=12, n=144, h_max=24",
+   "bytes": 2180,
+   "predict_samples": [
+    "data/samples/predict/airline_passengers_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/airline_passengers.feature_contract.json"
+   ],
+   "predict_source": "bundled"
+  },
+  {
+   "id": "DS23",
+   "name": "Shampoo Sales",
+   "file": "shampoo.csv",
+   "family": "time_series",
+   "task": "forecast",
+   "target": "Sales",
+   "seed": 42,
+   "source_url": "https://raw.githubusercontent.com/jbrownlee/Datasets/master/shampoo.csv",
+   "licence": "public (Makridakis)",
+   "notes": "n=36, h_max<=9",
+   "bytes": 519,
+   "predict_samples": [
+    "data/samples/predict/shampoo_sales_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/shampoo_sales.feature_contract.json"
+   ],
+   "predict_source": "bundled"
+  },
+  {
+   "id": "DS24",
+   "name": "Daily Min Temperatures (Melbourne)",
+   "file": "daily_min_temperatures.csv",
+   "family": "time_series",
+   "task": "forecast",
+   "target": "Temp",
+   "seed": 42,
+   "source_url": "https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv",
+   "licence": "public (Australian BoM via repo)",
+   "notes": "daily, m=365",
+   "bytes": 67921,
+   "predict_samples": [
+    "data/samples/predict/daily_min_temperatures_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/daily_min_temperatures.feature_contract.json"
+   ],
+   "predict_source": "bundled"
+  },
+  {
+   "id": "DS25",
+   "name": "Monthly Sunspots",
+   "file": "monthly_sunspots.csv",
+   "family": "time_series",
+   "task": "forecast",
+   "target": "Sunspots",
+   "seed": 42,
+   "source_url": "https://raw.githubusercontent.com/jbrownlee/Datasets/master/monthly-sunspots.csv",
+   "licence": "public (SIDC)",
+   "notes": "~11-year cycle",
+   "bytes": 45039,
+   "predict_samples": [
+    "data/samples/predict/monthly_sunspots_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/monthly_sunspots.feature_contract.json"
+   ],
+   "predict_source": "bundled"
+  },
+  {
+   "id": "DS26",
+   "name": "Mauna Loa CO2 (NOAA)",
+   "file": "co2_mauna_loa.csv",
+   "family": "time_series",
+   "task": "forecast",
+   "target": "average",
+   "seed": 42,
+   "source_url": "https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_mm_mlo.csv",
+   "licence": "public domain (NOAA)",
+   "notes": "comment='#'",
+   "bytes": 38776,
+   "predict_samples": [
+    "data/samples/predict/co2_mauna_loa_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/co2_mauna_loa.feature_contract.json"
+   ],
+   "predict_source": "bundled"
+  },
+  {
+   "id": "DS27",
+   "name": "US Macrodata (statsmodels)",
+   "file": "statsmodels_macrodata.csv",
+   "family": "time_series",
+   "task": "multivariate",
+   "target": "realgdp / infl",
+   "seed": 42,
+   "source_url": "https://raw.githubusercontent.com/statsmodels/statsmodels/main/statsmodels/datasets/macrodata/macrodata.csv",
+   "licence": "public domain (US government data)",
+   "notes": "quarterly; VAR/VECM, Granger",
+   "bytes": 17829,
+   "predict_samples": [
+    "data/samples/predict/us_macrodata_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/us_macrodata.feature_contract.json"
+   ],
+   "predict_source": "bundled"
+  },
+  {
+   "id": "DS28",
+   "name": "ETTh1",
+   "file": "etth1.csv",
+   "family": "time_series",
+   "task": "multivariate",
+   "target": "OT",
+   "seed": 42,
+   "source_url": "https://raw.githubusercontent.com/zhouhaoyi/ETDataset/main/ETT-small/ETTh1.csv",
+   "licence": "CC BY-ND 4.0 (ETDataset)",
+   "notes": "hourly; DL benchmark",
+   "bytes": 2589657,
+   "predict_samples": [
+    "data/samples/predict/etth1_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/etth1.feature_contract.json"
+   ],
+   "predict_source": "bundled"
+  },
+  {
+   "id": "DS30",
+   "name": "NIFTY 50 daily (^NSEI) 5y",
+   "file": "nifty50_daily_5y.csv",
+   "family": "supervised_sequential_financial",
+   "task": "triple_barrier / returns",
+   "target": "derived (forward return or triple-barrier label)",
+   "seed": 42,
+   "source_url": "https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEI?range=5y&interval=1d",
+   "licence": "Yahoo Finance terms: personal/research use only; use an NSE/vendor feed in production",
+   "notes": "1236 rows, 15 Nov 2021 to 13 Nov 2026; expected suitability: Suitable (FS checks)",
+   "bytes": 94811,
+   "predict_samples": [
+    "data/samples/predict/nifty50_daily_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/nifty50_daily.feature_contract.json"
+   ],
+   "predict_source": "bundled"
+  }
+ ],
+ "lazy": [
+  {
+   "id": "DS4",
+   "name": "Adult",
+   "source": "https://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data",
+   "seed": 42,
+   "predict_samples": [
+    "data/samples/predict/adult_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/adult.feature_contract.json"
+   ],
+   "predict_source": "downloaded (UCI adult.test)"
+  },
+  {
+   "id": "DS5",
+   "name": "German Credit",
+   "source": "https://www.openml.org/api/v1/json/data/31",
+   "seed": 42,
+   "predict_samples": [
+    "data/samples/predict/german_credit_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/german_credit.feature_contract.json"
+   ],
+   "predict_source": "downloaded (OpenML 31)"
+  },
+  {
+   "id": "DS6",
+   "name": "Credit Card Fraud",
+   "source": "https://www.openml.org/api/v1/json/data/1597",
+   "seed": 42,
+   "predict_samples": [
+    "data/samples/predict/credit_card_fraud_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/credit_card_fraud.feature_contract.json"
+   ],
+   "predict_source": "downloaded (OpenML 1597 parquet)"
+  },
+  {
+   "id": "DS7",
+   "name": "Bank Marketing",
+   "source": "https://archive.ics.uci.edu/static/public/222/bank+marketing.zip",
+   "seed": 42,
+   "predict_samples": [
+    "data/samples/predict/bank_marketing_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/bank_marketing.feature_contract.json"
+   ],
+   "predict_source": "downloaded (UCI 222)"
+  },
+  {
+   "id": "DS8",
+   "name": "Default of Credit Card Clients",
+   "source": "https://archive.ics.uci.edu/static/public/350/default+of+credit+card+clients.zip",
+   "seed": 42,
+   "predict_samples": [
+    "data/samples/predict/credit_default_taiwan_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/credit_default_taiwan.feature_contract.json"
+   ],
+   "predict_source": "downloaded (UCI 350)"
+  },
+  {
+   "id": "DS12",
+   "name": "California Housing",
+   "source": "https://www.openml.org/api/v1/json/data/537",
+   "seed": 42,
+   "predict_samples": [
+    "data/samples/predict/california_housing_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/california_housing.feature_contract.json"
+   ],
+   "predict_source": "downloaded (OpenML 537)"
+  },
+  {
+   "id": "DS13",
+   "name": "Ames House Prices",
+   "source": "https://www.openml.org/api/v1/json/data/42165",
+   "seed": 42,
+   "predict_samples": [
+    "data/samples/predict/ames_house_prices_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/ames_house_prices.feature_contract.json"
+   ],
+   "predict_source": "downloaded (OpenML 42165)"
+  },
+  {
+   "id": "DS17",
+   "name": "sklearn built-ins",
+   "source": "sklearn.datasets.load_*",
+   "seed": 42,
+   "predict_samples": [
+    "data/samples/predict/sklearn_diabetes_predict.csv",
+    "data/samples/predict/sklearn_digits_predict.csv",
+    "data/samples/predict/sklearn_wine_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/sklearn_diabetes.feature_contract.json",
+    "data/samples/predict/contracts/sklearn_digits.feature_contract.json",
+    "data/samples/predict/contracts/sklearn_wine.feature_contract.json"
+   ],
+   "predict_source": "bundled with scikit-learn"
+  },
+  {
+   "id": "DS20",
+   "name": "Online Retail II",
+   "source": "https://archive.ics.uci.edu/static/public/502/online+retail+ii.zip",
+   "seed": 42,
+   "predict_samples": [
+    "data/samples/predict/online_retail_rfm_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/online_retail_rfm.feature_contract.json"
+   ],
+   "predict_source": "downloaded (UCI 502), RFM derived"
+  },
+  {
+   "id": "DS21",
+   "name": "Credit Card Fraud (unlabelled view)",
+   "source": "https://www.openml.org/api/v1/json/data/1597",
+   "seed": 42,
+   "predict_samples": [
+    "data/samples/predict/credit_card_fraud_unlabelled_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/credit_card_fraud_unlabelled.feature_contract.json"
+   ],
+   "predict_source": "downloaded (OpenML 1597 parquet)"
+  },
+  {
+   "id": "DS29",
+   "name": "Electricity Load Diagrams",
+   "source": "https://archive.ics.uci.edu/static/public/321/electricityloaddiagrams20112014.zip",
+   "seed": 42,
+   "predict_samples": [
+    "data/samples/predict/electricity_load_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/electricity_load.feature_contract.json"
+   ],
+   "predict_source": "schema-derived (no download)"
+  },
+  {
+   "id": "DS31",
+   "name": "S&P 500 / NIFTY constituents",
+   "source": "https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=5y&interval=1d",
+   "seed": 42,
+   "predict_samples": [
+    "data/samples/predict/multi_asset_prices_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/multi_asset_prices.feature_contract.json"
+   ],
+   "predict_source": "downloaded (Yahoo chart API, 3 months)"
+  },
+  {
+   "id": "DS32",
+   "name": "TradingLab samples",
+   "source": "vendor/tradinglab datasets/sample_loaders.py",
+   "seed": 42,
+   "predict_samples": [
+    "data/samples/predict/tradinglab_dollar_bars_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/tradinglab_dollar_bars.feature_contract.json"
+   ],
+   "predict_source": "synthetic (schema-correct)"
+  },
+  {
+   "id": "DS33",
+   "name": "Synthetic generators",
+   "source": "code (sklearn make_*, TradingLab get_classification_data)",
+   "seed": 42,
+   "predict_samples": [
+    "data/samples/predict/synthetic_classification_predict.csv"
+   ],
+   "feature_contracts": [
+    "data/samples/predict/contracts/synthetic_classification.feature_contract.json"
+   ],
+   "predict_source": "synthetic generator (by design)"
+  }
+ ],
+ "predict_note": "Prediction Studio samples (ARCHITECTURE \u00a745.9): data/samples/predict/*_predict.csv, target removed, seed 42; see predict/predict_manifest.json. Regenerate with scripts/make_predict_samples.py."
+}

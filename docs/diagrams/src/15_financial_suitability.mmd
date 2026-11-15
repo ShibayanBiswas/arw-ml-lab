@@ -1,0 +1,15 @@
+flowchart TD
+  A[Dataset flagged sequential financial by Intake or user picks a financial label] --> B[Detect index, price or returns, OHLCV, frequency, asset id]
+  B --> C[Data checks FS1-FS8 - index, price series, positivity, OHLCV consistency,<br/>regularity, length ge 1000 bars, volatility estimable, stale prices]
+  C --> D[Trial labelling - CUSUM events, triple barrier pt_sl 1,1 and vertical barrier]
+  D --> E[Label checks FS9-FS13 - event count, class balance, vertical-barrier share,<br/>average uniqueness, effective sample size]
+  E --> F[Context checks FS14-FS20 - autocorrelation, min FFD d, SADF breaks,<br/>trend-scan t-values, primary model for meta-labels, fixed-horizon balance, leakage]
+  F --> G[Grid preview 36 combinations - pt_sl x vertical x CUSUM multiple]
+  G --> H{Verdict per method}
+  H -->|Suitable| OK[Enable triple-barrier / meta-labelling / fixed-horizon / trend-scanning<br/>with recommended parameters]
+  H -->|Suitable with cautions| WC[Enable with recommendations - uniqueness weights, sequential bootstrap, embargo]
+  H -->|Not suitable| FB[Fallback - next-period return regression, sign classification with dead-zone,<br/>or ordinary forecasting]
+  OK --> V[VLM VD9 reviews barrier and grid plots - may choose among allowed methods only]
+  WC --> V
+  V --> U[User approves - Suitability report stored]
+  FB --> U

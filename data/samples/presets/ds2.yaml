@@ -1,0 +1,11 @@
+id: DS2
+name: "Breast Cancer Wisconsin (WDBC)"
+file: data/samples/breast_cancer_wdbc.data
+family: supervised
+task: binary
+target: "diagnosis (col 2)"
+cv: stratified_kfold
+seed: 42
+notes: "no header; id, diagnosis, 30 features"
+predict_sample: data/samples/predict/breast_cancer_wdbc_predict.csv
+feature_contract: data/samples/predict/contracts/breast_cancer_wdbc.feature_contract.json

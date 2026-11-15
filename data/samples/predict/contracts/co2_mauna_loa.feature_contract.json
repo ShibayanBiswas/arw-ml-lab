@@ -1,0 +1,24 @@
+{
+ "contract_version": "1.0",
+ "dataset_id": "DS26",
+ "task": "forecast",
+ "target": "average",
+ "features": [
+  {
+   "name": "date",
+   "nullable": false,
+   "kind": "datetime",
+   "dtype": "datetime64[ns]",
+   "min": "1958-03-01 00:00:00",
+   "max": "2024-09-01 00:00:00"
+  }
+ ],
+ "id_columns": [],
+ "time_column": "date",
+ "frequency": "MS",
+ "series_column": null,
+ "horizon_max": 24,
+ "seed": 42,
+ "n_train_rows": 799,
+ "note": "illustrative contract computed from the training split of the sample; the real one is saved by the training job (ARCHITECTURE \u00a745.2)"
+}
