@@ -4,7 +4,7 @@
 |---|---|
 | Current phase | Phase 2-cont Eval Core complete — next: 2-cont-2 or 2A |
 | Last completed step | Eval Core §41/§42 + ≥30 algos + deploy sync rule |
-| Last green commit | (pending `phase 2-cont: eval core`) |
+| Last green commit | `0afd818` (`phase 2-cont: eval core`) |
 | Open failures | Render Blueprint `need_payment_info`; Vercel may need SSO for MCP |
 | Next action | Say **continue** for Phase 2-cont-2 (plots/CV/Optuna/remaining R*C*) or Phase 2A |
 
