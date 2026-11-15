@@ -3,10 +3,12 @@ import { z } from "zod";
 import { TEAM_MEMBERS, resolveLoginEmail } from "@/data/team";
 import {
   verifyPassword,
-  createPendingToken,
-  applyPendingCookie,
+  createSessionToken,
+  applySessionCookie,
+  clearCookiesOnResponse,
+  newId,
 } from "@/lib/auth/crypto";
-import { createOtp, ensureSeeded, findUserByEmail } from "@/lib/auth/store";
+import { ensureSeeded, findUserByEmail, setActiveSession } from "@/lib/auth/store";
 
 export const dynamic = "force-dynamic";
 
@@ -28,11 +30,14 @@ export async function POST(request: Request) {
     if (!allowed.has(canonical)) {
       return NextResponse.json({ error: "Invalid email ID." }, { status: 401 });
     }
-    await ensureSeeded();
+    await ensureSeeded({ overwritePasswords: false });
     const user = await findUserByEmail(canonical);
     if (!user) {
       return NextResponse.json(
-        { error: "Account not provisioned. Set SEED_DEFAULT_PASSWORD_MAP and POST /api/auth/seed." },
+        {
+          error:
+            "Account not provisioned. Set SEED_DEFAULT_PASSWORD_MAP and POST /api/auth/seed.",
+        },
         { status: 401 },
       );
     }
@@ -40,21 +45,25 @@ export async function POST(request: Request) {
     if (!ok) {
       return NextResponse.json({ error: "Wrong password." }, { status: 401 });
     }
-    const { otp, code } = await createOtp(user);
-    const pending = await createPendingToken({
+    const sid = newId();
+    await setActiveSession(user.id, sid);
+    const token = await createSessionToken({
       userId: user.id,
       email: user.email,
       name: user.name,
-      purpose: "login",
-      otpId: otp.id,
+      role: user.role,
+      sid,
+      workspaceId:
+        process.env.LAB_DEFAULT_WORKSPACE_ID || "00000000-0000-0000-0000-000000000010",
     });
     const res = NextResponse.json({
       ok: true,
-      otp: code,
       email: user.email,
       name: user.name,
+      redirect: "/",
     });
-    applyPendingCookie(res, pending);
+    clearCookiesOnResponse(res);
+    applySessionCookie(res, token);
     return res;
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);

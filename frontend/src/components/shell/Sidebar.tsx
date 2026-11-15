@@ -280,6 +280,14 @@ export function Sidebar({ userName, userEmail, collapsed = false, onNavigate }: 
             </div>
           ) : null}
         </div>
+        {!collapsed ? (
+          <Link
+            href="/change-password"
+            className="mb-2 block rounded-lg border border-[var(--border)] px-2.5 py-2 text-center text-xs font-medium text-[var(--fg-muted)] transition hover:border-[color-mix(in_srgb,var(--gold)_40%,var(--border))] hover:text-[var(--fg)]"
+          >
+            Change password
+          </Link>
+        ) : null}
         <div className={`flex gap-2 ${collapsed ? "flex-col" : ""}`}>
           <button
             type="button"

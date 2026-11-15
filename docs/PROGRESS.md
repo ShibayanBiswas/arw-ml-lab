@@ -2,11 +2,11 @@
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 2-cont-2 done — awaiting continue |
-| Last completed step | Phase 2-cont-2 Tune / CV / plots |
-| Last green commit | `046cfe7` (`phase 2-cont-2: tune cv plots`) |
-| Open failures | Render Blueprint `need_payment_info` |
-| Next action | User **continue** → 2-cont-3 or Phase 2A |
+| Current phase | Phase 2-cont-3 done — awaiting continue |
+| Last completed step | Phase 2-cont-3 SP Auth / UI parity |
+| Last green commit | *(filled at push)* |
+| Open failures | Render Blueprint `need_payment_info`; optional Vercel `SUPABASE_SERVICE_ROLE_KEY` for durable password changes |
+| Next action | User **continue** → Phase 2A or more ML 2-cont |
 
 ## Phase log
 | Phase | Status | Report | Commit |
@@ -18,3 +18,4 @@
 | 2 | done (thin) | docs/PHASE_2_REPORT.md | phase 2: auth brand thin supervised |
 | 2-cont | done (Eval Core) | docs/PHASE_2_CONT_REPORT.md | phase 2-cont: eval core |
 | 2-cont-2 | done | docs/PHASE_2_CONT_2_REPORT.md | phase 2-cont-2: tune cv plots |
+| 2-cont-3 | done | docs/PHASE_2_CONT_3_REPORT.md | phase 2-cont-3: sp auth ui parity |

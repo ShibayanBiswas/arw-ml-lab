@@ -2,19 +2,21 @@
 
 Secrets never go in git or chat; set them in the vendor dashboards and GitHub Environment `production`.
 
-## Auth (Phase 2 — BFF, not Supabase email OTP)
+## Auth (Phase 2-cont-3 — BFF password-only, not Supabase email OTP)
 
-Login is SP Workstation–style: password → **on-screen OTP** (nothing emailed). Roster = Rathi emails in `frontend/src/data/team.ts`.
+Login is SP Workstation–style UI: **email + password → session** (no OTP screen; ADR-0008). Roster = Rathi emails in `frontend/src/data/team.ts`.
 
 | Vercel env | Purpose |
 |---|---|
 | `JWT_SECRET` | Shared with Render `lab-api` (`AUTH_MODE=bff`) |
-| `SEED_DEFAULT_PASSWORD_MAP` | JSON `{"email@rathi.com":"…"}` for first seed |
+| `SEED_DEFAULT_PASSWORD_MAP` | JSON `{"email@rathi.com":"…"}` for first seed / force reseed via `POST /api/auth/seed` |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Server-only** BFF access to `lab_app_users` (ADR-0008). Never `NEXT_PUBLIC_*` |
+| `NEXT_PUBLIC_SUPABASE_URL` | Project URL (already required) |
 | `NEXT_PUBLIC_APP_URL` | `https://arw-ml-lab.vercel.app` (or new alias) |
 | `LAB_DEFAULT_WORKSPACE_ID` | default workspace UUID |
 | `NEXT_PUBLIC_LAB_API_URL` | `lab-api` URL when Render exists; else local |
 
-Supabase Auth magic-link redirects are **not** required for primary login (ADR-0005). Postgres/Storage still on Supabase free/Pro.
+Supabase Auth magic-link redirects are **not** required for primary login (ADR-0005/0008). Postgres/Storage still on Supabase free/Pro.
 
 ## Live status
 
@@ -35,7 +37,7 @@ After **every** phase green closeout:
 1. `git commit` with `phase <n>: …`
 2. `git push origin main` so GitHub matches local
 3. Confirm Vercel Hobby production deployment is **READY** for Root Directory `frontend` (Git integration or MCP). If MCP returns 403, run team SSO consent once, then re-check deployments.
-4. Never put `NVIDIA_API_KEY` / service-role keys on Vercel.
+4. Never put `NVIDIA_API_KEY` on Vercel. `SUPABASE_SERVICE_ROLE_KEY` is allowed **only** as a non-`NEXT_PUBLIC` Vercel server env for BFF `lab_app_users` (ADR-0008); CI still fails if it appears in the client bundle.
 
 ## Topology
 
@@ -108,7 +110,7 @@ Buckets `datasets`, `artefacts`, `models`, `reports`, `plots`, `predictions` and
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | publishable/anon key only |
 | `NEXT_PUBLIC_LAB_API_URL` | `https://<lab-api>.onrender.com` |
 
-**Never** set `NVIDIA_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, or any `DATABASE_URL` on Vercel.
+**Never** set `NVIDIA_API_KEY` or any `DATABASE_URL` on Vercel. `SUPABASE_SERVICE_ROLE_KEY` is server-only for BFF `lab_app_users` (ADR-0008); never expose it as `NEXT_PUBLIC_*`.
 
 ### 5. GitHub Environment `production`
 

@@ -1,5 +1,12 @@
 # Architecture decision records
 
+## ADR-0008 — Phase 2-cont-3 password-only SP auth UI + durable seed (2026-11-15)
+
+- Product request: **no OTP screen** — login is email+password → `ml_session` immediately (ADR-0005 OTP step removed).
+- Change password uses **current + new** (no on-screen OTP); SP layout/styles retained with ML Lab branding.
+- Hosted passwords: `SEED_DEFAULT_PASSWORD_MAP` on Vercel + upsert into `lab_app_users`. BFF may use **`SUPABASE_SERVICE_ROLE_KEY` server-only** in Next.js route handlers for this table (never `NEXT_PUBLIC_*`, never client bundle). In-memory Map remains local/dev fallback.
+- UI must match SP Workstation auth shell (aurora, auth-card-large, disclaimer modal, ThemeToggle, light/dark).
+
 ## ADR-0007 — Phase 2-cont-2 Tune / CV / nested default (2026-11-15)
 
 - Nested CV **on by default when n_train &lt; 2000** (MI-03); outer folds use the selected scheme, inner = 3-fold stratified/kfold for tune only.

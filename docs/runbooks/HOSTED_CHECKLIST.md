@@ -23,7 +23,9 @@ Use this after following [docs/DEPLOY.md](../DEPLOY.md). Reply with ticks only; 
 ## Vercel
 
 - [x] Project linked; Root Directory = `frontend`; display name **Machine Learning Lab**
-- [x] Supabase `NEXT_PUBLIC_*` set; add `JWT_SECRET`, `NEXT_PUBLIC_APP_URL`, `SEED_DEFAULT_PASSWORD_MAP` (server-only) for BFF
+- [x] Supabase `NEXT_PUBLIC_*` set; `JWT_SECRET` + `SEED_DEFAULT_PASSWORD_MAP` set on Vercel (2-cont-3)
+- [ ] Optional: `SUPABASE_SERVICE_ROLE_KEY` on Vercel (server-only) for durable `lab_app_users` password updates
+- [x] Password-only login (no OTP); SP auth UI parity (ADR-0008)
 - [x] Production URL: `https://arw-ml-lab.vercel.app`
 - [ ] MCP team re-auth when SSO expires (approve consent link from agent); then inspect failed deploys
 - [ ] Update `NEXT_PUBLIC_LAB_API_URL` once lab-api exists (or point at local tunnel for demos)

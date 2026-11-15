@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { BrandLogo } from "@/components/ui/BrandLogo";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 type Props = {
   children: ReactNode;
@@ -19,20 +20,24 @@ export function AuthShell({ children, subtitle, variant = "signin" }: Props) {
 
       <header className="relative z-10 flex items-center justify-between px-6 py-6 md:px-12">
         <BrandLogo priority className="h-11 w-auto md:h-12" />
-        {subtitle ? (
-          <span className="hidden text-[10px] font-bold tracking-[0.32em] text-[var(--fg-subtle)] md:inline">
-            {subtitle}
-          </span>
-        ) : null}
+        <div className="flex items-center gap-4">
+          {subtitle ? (
+            <span className="hidden text-[10px] font-bold tracking-[0.32em] text-[var(--fg-subtle)] md:inline">
+              {subtitle}
+            </span>
+          ) : null}
+          <ThemeToggle />
+        </div>
       </header>
 
       <main className="relative z-10 flex w-full flex-1 items-center justify-center px-5 py-10 md:px-10 md:py-14">
-        <div className="auth-card-wrap w-full max-w-md">{children}</div>
+        <div className="auth-card-wrap w-full">{children}</div>
       </main>
 
       <footer className="relative z-10 border-t border-[color-mix(in_srgb,var(--gold)_12%,var(--border))] px-6 py-6 text-center md:px-12">
         <p className="text-[10px] font-medium tracking-[0.22em] text-[var(--fg-subtle)]">
-          © {new Date().getFullYear()} ANAND RATHI WEALTH · MACHINE LEARNING LAB · INTERNAL USE ONLY
+          © {new Date().getFullYear()} ANAND RATHI WEALTH · MACHINE LEARNING LAB ·
+          INTERNAL USE ONLY
         </p>
       </footer>
     </div>
