@@ -10,7 +10,8 @@
 - `/otp` redirects to `/login`; `POST /api/auth/verify-otp` returns 410
 - Change password: current + new + confirm (`POST /api/auth/change-password`)
 - Store: Supabase `lab_app_users` when `SUPABASE_SERVICE_ROLE_KEY` set; else memory + seed map
-- Vercel secrets set: `JWT_SECRET`, `SEED_DEFAULT_PASSWORD_MAP` (all roster → shared initial password; not in git)
+- Vercel secrets set: `JWT_SECRET`, `LAB_DEFAULT_SEED` (shared initial password for all roster), `SEED_DEFAULT_PASSWORD_MAP` (optional JSON); not in git
+- Hosted smoke: `POST /api/auth/login` → **200** `ok:true`, no `otp`, `Set-Cookie` present
 
 ### UI (SP same-to-same, ML Lab branding)
 - `LoginForm`, `AuthShell` + `ThemeToggle`, `AuthAccessStrip`, `AuthDisclaimerModal`, `ChangePasswordForm`
@@ -23,7 +24,8 @@
 | Vitest auth store seed / map / change + LoginForm SP structure | **PASS** (11 tests) |
 | `tsc --noEmit` | **PASS** |
 | No OTP copy on login | **PASS** |
-| Vercel env JWT_SECRET + SEED_DEFAULT_PASSWORD_MAP | **SET** (production + preview) |
+| Vercel env JWT_SECRET + LAB_DEFAULT_SEED | **SET** (production + preview) |
+| Hosted login smoke (seeded password → session) | **PASS** |
 
 ### Commands
 

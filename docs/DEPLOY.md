@@ -9,7 +9,8 @@ Login is SP Workstation–style UI: **email + password → session** (no OTP scr
 | Vercel env | Purpose |
 |---|---|
 | `JWT_SECRET` | Shared with Render `lab-api` (`AUTH_MODE=bff`) |
-| `SEED_DEFAULT_PASSWORD_MAP` | JSON `{"email@rathi.com":"…"}` for first seed / force reseed via `POST /api/auth/seed` |
+| `LAB_DEFAULT_SEED` | Shared initial password for all roster emails (preferred on Vercel) |
+| `SEED_DEFAULT_PASSWORD_MAP` | Optional JSON per-email overrides; force reseed via `POST /api/auth/seed` |
 | `SUPABASE_SERVICE_ROLE_KEY` | **Server-only** BFF access to `lab_app_users` (ADR-0008). Never `NEXT_PUBLIC_*` |
 | `NEXT_PUBLIC_SUPABASE_URL` | Project URL (already required) |
 | `NEXT_PUBLIC_APP_URL` | `https://arw-ml-lab.vercel.app` (or new alias) |
