@@ -66,10 +66,16 @@ function cachePut(user: AppUser): void {
 /**
  * Upsert roster into DB (or memory). overwritePasswords=true forces hashes from seed map
  * (used by POST /api/auth/seed).
+ *
+ * Memory-only (no service role): always re-apply SEED_DEFAULT_PASSWORD_MAP when set so
+ * every Vercel isolate matches hosted seed (change-password is ephemeral until durable DB).
  */
 export async function ensureSeeded(opts?: { overwritePasswords?: boolean }): Promise<void> {
-  const overwrite = Boolean(opts?.overwritePasswords);
-  if (!overwrite && globalThis.__mlAuthSeeded && users().size > 0 && !authDbEnabled()) {
+  const mapSet = Boolean(process.env.SEED_DEFAULT_PASSWORD_MAP);
+  const durable = authDbEnabled();
+  const overwrite =
+    Boolean(opts?.overwritePasswords) || (!durable && mapSet);
+  if (!overwrite && globalThis.__mlAuthSeeded && users().size > 0 && !durable) {
     return;
   }
   const pw = passwordMap();
@@ -78,13 +84,13 @@ export async function ensureSeeded(opts?: { overwritePasswords?: boolean }): Pro
     const role = m.role === "admin" ? "admin" : "scientist";
     const passwordHash = await hashPassword(pw[email] || "Lab@ChangeMe1");
 
-    if (authDbEnabled()) {
+    if (durable) {
       const row = await dbUpsertUser({
         email,
         name: m.name,
         role,
         password_hash: passwordHash,
-        overwritePassword: overwrite,
+        overwritePassword: Boolean(opts?.overwritePasswords),
       });
       if (row) cachePut(fromDb(row));
       continue;
