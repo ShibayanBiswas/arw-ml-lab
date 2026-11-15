@@ -67,6 +67,12 @@ Full CLE.P/REE.P catalogues; remaining R*/C*; Optuna trial loop / Halving / NSGA
 - [x] seed 42 on CV / compare
 - [x] push + Vercel verification (recorded below at closeout)
 
+### Deploy closeout
+
+- GitHub `main` at `47e1eed` (includes `0afd818` phase 2-cont)
+- Vercel production **READY**: `https://arw-ml-16ch65rti-shibayan-biswas-projects.vercel.app` (alias `https://arw-ml-lab.vercel.app`)
+- Supabase hosted: applied `lab_bff_auth` migration (lab_app_users / lab_otps)
+
 ## Next
 
 **Phase 2-cont-2** (remaining Phase 2 AC) or **Phase 2A** on user **continue**.
