@@ -4,7 +4,7 @@
 |---|---|
 | Current phase | Phase 2-cont-2 done — awaiting continue |
 | Last completed step | Phase 2-cont-2 Tune / CV / plots |
-| Last green commit | *(filled at push)* |
+| Last green commit | `046cfe7` (`phase 2-cont-2: tune cv plots`) |
 | Open failures | Render Blueprint `need_payment_info` |
 | Next action | User **continue** → 2-cont-3 or Phase 2A |
 

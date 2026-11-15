@@ -59,8 +59,8 @@ Full CLE.P.45 / REE.P.36; complete R*/C* + DL tabular; Halving/NSGA-II/Hyperband
 
 ### Deploy closeout
 
-- GitHub `main` commit: *(filled at push)*
-- Vercel production READY: *(filled at push)*
+- GitHub `main` commit: `046cfe7` (`phase 2-cont-2: tune cv plots`)
+- Vercel production **READY**: `https://arw-ml-cpkn0e0tu-shibayan-biswas-projects.vercel.app` (alias `https://arw-ml-lab.vercel.app`)
 
 ## Next
 
