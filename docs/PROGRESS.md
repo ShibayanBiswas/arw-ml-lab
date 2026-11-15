@@ -2,11 +2,11 @@
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 2B done — awaiting continue |
-| Last completed step | Phase 2B Workstation UI shell |
-| Last green commit | `f3bf6de` (`phase 2b: workstation ui shell`) |
+| Current phase | Phase 3 thin done — awaiting continue |
+| Last completed step | Phase 3 Explain/Predict/UQ thin + deploy hygiene |
+| Last green commit | _(filled after commit)_ (`phase 3: explain predict uq thin`) |
 | Open failures | Render Blueprint `need_payment_info`; optional Vercel `SUPABASE_SERVICE_ROLE_KEY` for durable password changes |
-| Next action | User **continue** → Phase 3 (Explain+Predict) or Phase 2A-cont (full §34) |
+| Next action | User **continue** → Phase 3A (Prediction Studio) or 3-cont / 2A-cont |
 
 ## Phase log
 | Phase | Status | Report | Commit |
@@ -21,3 +21,5 @@
 | 2-cont-3 | done | docs/PHASE_2_CONT_3_REPORT.md | phase 2-cont-3: sp auth ui parity |
 | 2A | done (thin) | docs/PHASE_2A_REPORT.md | phase 2a: dl thin smoke |
 | 2B | done | docs/PHASE_2B_REPORT.md | phase 2b: workstation ui shell |
+| 2C | done (deploy hygiene) | docs/PHASE_3_REPORT.md (A) | fix: sole arw-ml-lab + ci |
+| 3 | done (thin) | docs/PHASE_3_REPORT.md | phase 3: explain predict uq thin |

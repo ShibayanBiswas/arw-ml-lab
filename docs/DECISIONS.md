@@ -1,5 +1,11 @@
 # Architecture decision records
 
+## ADR-0012 — Phase 3 Explain / Predict / UQ thin (2026-11-15)
+
+- Thin smoke only: TreeSHAP (`shap.TreeExplainer`), PDP/ICE (`sklearn.inspection`), MAPIE `SplitConformalRegressor` / `SplitConformalClassifier(aps)`, `CalibratedClassifierCV` + `FrozenEstimator` (sklearn ≥1.6 removed `cv='prefit'`), feature contracts + `predict_single`/`predict_batch` (never refit).
+- Full §17 explainers, §25 registry/ONNX/export, §45 Prediction Studio UI → **3-cont / 3A**.
+- In-memory `MODEL_STORE` for thin API routes; durable registry stays Phase 3A/7.
+
 ## ADR-0011 — Sole Vercel project `arw-ml-lab` (2026-11-15)
 
 - This repo deploys to **one** Vercel project: **`arw-ml-lab`** (`prj_gohylY9RNNIcBZHqG6GqaKtaTmrY`), Root Directory **`frontend`**, production alias `https://arw-ml-lab.vercel.app`.

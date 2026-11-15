@@ -30,9 +30,14 @@ jobs:
         with: { submodules: recursive }
       - uses: astral-sh/setup-uv@v6
       - run: uv sync --all-extras --frozen
-      # pyproject.dev extras are API/tooling only; unit tests need the worker-light ML pins
-      - name: Install worker-light ML stack
-        run: uv pip install -r backend/requirements/worker-light.lock.txt
+      # pyproject.dev extras are API/tooling only; unit tests need ML pins (use .txt not .lock —
+      # uv cannot resolve pip-compile lock files that pin hashes against a conflicting base env)
+      - name: Install ML stack for unit tests
+        run: >
+          uv pip install
+          -r backend/requirements/ml-core.txt
+          -r backend/requirements/eda.txt
+          -r backend/requirements/xai-uq.txt
       - run: uv run ruff check labcore backend tests && uv run ruff format --check labcore backend tests && uv run mypy labcore
       - env:
           LAB_DEFAULT_SEED: "42"

@@ -13,7 +13,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
 
-from backend.app.routers import auth, catalog, datasets, eda, experiments, intake, jobs
+from backend.app.routers import auth, catalog, datasets, eda, experiments, intake, jobs, predict
 from backend.app.schemas import Healthz
 from backend.app.settings import get_settings
 
@@ -68,6 +68,7 @@ def create_app() -> FastAPI:
     app.include_router(eda.router)
     app.include_router(intake.router)
     app.include_router(experiments.router)
+    app.include_router(predict.router)
     return app
 
 
