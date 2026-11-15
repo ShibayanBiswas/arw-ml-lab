@@ -12,6 +12,8 @@ describe("auth store (memory path)", () => {
     globalThis.__mlAuthUsers = new Map();
     globalThis.__mlAuthSeeded = false;
     delete process.env.SEED_DEFAULT_PASSWORD_MAP;
+    delete process.env.LAB_DEFAULT_SEED;
+    delete process.env.SEED_DEFAULT_PASSWORD;
     delete process.env.SUPABASE_SERVICE_ROLE_KEY;
   });
 
@@ -29,6 +31,14 @@ describe("auth store (memory path)", () => {
     process.env.SEED_DEFAULT_PASSWORD_MAP = JSON.stringify({
       "shibayanbiswas@rathi.com": "Shibayan@123",
     });
+    await ensureSeeded({ overwritePasswords: true });
+    const user = await findUserByEmail("shibayanbiswas@rathi.com");
+    expect(await verifyPassword("Shibayan@123", user!.passwordHash)).toBe(true);
+  });
+
+  it("respects LAB_DEFAULT_SEED shared password", async () => {
+    process.env.JWT_SECRET = process.env.JWT_SECRET || "test-secret-for-vitest-32chars!!";
+    process.env.LAB_DEFAULT_SEED = "Shibayan@123";
     await ensureSeeded({ overwritePasswords: true });
     const user = await findUserByEmail("shibayanbiswas@rathi.com");
     expect(await verifyPassword("Shibayan@123", user!.passwordHash)).toBe(true);

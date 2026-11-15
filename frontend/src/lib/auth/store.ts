@@ -37,13 +37,20 @@ function users(): Map<string, AppUser> {
 export function passwordMap(): Record<string, string> {
   try {
     const raw = process.env.SEED_DEFAULT_PASSWORD_MAP;
-    if (raw) return JSON.parse(raw) as Record<string, string>;
+    if (raw && raw.trim() && raw.trim() !== "[SENSITIVE]") {
+      return JSON.parse(raw) as Record<string, string>;
+    }
   } catch {
-    /* ignore */
+    /* ignore malformed JSON — fall through */
   }
+  // Shared initial password for all roster emails (preferred on Vercel — avoids JSON quoting issues)
+  const shared =
+    process.env.LAB_DEFAULT_SEED?.trim() ||
+    process.env.SEED_DEFAULT_PASSWORD?.trim() ||
+    "Lab@ChangeMe1";
   const out: Record<string, string> = {};
   for (const m of TEAM_MEMBERS) {
-    out[m.email.toLowerCase()] = "Lab@ChangeMe1";
+    out[m.email.toLowerCase()] = shared;
   }
   return out;
 }
@@ -71,7 +78,13 @@ function cachePut(user: AppUser): void {
  * every Vercel isolate matches hosted seed (change-password is ephemeral until durable DB).
  */
 export async function ensureSeeded(opts?: { overwritePasswords?: boolean }): Promise<void> {
-  const mapSet = Boolean(process.env.SEED_DEFAULT_PASSWORD_MAP);
+  const mapSet = Boolean(
+    (process.env.SEED_DEFAULT_PASSWORD_MAP &&
+      process.env.SEED_DEFAULT_PASSWORD_MAP.trim() &&
+      process.env.SEED_DEFAULT_PASSWORD_MAP.trim() !== "[SENSITIVE]") ||
+      process.env.LAB_DEFAULT_SEED?.trim() ||
+      process.env.SEED_DEFAULT_PASSWORD?.trim(),
+  );
   const durable = authDbEnabled();
   const overwrite =
     Boolean(opts?.overwritePasswords) || (!durable && mapSet);
