@@ -4,7 +4,7 @@
 |---|---|
 | Current phase | Phase 1A complete — next: Phase 2 |
 | Last completed step | Phase 1A AI Dataset Intake / Auto-Setup (§33) rule-based |
-| Last green commit | (pending `phase 1A: dataset intake`) |
+| Last green commit | `b5c3b13` (`phase 1A: dataset intake`) |
 | Open failures | Hosted Render Blueprint still `need_payment_info` (from 8.1); DS12 OpenML may soft-skip; 1M intake soft-skip on this host |
 | Next action | Say **continue** for Phase 2 plan (preprocessing + supervised core) |
 
