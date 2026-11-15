@@ -52,8 +52,9 @@ EXIT:0
 
 ### Deploy closeout
 
-- GitHub `main`: _(filled after push)_
-- Vercel **`arw-ml-lab` only** READY: _(filled after deploy)_
+- GitHub `main`: `23df8d6` (`phase 3: explain predict uq thin`); CI green on `ed9f918`
+- Vercel **`arw-ml-lab` only** READY: `https://arw-ml-g4iy06imh-shibayan-biswas-projects.vercel.app` (alias `https://arw-ml-lab.vercel.app`)
+- Stray project `frontend` deleted — not in project list
 
 ## Next
 

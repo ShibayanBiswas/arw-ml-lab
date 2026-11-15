@@ -4,7 +4,7 @@
 |---|---|
 | Current phase | Phase 3 thin done — awaiting continue |
 | Last completed step | Phase 3 Explain/Predict/UQ thin + deploy hygiene |
-| Last green commit | _(filled after commit)_ (`phase 3: explain predict uq thin`) |
+| Last green commit | `23df8d6` (`phase 3: explain predict uq thin`) |
 | Open failures | Render Blueprint `need_payment_info`; optional Vercel `SUPABASE_SERVICE_ROLE_KEY` for durable password changes |
 | Next action | User **continue** → Phase 3A (Prediction Studio) or 3-cont / 2A-cont |
 
