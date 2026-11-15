@@ -5,6 +5,7 @@ import { IntakeReview } from "@/components/data/IntakeReview";
 import { EdaWorkbench } from "@/components/eda/EdaWorkbench";
 import { LogicAtlas } from "@/components/learn/LogicAtlas";
 import { ModulePlaceholder } from "@/components/panels/ModulePlaceholder";
+import { PredictWorkbench } from "@/components/predict/PredictWorkbench";
 import { TrainWorkbench } from "@/components/train/TrainWorkbench";
 import { MODULES } from "@/lib/modules";
 
@@ -46,6 +47,10 @@ export default async function ModuleSubPage({ params }: Props) {
     const mode =
       page === "leaderboard" ? "leaderboard" : page === "detail" ? "detail" : "models";
     return <TrainWorkbench mode={mode} />;
+  }
+  if (slug === "predict" && (page === "home" || page === "batch" || page === "single")) {
+    const mode = page === "batch" ? "batch" : page === "single" ? "single" : "home";
+    return <PredictWorkbench mode={mode} />;
   }
 
   return (

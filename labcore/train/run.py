@@ -38,6 +38,7 @@ class TrainConfig(BaseModel):
     run_eval: bool = True
     cv_scheme: str | None = None  # None → task default; "nested" forces nested flag
     nested: bool | None = None  # None → MI-03 auto (n_train < 2000)
+    dataset_id: str = "unknown"
 
 
 def _metrics_reg(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, float]:
@@ -107,6 +108,13 @@ def run_supervised_cv(
             drop_cols.append(c)
     if drop_cols:
         X_all = X_all.drop(columns=drop_cols)
+    # Never train on identifier-like columns (§45.2 / MI — values must not enter the contract)
+    from labcore.predict.contract import looks_identifier
+
+    id_drop = [c for c in list(X_all.columns) if looks_identifier(str(c), X_all[c])]
+    if id_drop:
+        drop_cols.extend(id_drop)
+        X_all = X_all.drop(columns=id_drop)
 
     stratify = y_all if config.task != "regression" else None
     X_tr, X_te, y_tr, y_te = train_test_split(
@@ -224,6 +232,7 @@ def run_supervised_cv(
             "folds": fold_metrics,
             "dropped_constant": meta.get("dropped_constant"),
             "prediction_source": {"cv": "oof", "test": "holdout"},
+            "_pipeline": full,
             "_oof": {
                 "y_true": y_oof_true,
                 "y_pred": y_oof_hat,
@@ -240,12 +249,26 @@ def run_supervised_cv(
     for i, r in enumerate(rows, start=1):
         r["rank"] = i
 
+    from labcore.predict.contract import build_feature_contract
+
+    feature_names = [str(c) for c in X_tr.columns]
+    feature_contract = build_feature_contract(
+        X_tr,
+        dataset_id=config.dataset_id,
+        task=config.task,
+        target=config.target,
+        seed=config.seed,
+    )
+
     eval_payload = None
+    champion_pipeline = None
     if config.run_eval and rows:
         champ = rows[0]
         oof = champ.pop("_oof")
+        champion_pipeline = champ.pop("_pipeline", None)
         for r in rows[1:]:
             r.pop("_oof", None)
+            r.pop("_pipeline", None)
         if config.task == "regression":
             from labcore.eval.regression.suite import run_regression_eval
 
@@ -277,8 +300,13 @@ def run_supervised_cv(
             }
         champion_payload = {"algorithm_key": champ["algorithm_key"], "eval": eval_payload}
     else:
+        if rows:
+            champion_pipeline = rows[0].get("_pipeline")
+            if champion_pipeline is not None:
+                champion_payload = {"algorithm_key": rows[0]["algorithm_key"], "eval": None}
         for r in rows:
             r.pop("_oof", None)
+            r.pop("_pipeline", None)
 
     return {
         "leaderboard": rows,
@@ -292,4 +320,7 @@ def run_supervised_cv(
         "cv_visualiser": cv_plot,
         "eval": eval_payload,
         "champion": champion_payload,
+        "feature_contract": feature_contract,
+        "feature_names": feature_names,
+        "champion_pipeline": champion_pipeline,
     }

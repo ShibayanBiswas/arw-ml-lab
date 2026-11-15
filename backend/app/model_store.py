@@ -30,6 +30,9 @@ class ModelStore:
     def get(self, model_id: str) -> StoredModel | None:
         return self._models.get(model_id)
 
+    def list(self) -> list[StoredModel]:
+        return list(self._models.values())
+
     def create(
         self,
         *,

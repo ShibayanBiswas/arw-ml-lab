@@ -205,3 +205,131 @@ export async function getExperiment(experimentId: string) {
     champion?: { algorithm_key?: string };
   };
 }
+
+export type FeatureContract = {
+  contract_version?: string;
+  dataset_id?: string;
+  task?: string;
+  target?: string | null;
+  features?: Array<{
+    name: string;
+    kind: string;
+    dtype?: string;
+    nullable?: boolean;
+    role?: string;
+    min?: number | null;
+    max?: number | null;
+    median?: number | null;
+    p01?: number | null;
+    p99?: number | null;
+    integer?: boolean;
+    categories?: string[] | null;
+    mode?: string | null;
+  }>;
+  [key: string]: unknown;
+};
+
+export async function listModels() {
+  const res = await fetch(`${labApiBase()}/api/v1/models`, { headers: labAuthHeaders() });
+  if (!res.ok) throw new Error(`models: ${res.status}`);
+  return (await res.json()) as Array<{
+    id: string;
+    task: string;
+    target: string | null;
+    dataset_id: string;
+    n_features: number;
+    meta?: Record<string, unknown>;
+  }>;
+}
+
+export async function getModelSchema(modelId: string) {
+  const res = await fetch(`${labApiBase()}/api/v1/models/${modelId}/schema`, {
+    headers: labAuthHeaders(),
+  });
+  if (!res.ok) throw new Error(`schema: ${res.status}`);
+  return (await res.json()) as FeatureContract;
+}
+
+export async function getModelSampleRow(modelId: string) {
+  const res = await fetch(`${labApiBase()}/api/v1/models/${modelId}/sample-row`, {
+    headers: labAuthHeaders(),
+  });
+  if (!res.ok) throw new Error(`sample-row: ${res.status}`);
+  return (await res.json()) as { row: Record<string, unknown>; feature_names: string[] };
+}
+
+export function modelTemplateUrl(modelId: string, format: "csv" | "xlsx" = "csv") {
+  return `${labApiBase()}/api/v1/models/${modelId}/template?format=${format}`;
+}
+
+export async function downloadModelTemplate(modelId: string, format: "csv" | "xlsx" = "csv") {
+  const res = await fetch(modelTemplateUrl(modelId, format), { headers: labAuthHeaders() });
+  if (!res.ok) throw new Error(`template: ${res.status}`);
+  return res.blob();
+}
+
+export async function predictSingle(modelId: string, row: Record<string, unknown>) {
+  const res = await fetch(`${labApiBase()}/api/v1/models/${modelId}/predict`, {
+    method: "POST",
+    headers: labAuthHeaders(),
+    body: JSON.stringify({ row }),
+  });
+  if (!res.ok) throw new Error(`predict: ${res.status}`);
+  return (await res.json()) as {
+    prediction: unknown;
+    probabilities?: number[];
+    n_rows: number;
+    refit: boolean;
+  };
+}
+
+export async function predictBatchJson(modelId: string, rows: Record<string, unknown>[]) {
+  const res = await fetch(`${labApiBase()}/api/v1/predict/batch`, {
+    method: "POST",
+    headers: labAuthHeaders(),
+    body: JSON.stringify({ model_id: modelId, rows }),
+  });
+  if (!res.ok) throw new Error(`predict batch: ${res.status}`);
+  return (await res.json()) as {
+    validation: Record<string, unknown>;
+    scored: boolean;
+    predictions?: unknown[];
+    probabilities?: number[][];
+    csv?: string | null;
+    n_rows?: number;
+    refit?: boolean;
+  };
+}
+
+export async function predictBatchUpload(modelId: string, file: File) {
+  const form = new FormData();
+  form.append("model_id", modelId);
+  form.append("file", file);
+  const headers = labAuthHeaders();
+  delete headers["Content-Type"];
+  const res = await fetch(`${labApiBase()}/api/v1/predict/batch/upload`, {
+    method: "POST",
+    headers,
+    body: form,
+  });
+  if (!res.ok) throw new Error(`predict upload: ${res.status}`);
+  return (await res.json()) as {
+    validation: Record<string, unknown>;
+    scored: boolean;
+    predictions?: unknown[];
+    probabilities?: number[][];
+    csv?: string | null;
+    n_rows?: number;
+    refit?: boolean;
+  };
+}
+
+export async function explainRows(modelId: string, rows: Record<string, unknown>[]) {
+  const res = await fetch(`${labApiBase()}/api/v1/explain/${modelId}`, {
+    method: "POST",
+    headers: labAuthHeaders(),
+    body: JSON.stringify({ rows }),
+  });
+  if (!res.ok) throw new Error(`explain: ${res.status}`);
+  return (await res.json()) as Record<string, unknown>;
+}

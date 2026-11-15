@@ -2,11 +2,11 @@
 
 | Field | Value |
 |---|---|
-| Current phase | Phase 3 thin done — awaiting continue |
-| Last completed step | Phase 3 Explain/Predict/UQ thin + deploy hygiene |
-| Last green commit | `23df8d6` (`phase 3: explain predict uq thin`) |
+| Current phase | Phase 3A thin done — awaiting continue |
+| Last completed step | Phase 3A Prediction Studio thin + deploy sync |
+| Last green commit | *(pending commit `phase 3a: prediction studio thin`)* |
 | Open failures | Render Blueprint `need_payment_info`; optional Vercel `SUPABASE_SERVICE_ROLE_KEY` for durable password changes |
-| Next action | User **continue** → Phase 3A (Prediction Studio) or 3-cont / 2A-cont |
+| Next action | User **continue** → Phase 3A-cont (full §45) or Phase 4 (Time Series) |
 
 ## Phase log
 | Phase | Status | Report | Commit |
@@ -23,3 +23,4 @@
 | 2B | done | docs/PHASE_2B_REPORT.md | phase 2b: workstation ui shell |
 | 2C | done (deploy hygiene) | docs/PHASE_3_REPORT.md (A) | fix: sole arw-ml-lab + ci |
 | 3 | done (thin) | docs/PHASE_3_REPORT.md | phase 3: explain predict uq thin |
+| 3A | done (thin) | docs/PHASE_3A_REPORT.md | phase 3a: prediction studio thin |

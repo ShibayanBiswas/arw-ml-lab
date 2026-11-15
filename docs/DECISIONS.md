@@ -1,5 +1,12 @@
 # Architecture decision records
 
+## ADR-0013 — Phase 3A Prediction Studio thin (2026-11-15)
+
+- Thin smoke of §45 only: PV core (PV01 extension + PV04–PV09; other codes deferred stubs), CSV/XLSX templates, sync batch validate+score (≤5k rows), contract-driven custom form UI, DS3 sample path.
+- Train drops identifier-like columns before fit and persists `feature_contract` + champion pipeline into in-memory `MODEL_STORE` (`model_id` on experiment result). Never refit at predict; formula-safe CSV export (SEC-04).
+- Full PV01–PV16 matrix, Celery `q.predict.batch` / 1M chunking, Playwright, conformal batch columns, sequential lookback, AI `prompts/prediction.md` → **3A-cont**.
+- Deploy sync unchanged: sole Vercel `arw-ml-lab` (ADR-0011).
+
 ## ADR-0012 — Phase 3 Explain / Predict / UQ thin (2026-11-15)
 
 - Thin smoke only: TreeSHAP (`shap.TreeExplainer`), PDP/ICE (`sklearn.inspection`), MAPIE `SplitConformalRegressor` / `SplitConformalClassifier(aps)`, `CalibratedClassifierCV` + `FrozenEstimator` (sklearn ≥1.6 removed `cv='prefit'`), feature contracts + `predict_single`/`predict_batch` (never refit).

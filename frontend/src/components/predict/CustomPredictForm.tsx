@@ -1,0 +1,236 @@
+"use client";
+
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  explainRows,
+  getModelSampleRow,
+  getModelSchema,
+  predictSingle,
+  type FeatureContract,
+} from "@/lib/api";
+
+type Props = {
+  modelId: string;
+};
+
+type Feat = NonNullable<FeatureContract["features"]>[number];
+
+function formFeatures(contract: FeatureContract | null, names: string[]): Feat[] {
+  if (!contract?.features) return names.map((n) => ({ name: n, kind: "numeric" }));
+  const by = Object.fromEntries(contract.features.map((f) => [f.name, f]));
+  return names.map((n) => by[n] ?? { name: n, kind: "numeric" });
+}
+
+export function CustomPredictForm({ modelId }: Props) {
+  const [contract, setContract] = useState<FeatureContract | null>(null);
+  const [featureNames, setFeatureNames] = useState<string[]>([]);
+  const [defaults, setDefaults] = useState<Record<string, unknown>>({});
+  const [values, setValues] = useState<Record<string, unknown>>({});
+  const [result, setResult] = useState<Record<string, unknown> | null>(null);
+  const [shap, setShap] = useState<Record<string, unknown> | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState("");
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const feats = useMemo(
+    () => formFeatures(contract, featureNames),
+    [contract, featureNames]
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [schema, sample] = await Promise.all([
+          getModelSchema(modelId),
+          getModelSampleRow(modelId),
+        ]);
+        if (cancelled) return;
+        setContract(schema);
+        setFeatureNames(sample.feature_names);
+        setDefaults(sample.row);
+        setValues(sample.row);
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : String(e));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [modelId]);
+
+  useEffect(() => {
+    if (!featureNames.length) return;
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      void (async () => {
+        setStatus("Predicting…");
+        setError(null);
+        try {
+          const out = await predictSingle(modelId, values);
+          setResult(out as Record<string, unknown>);
+          setStatus("Live");
+          try {
+            const ex = await explainRows(modelId, [values]);
+            setShap(ex);
+          } catch {
+            setShap(null);
+          }
+        } catch (e) {
+          setError(e instanceof Error ? e.message : String(e));
+          setStatus("");
+        }
+      })();
+    }, 300);
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, [values, modelId, featureNames.length]);
+
+  function setField(name: string, v: unknown) {
+    setValues((prev) => ({ ...prev, [name]: v }));
+  }
+
+  function resetDefaults() {
+    setValues({ ...defaults });
+  }
+
+  async function fillRandom() {
+    try {
+      const sample = await getModelSampleRow(modelId);
+      // jitter numerics slightly with deterministic-ish Math from seed-ish
+      const row = { ...sample.row };
+      for (const f of feats) {
+        if (f.kind === "numeric" && typeof row[f.name] === "number") {
+          const span = (f.max ?? 1) - (f.min ?? 0) || 1;
+          row[f.name] = Number(row[f.name]) + (Math.random() - 0.5) * 0.05 * span;
+        }
+      }
+      setValues(row);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  const shapValues = (shap?.shap_values as number[][] | number[] | undefined) ?? null;
+  const featureNamesShap = (shap?.feature_names as string[] | undefined) ?? featureNames;
+
+  return (
+    <div className="space-y-4 p-4">
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          className="rounded border border-[var(--border)] px-3 py-1.5 text-sm"
+          onClick={resetDefaults}
+        >
+          Reset defaults
+        </button>
+        <button
+          type="button"
+          className="rounded border border-[var(--border)] px-3 py-1.5 text-sm"
+          onClick={() => void fillRandom()}
+        >
+          Fill random row
+        </button>
+        {status ? <span className="self-center text-sm text-[var(--muted)]">{status}</span> : null}
+      </div>
+      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      <div className="grid gap-3 md:grid-cols-2">
+        {feats.map((f) => {
+          if (f.kind === "boolean") {
+            return (
+              <label key={f.name} className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={Boolean(values[f.name])}
+                  onChange={(e) => setField(f.name, e.target.checked)}
+                />
+                {f.name}
+              </label>
+            );
+          }
+          if (f.kind === "categorical") {
+            const cats = f.categories ?? [];
+            return (
+              <label key={f.name} className="block text-sm">
+                <span className="text-[var(--muted)]">{f.name}</span>
+                <select
+                  className="mt-1 w-full rounded border border-[var(--border)] bg-transparent px-2 py-1"
+                  value={String(values[f.name] ?? "")}
+                  onChange={(e) => setField(f.name, e.target.value)}
+                >
+                  {cats.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            );
+          }
+          const min = f.min ?? f.p01 ?? 0;
+          const max = f.max ?? f.p99 ?? 100;
+          const num = Number(values[f.name] ?? min);
+          return (
+            <label key={f.name} className="block text-sm">
+              <span className="text-[var(--muted)]">{f.name}</span>
+              <div className="mt-1 flex gap-2">
+                <input
+                  type="range"
+                  min={min}
+                  max={max}
+                  step={f.integer ? 1 : (max - min) / 100 || 0.01}
+                  value={Number.isFinite(num) ? num : min}
+                  onChange={(e) =>
+                    setField(f.name, f.integer ? parseInt(e.target.value, 10) : Number(e.target.value))
+                  }
+                  className="flex-1"
+                />
+                <input
+                  type="number"
+                  className="w-24 rounded border border-[var(--border)] bg-transparent px-2 py-1"
+                  value={Number.isFinite(num) ? num : ""}
+                  onChange={(e) =>
+                    setField(
+                      f.name,
+                      f.integer ? parseInt(e.target.value, 10) : Number(e.target.value)
+                    )
+                  }
+                />
+              </div>
+            </label>
+          );
+        })}
+      </div>
+      {result ? (
+        <div className="rounded border border-[var(--border)] p-3 text-sm">
+          <p>
+            Prediction: <strong>{String(result.prediction)}</strong>
+            {result.refit === false ? " · no refit" : null}
+          </p>
+          {Array.isArray(result.probabilities) ? (
+            <p className="text-[var(--muted)]">
+              Probabilities: {(result.probabilities as number[]).map((p) => p.toFixed(4)).join(", ")}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+      {Array.isArray(shapValues) ? (
+        <div className="rounded border border-[var(--border)] p-3 text-sm">
+          <p className="mb-2 font-medium">SHAP (local)</p>
+          <ul className="space-y-1 font-mono text-xs">
+            {(Array.isArray(shapValues[0]) ? (shapValues[0] as number[]) : (shapValues as number[]))
+              .map((v, i) => ({ name: featureNamesShap[i] ?? `f${i}`, v }))
+              .sort((a, b) => Math.abs(b.v) - Math.abs(a.v))
+              .slice(0, 12)
+              .map((row) => (
+                <li key={row.name}>
+                  {row.name}: {row.v.toFixed(4)}
+                </li>
+              ))}
+          </ul>
+        </div>
+      ) : null}
+    </div>
+  );
+}

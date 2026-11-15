@@ -198,8 +198,8 @@ export const MODULES: ModuleGroup[] = [
     requires: ["supervised", "unsupervised", "timeseries"],
     nav: leaves("/predict", [
       { id: "home", label: "Home" },
-      { id: "single", label: "Single" },
       { id: "batch", label: "Batch" },
+      { id: "single", label: "Custom form" },
       { id: "what-if", label: "What-if / Scenario" },
       { id: "forecast", label: "Forecast" },
       { id: "monitoring", label: "Monitoring" },

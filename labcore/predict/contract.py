@@ -16,7 +16,7 @@ SCHEMA_PATH = ROOT / "docs" / "contracts" / "feature_contract.schema.json"
 _ID_NAME_HINTS = ("id", "uuid", "ssn", "email", "phone", "customer", "account", "pan", "aadhaar")
 
 
-def _looks_identifier(name: str, series: pd.Series) -> bool:
+def looks_identifier(name: str, series: pd.Series) -> bool:
     low = name.lower()
     if any(h in low for h in _ID_NAME_HINTS):
         return True
@@ -25,6 +25,10 @@ def _looks_identifier(name: str, series: pd.Series) -> bool:
         return False
     nunq = int(series.nunique(dropna=True))
     return nunq >= max(50, int(0.9 * n)) and series.dtype == object
+
+
+# Back-compat alias used by older call sites
+_looks_identifier = looks_identifier
 
 
 def build_feature_contract(

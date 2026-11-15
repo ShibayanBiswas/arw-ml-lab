@@ -38,6 +38,7 @@ def run_train_task(self, job_id: str, experiment_id: str, body: dict[str, Any]) 
             seed=42,
             recipe=RecipeSpec(seed=42),
             cv_scheme=body.get("cv_scheme"),
+            dataset_id=str(body.get("dataset_id") or body.get("sample_id") or "unknown"),
         )
         JOB_STORE.update(
             job_id,
@@ -46,13 +47,40 @@ def run_train_task(self, job_id: str, experiment_id: str, body: dict[str, Any]) 
             event={"type": "progress", "pct": 0.4, "step": "cv"},
         )
         result = run_supervised_cv(df, cfg)
+        # Persist champion pipeline for Prediction Studio (never pickle into experiment JSON)
+        pipeline = result.pop("champion_pipeline", None)
+        model_id = None
+        if pipeline is not None:
+            from backend.app.model_store import MODEL_STORE
+
+            stored = MODEL_STORE.create(
+                task=cfg.task,
+                target=cfg.target,
+                dataset_id=cfg.dataset_id,
+                feature_names=list(result.get("feature_names") or []),
+                feature_contract=dict(result.get("feature_contract") or {}),
+                pipeline=pipeline,
+                meta={
+                    "experiment_id": experiment_id,
+                    "algorithm_key": (result.get("champion") or {}).get("algorithm_key"),
+                    "seed": 42,
+                },
+            )
+            model_id = stored.id
+            result["model_id"] = model_id
+            if result.get("feature_contract") is not None:
+                result["feature_contract"]["model_id"] = model_id
         EXPERIMENT_STORE.update(
             experiment_id,
             status="done",
             leaderboard=result["leaderboard"],
             result=result,
         )
-        out = {"experiment_id": experiment_id, "n_models": len(result["leaderboard"])}
+        out = {
+            "experiment_id": experiment_id,
+            "n_models": len(result["leaderboard"]),
+            "model_id": model_id,
+        }
         JOB_STORE.update(
             job_id,
             status="done",
