@@ -50,8 +50,8 @@ EXIT:0
 
 ### Deploy closeout
 
-- GitHub `main`: *(filled at push)*
-- Vercel production READY: *(filled at push)*
+- GitHub `main`: `f9ee8b0` (`fix: use LAB_DEFAULT_SEED…`; feature `7b6fdfe`)
+- Vercel production **READY**: `https://arw-ml-mir0m0282-shibayan-biswas-projects.vercel.app` (alias `https://arw-ml-lab.vercel.app`)
 
 ## Next
 
