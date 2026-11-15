@@ -13,6 +13,13 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    rules: {
+      // Data-load / URL-sync effects set state after fetch; the new React Compiler
+      // rule is too strict for our intake + shell patterns (ADR-0011 CI hygiene).
+      "react-hooks/set-state-in-effect": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

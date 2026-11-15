@@ -102,17 +102,19 @@ def mcnemar_test(y_true: np.ndarray, y_a: np.ndarray, y_b: np.ndarray) -> dict[s
 
     a_wrong_b_right = int(np.sum((y_a != y_true) & (y_b == y_true)))
     a_right_b_wrong = int(np.sum((y_a == y_true) & (y_b != y_true)))
-    table = [[0, a_right_b_wrong], [a_wrong_b_right, 0]]
-    # Better: full 2x2 of disagreements
+    # Full 2x2 of agreements / disagreements
     both_right = int(np.sum((y_a == y_true) & (y_b == y_true)))
     both_wrong = int(np.sum((y_a != y_true) & (y_b != y_true)))
-    table = np.array([[both_right, a_right_b_wrong], [a_wrong_b_right, both_wrong]])
-    res = mcnemar(table, exact=False, correction=True)
+    table_arr = np.array(
+        [[both_right, a_right_b_wrong], [a_wrong_b_right, both_wrong]],
+        dtype=int,
+    )
+    res = mcnemar(table_arr, exact=False, correction=True)
     return {
         "id": "CLE.T.COMPARE_MCNEMAR",
         "statistic": float(res.statistic),
         "pvalue": float(res.pvalue),
-        "table": table.tolist(),
+        "table": table_arr.tolist(),
     }
 
 

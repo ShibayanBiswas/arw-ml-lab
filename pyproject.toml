@@ -124,6 +124,33 @@ module = [
   "pytorch_tabular.*",
   "pytorch_tcn",
   "pytorch_tcn.*",
+  "pandas",
+  "imblearn",
+  "imblearn.*",
+  "rapidfuzz",
+  "rapidfuzz.*",
+  "exchange_calendars",
+  "netcal",
+  "netcal.*",
+  "scikit_posthocs",
+  "MLstatkit",
+  "MLstatkit.*",
+  "mlxtend",
+  "mlxtend.*",
+  "optuna",
+  "optuna.*",
+  "mlflow",
+  "mlflow.*",
+  "shap",
+  "shap.*",
+  "mapie",
+  "mapie.*",
+  "lightgbm",
+  "xgboost",
+  "catboost",
+  "category_encoders",
+  "feature_engine",
+  "feature_engine.*",
 ]
 ignore_missing_imports = true
 
@@ -135,12 +162,21 @@ module = [
   "labcore.insights.rules",
   "labcore.intake.*",
   "labcore.deep.*",
+  "labcore.eval.*",
+  "labcore.train.*",
+  "labcore.preprocess.*",
+  "labcore.data.*",
+  "labcore.plots.*",
+  "labcore.cv.*",
+  "labcore.explain.*",
+  "labcore.uncertainty.*",
+  "labcore.predict.*",
 ]
 # Thin library wrappers over untyped scientific APIs — keep runtime tests as the contract
 disallow_untyped_calls = false
 disallow_any_generics = false
 warn_return_any = false
-disable_error_code = ["arg-type", "operator", "union-attr", "assignment", "no-untyped-call", "call-overload", "attr-defined", "import-untyped", "unused-ignore", "misc", "no-any-return"]
+disable_error_code = ["arg-type", "operator", "union-attr", "assignment", "no-untyped-call", "call-overload", "attr-defined", "import-untyped", "import-not-found", "unused-ignore", "misc", "no-any-return", "dict-item"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 type Props = { name: string };
 
 function greetingForHour(hour: number) {
@@ -10,33 +8,32 @@ function greetingForHour(hour: number) {
   return "Good evening";
 }
 
+function istGreetingLine(now = new Date()) {
+  const istHour = Number(
+    now.toLocaleString("en-US", {
+      timeZone: "Asia/Kolkata",
+      hour: "numeric",
+      hour12: false,
+    })
+  );
+  return {
+    greet: greetingForHour(Number.isFinite(istHour) ? istHour : now.getHours()),
+    weekday: now.toLocaleDateString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      weekday: "long",
+    }),
+    dateLine: now.toLocaleDateString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }),
+  };
+}
+
 export function Greeting({ name }: Props) {
-  const [line, setLine] = useState({ greet: "Welcome", weekday: "", dateLine: "" });
-
-  useEffect(() => {
-    const now = new Date();
-    const istHour = Number(
-      now.toLocaleString("en-US", {
-        timeZone: "Asia/Kolkata",
-        hour: "numeric",
-        hour12: false,
-      })
-    );
-    setLine({
-      greet: greetingForHour(Number.isFinite(istHour) ? istHour : now.getHours()),
-      weekday: now.toLocaleDateString("en-IN", {
-        timeZone: "Asia/Kolkata",
-        weekday: "long",
-      }),
-      dateLine: now.toLocaleDateString("en-IN", {
-        timeZone: "Asia/Kolkata",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      }),
-    });
-  }, []);
-
+  // Compute IST greeting at render time (no effect/setState — CI react-hooks/set-state-in-effect)
+  const line = istGreetingLine();
   const display = name.trim() || "there";
 
   return (
@@ -55,16 +52,11 @@ export function Greeting({ name }: Props) {
       </h1>
       <p className="relative mt-3 max-w-2xl border-l-2 border-[color-mix(in_srgb,var(--gold)_55%,transparent)] pl-3 text-sm text-[var(--fg-muted)] md:text-[15px]">
         Tabular ML workstation for Anand Rathi Wealth — registry-driven modules, leakage-safe
-        pipelines, and every number from a real run.
-        {line.weekday ? (
-          <>
-            {" "}
-            <span className="text-[var(--fg-subtle)]">
-              {line.weekday}
-              {line.dateLine ? ` · ${line.dateLine}` : ""}
-            </span>
-          </>
-        ) : null}
+        pipelines, and every number from a real run.{" "}
+        <span className="text-[var(--fg-subtle)]">
+          {line.weekday}
+          {line.dateLine ? ` · ${line.dateLine}` : ""}
+        </span>
       </p>
     </section>
   );

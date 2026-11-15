@@ -175,13 +175,12 @@ def run_supervised_cv(
                     oof_proba[va_idx] = proba
                 except Exception:
                     proba = None
-            fold_preds.append(
-                {
-                    "y_true": y_fold_va.to_numpy(),
-                    "y_pred": pred,
-                    "y_proba": proba,
-                }
-            )
+            fold_entry: dict[str, Any] = {
+                "y_true": y_fold_va.to_numpy(),
+                "y_pred": pred,
+                "y_proba": proba,
+            }
+            fold_preds.append(fold_entry)
             if config.task == "regression":
                 fold_metrics.append(_metrics_reg(y_fold_va.to_numpy(), pred))
             else:

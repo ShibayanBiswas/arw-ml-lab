@@ -86,7 +86,6 @@ export function IntakeReview() {
 
   useEffect(() => {
     if (versionId) void loadProposal(versionId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [versionId]);
 
   const ambiguousDate = Boolean(proposal?.merged.time_index?.ambiguous_format);

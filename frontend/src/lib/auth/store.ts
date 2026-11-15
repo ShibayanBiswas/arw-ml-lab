@@ -23,9 +23,7 @@ export type AppUser = {
 };
 
 declare global {
-  // eslint-disable-next-line no-var
   var __mlAuthUsers: Map<string, AppUser> | undefined;
-  // eslint-disable-next-line no-var
   var __mlAuthSeeded: boolean | undefined;
 }
 
