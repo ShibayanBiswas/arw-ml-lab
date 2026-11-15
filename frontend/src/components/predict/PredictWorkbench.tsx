@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BatchPredictPanel } from "@/components/predict/BatchPredictPanel";
 import { CustomPredictForm } from "@/components/predict/CustomPredictForm";
@@ -127,7 +128,7 @@ export function PredictWorkbench({ mode }: { mode: Mode }) {
 
       {effectiveMode === "chooser" ? (
         <div className="grid gap-4 sm:grid-cols-2">
-          <a
+          <Link
             href="/predict/batch"
             className="rounded border border-[var(--border)] p-6 transition hover:border-[var(--gold)]"
           >
@@ -135,8 +136,8 @@ export function PredictWorkbench({ mode }: { mode: Mode }) {
             <p className="mt-2 text-sm text-[var(--muted)]">
               Download template, upload CSV/XLSX, review PV report, download scored results.
             </p>
-          </a>
-          <a
+          </Link>
+          <Link
             href="/predict/single"
             className="rounded border border-[var(--border)] p-6 transition hover:border-[var(--gold)]"
           >
@@ -145,7 +146,7 @@ export function PredictWorkbench({ mode }: { mode: Mode }) {
               Widgets from the feature contract, live predict (300 ms debounce), SHAP, reset /
               random row.
             </p>
-          </a>
+          </Link>
         </div>
       ) : null}
 

@@ -98,9 +98,7 @@ def model_template(
         content=data,
         media_type="text/csv; charset=utf-8",
         headers={
-            "Content-Disposition": (
-                f'attachment; filename="predict_template_{model_id[:8]}.csv"'
-            )
+            "Content-Disposition": (f'attachment; filename="predict_template_{model_id[:8]}.csv"')
         },
     )
 
