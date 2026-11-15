@@ -5,10 +5,6 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 import pytest
-from lightgbm import LGBMClassifier, LGBMRegressor
-from sklearn.datasets import fetch_california_housing, load_breast_cancer, make_classification
-from sklearn.model_selection import train_test_split
-
 from labcore.explain.shap_trees import pdp_equals_mean_ice, tree_shap_explain
 from labcore.predict.contract import (
     assert_no_identifier_values,
@@ -18,6 +14,9 @@ from labcore.predict.contract import (
 from labcore.predict.score import predict_batch, predict_single
 from labcore.uncertainty.calibration import calibrate_binary
 from labcore.uncertainty.conformal import split_conformal_aps, split_conformal_regression
+from lightgbm import LGBMClassifier, LGBMRegressor
+from sklearn.datasets import fetch_california_housing, load_breast_cancer, make_classification
+from sklearn.model_selection import train_test_split
 
 
 def test_feature_contract_schema_and_no_id_values():
