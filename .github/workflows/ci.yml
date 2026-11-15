@@ -12,20 +12,12 @@ jobs:
     defaults: { run: { working-directory: frontend } }
     steps:
       - uses: actions/checkout@v4
-      - name: Skip until the Next.js app exists (Phase 0)
-        id: has_app
-        run: test -f package.json && echo "ok=true" >> "$GITHUB_OUTPUT" || echo "ok=false" >> "$GITHUB_OUTPUT"
       - uses: pnpm/action-setup@v4
-        if: steps.has_app.outputs.ok == 'true'
       - uses: actions/setup-node@v4
-        if: steps.has_app.outputs.ok == 'true'
         with: { node-version: 22, cache: pnpm, cache-dependency-path: frontend/pnpm-lock.yaml }
-      - if: steps.has_app.outputs.ok == 'true'
-        run: pnpm install --frozen-lockfile
-      - if: steps.has_app.outputs.ok == 'true'
-        run: pnpm lint && pnpm exec tsc --noEmit && pnpm test --run && pnpm build
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint && pnpm exec tsc --noEmit && pnpm test --run && pnpm build
       - name: No AI provider secrets in the client bundle
-        if: steps.has_app.outputs.ok == 'true'
         run: "! grep -R -E 'NVIDIA_API_KEY|nvapi-|SUPABASE_SERVICE_ROLE_KEY' .next/static || (echo 'secret found in bundle' && exit 1)"
 
   backend:
@@ -34,21 +26,15 @@ jobs:
       - uses: actions/checkout@v4
         with: { submodules: recursive }
       - uses: astral-sh/setup-uv@v6
-      - name: Skip until pyproject exists (Phase 0)
-        id: has_py
-        run: test -f pyproject.toml && echo "ok=true" >> "$GITHUB_OUTPUT" || echo "ok=false" >> "$GITHUB_OUTPUT"
-      - if: steps.has_py.outputs.ok == 'true'
-        run: uv sync --all-extras --frozen
-      - if: steps.has_py.outputs.ok == 'true'
-        run: uv run ruff check . && uv run ruff format --check . && uv run mypy labcore
-      - if: steps.has_py.outputs.ok == 'true'
-        env:
+      - run: uv sync --all-extras --frozen
+      - run: uv run ruff check labcore backend tests && uv run ruff format --check labcore backend tests && uv run mypy labcore
+      - env:
           LAB_DEFAULT_SEED: "42"
-          AI_ENABLED: "false"          # CI uses mocked AI providers only
+          AI_ENABLED: "false"
+          AUTH_TEST_BYPASS: "true"
         run: uv run pytest tests/unit tests/contract_tradinglab tests/golden -q
 
   kit-checks:
-    # Runs from day one (before Phase 0 creates pyproject.toml): sample files, contracts, migrations parse.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -57,7 +43,9 @@ jobs:
       - run: pip install pandas==2.3.3 pyarrow==26.0.1 jsonschema==4.26.0 pytest pyyaml
       - run: pytest tests/unit/test_predict_samples.py -q
       - name: render.yaml parses
-        run: python -c "import yaml; yaml.safe_load(open('render.yaml'))"
+        run: python -c "import yaml; yaml.safe_load(open('render.yaml')); print('render.yaml ok')"
+      - name: maintenance CLI smoke
+        run: PYTHONPATH=. python -m backend.worker.maintenance --all
 
   supabase:
     runs-on: ubuntu-latest
