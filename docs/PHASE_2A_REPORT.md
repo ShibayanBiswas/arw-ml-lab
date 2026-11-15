@@ -66,6 +66,11 @@ EXIT:0
 - [x] report + DECISIONS + PROGRESS
 - [x] commit + push + Vercel READY (below)
 
+### Deploy closeout
+
+- GitHub `main`: `1fc9929` (`phase 2a: dl thin smoke`)
+- Vercel production **READY**: `https://arw-ml-6cjrcce90-shibayan-biswas-projects.vercel.app` (alias `https://arw-ml-lab.vercel.app`)
+
 ## Next
 
 Stop and wait for user **continue** → Phase 2A-cont (full §34) or Phase 3.

@@ -4,7 +4,7 @@
 |---|---|
 | Current phase | Phase 2A done (thin) — awaiting continue |
 | Last completed step | Phase 2A Deep Learning thin smoke |
-| Last green commit | (this commit) `phase 2a: dl thin smoke` |
+| Last green commit | `1fc9929` (`phase 2a: dl thin smoke`) |
 | Open failures | Render Blueprint `need_payment_info`; optional Vercel `SUPABASE_SERVICE_ROLE_KEY` for durable password changes |
 | Next action | User **continue** → Phase 2A-cont (full §34) or Phase 3 |
 
