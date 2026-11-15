@@ -4,7 +4,7 @@
 |---|---|
 | Current phase | Phase 3A thin done — awaiting continue |
 | Last completed step | Phase 3A Prediction Studio thin + deploy sync |
-| Last green commit | *(pending commit `phase 3a: prediction studio thin`)* |
+| Last green commit | `bf1b17f` (`phase 3a: prediction studio thin`) |
 | Open failures | Render Blueprint `need_payment_info`; optional Vercel `SUPABASE_SERVICE_ROLE_KEY` for durable password changes |
 | Next action | User **continue** → Phase 3A-cont (full §45) or Phase 4 (Time Series) |
 
