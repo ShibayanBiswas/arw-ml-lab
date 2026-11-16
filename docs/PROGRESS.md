@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Current phase | One-shot Chunk C — continue §36/§39 / 8.2 |
-| Last completed step | oneshot-c40 CLE.P.SLICES |
-| Last green commit | 0eb15f8 |
+| Last completed step | oneshot-c41 FS13 effective sample size |
+| Last green commit | 2092bfb |
 | Open failures | Deploy migrate (Supabase secrets); Render unpaid |
 | Next action | Shibayan: secrets + Render. Agent: remaining FS/F*/§39 AC |
 
