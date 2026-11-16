@@ -13,7 +13,7 @@ import {
   startTrain,
 } from "@/lib/api";
 
-type Mode = "home" | "batch" | "custom" | "single";
+type Mode = "home" | "batch" | "custom" | "single" | "what-if" | "forecast" | "monitoring" | "api";
 
 export function PredictWorkbench({ mode }: { mode: Mode }) {
   const [models, setModels] = useState<

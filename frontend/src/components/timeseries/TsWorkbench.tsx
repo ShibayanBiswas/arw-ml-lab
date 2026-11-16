@@ -3,7 +3,16 @@
 import { useEffect, useState } from "react";
 import { tsAnalysis, tsBacktest, tsHorizon } from "@/lib/api";
 
-type Mode = "home" | "analysis" | "backtesting" | "forecast" | "lab";
+type Mode =
+  | "home"
+  | "analysis"
+  | "backtesting"
+  | "forecast"
+  | "lab"
+  | "setup"
+  | "leaderboard"
+  | "residuals"
+  | "multivariate";
 
 export function TsWorkbench({ mode }: { mode: Mode }) {
   const [sampleId, setSampleId] = useState("DS22");

@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import { EvalWorkbench } from "@/components/train/EvalWorkbench";
 import { getExperiment, getJob, listSamples, loadSample, startTrain, startTune } from "@/lib/api";
 
-type Props = { mode: "recipe" | "leaderboard" | "models" | "detail" };
+type Props = {
+  mode: "recipe" | "leaderboard" | "models" | "detail" | "task" | "cv" | "runs" | "compare";
+};
 
 export function TrainWorkbench({ mode }: Props) {
   const [samples, setSamples] = useState<Array<Record<string, unknown>>>([]);

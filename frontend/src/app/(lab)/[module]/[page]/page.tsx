@@ -32,6 +32,7 @@ export default async function ModuleSubPage({ params }: Props) {
     if (page === "explorer" || page === "home" || page === "versions")
       return <DataWorkbench mode="explorer" />;
     if (page === "schema") return <DataWorkbench mode="schema" />;
+    if (page === "joins") return <DataWorkbench mode="joins" />;
     if (page === "intake-review")
       return (
         <Suspense fallback={<p className="p-6 text-sm">Loading intake…</p>}>
@@ -45,19 +46,74 @@ export default async function ModuleSubPage({ params }: Props) {
   if (slug === "learn") {
     return <LogicAtlas page={page} />;
   }
-  if (slug === "preprocess" && page === "recipe") {
+  if (
+    slug === "preprocess" &&
+    (page === "recipe" ||
+      page === "home" ||
+      page === "imputation" ||
+      page === "encoding" ||
+      page === "scaling" ||
+      page === "outliers" ||
+      page === "features" ||
+      page === "selection" ||
+      page === "imbalance" ||
+      page === "leakage" ||
+      page === "preview")
+  ) {
     return <TrainWorkbench mode="recipe" />;
   }
   if (
     slug === "supervised" &&
-    (page === "leaderboard" || page === "models" || page === "home" || page === "detail")
+    (page === "leaderboard" ||
+      page === "models" ||
+      page === "home" ||
+      page === "detail" ||
+      page === "task" ||
+      page === "lab" ||
+      page === "cv" ||
+      page === "runs" ||
+      page === "compare")
   ) {
     const mode =
-      page === "leaderboard" ? "leaderboard" : page === "detail" ? "detail" : "models";
+      page === "leaderboard"
+        ? "leaderboard"
+        : page === "detail"
+          ? "detail"
+          : page === "cv"
+            ? "cv"
+            : page === "runs"
+              ? "runs"
+              : page === "compare"
+                ? "compare"
+                : page === "task"
+                  ? "task"
+                  : "models";
     return <TrainWorkbench mode={mode} />;
   }
-  if (slug === "predict" && (page === "home" || page === "batch" || page === "single")) {
-    const mode = page === "batch" ? "batch" : page === "single" ? "single" : "home";
+  if (
+    slug === "predict" &&
+    (page === "home" ||
+      page === "batch" ||
+      page === "single" ||
+      page === "what-if" ||
+      page === "forecast" ||
+      page === "monitoring" ||
+      page === "api")
+  ) {
+    const mode =
+      page === "batch"
+        ? "batch"
+        : page === "single"
+          ? "single"
+          : page === "what-if"
+            ? "what-if"
+            : page === "forecast"
+              ? "forecast"
+              : page === "monitoring"
+                ? "monitoring"
+                : page === "api"
+                  ? "api"
+                  : "home";
     return <PredictWorkbench mode={mode} />;
   }
   if (
@@ -66,7 +122,11 @@ export default async function ModuleSubPage({ params }: Props) {
       page === "analysis" ||
       page === "backtesting" ||
       page === "forecast" ||
-      page === "lab")
+      page === "lab" ||
+      page === "setup" ||
+      page === "leaderboard" ||
+      page === "residuals" ||
+      page === "multivariate")
   ) {
     const mode =
       page === "analysis"
@@ -77,7 +137,15 @@ export default async function ModuleSubPage({ params }: Props) {
             ? "forecast"
             : page === "lab"
               ? "lab"
-              : "home";
+              : page === "setup"
+                ? "setup"
+                : page === "leaderboard"
+                  ? "leaderboard"
+                  : page === "residuals"
+                    ? "residuals"
+                    : page === "multivariate"
+                      ? "multivariate"
+                      : "home";
     return <TsWorkbench mode={mode} />;
   }
   if (

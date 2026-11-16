@@ -14,7 +14,7 @@ Honest interim closeout. Chunk A + deep B/C slices shipped with repeated **CI gr
 | 0–2B, 8.1 thin | done | `docs/PHASE_*_REPORT.md` |
 | 2 deepen | partial | expanded registry (~84), Halving + NSGA-II/Hyperband |
 | 2A deepen | partial | train-window-only scaler; DeepWorkbench |
-| 3 deepen | partial | ExplainWorkbench, TreeSHAP, permutation, LIME, DiCE, ALE |
+| 3 deepen | partial | + LIME/DiCE/ALE/EBM (Anchors/ONNX still open) |
 | 3A deepen | partial | PV02/03/10/14/15, Celery batch ≤1M, cancel |
 | 4 deepen | partial | + AutoARIMA/Naive/SWA/GARCH(1,1) |
 | 4A | partial | metrics/models expand — not full F*/TS.P.* |
@@ -44,13 +44,14 @@ Honest interim closeout. Chunk A + deep B/C slices shipped with repeated **CI gr
 | 62da077 | C.14 FS6/8/15/19 (CI format fail → fixed c15) |
 | 6aef99b | C.15 e2e httpx + Locust skeleton |
 | abe28cc | C.16 WFO Ridge retune loop |
-| (c17) | C.17 GARCH(1,1) via arch |
+| 901f24e | C.17 GARCH(1,1) via arch |
+| (c18) | C.18 EBM via interpret |
 
 ## CI / Deploy / Vercel
 
 | System | Status | Notes |
 |---|---|---|
-| CI | green through c16 (`abe28cc`) | https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43818761106 |
+| CI | green through c17 (`901f24e`) | https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43819541946 |
 | Deploy migrate | **fails** | missing `SUPABASE_ACCESS_TOKEN` / `SUPABASE_DB_PASSWORD` |
 | Deploy render/smoke | skipped honestly | until `RENDER_ENABLED=true` + migrate secrets |
 | Vercel | READY / **200** | https://arw-ml-lab.vercel.app |

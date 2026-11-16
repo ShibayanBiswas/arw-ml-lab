@@ -11,7 +11,7 @@ import {
   uploadDataset,
 } from "@/lib/api";
 
-type Mode = "upload" | "samples" | "explorer" | "schema";
+type Mode = "upload" | "samples" | "explorer" | "schema" | "joins";
 
 export function DataWorkbench({ mode }: { mode: Mode }) {
   const router = useRouter();
