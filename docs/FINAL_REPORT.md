@@ -1,7 +1,7 @@
 # ARW ML Lab — One-shot finish report (interim)
 
 **Date:** 16 Nov 2026 (IST)  
-**Tip:** `f9e2fed` (c49 ARIMA + metric folds CI green)  
+**Tip:** `60a702a` (c50 CLE CM plots CI green; c51 F13 pending)  
 **Live frontend:** https://arw-ml-lab.vercel.app/login → **200**  
 **Repo:** https://github.com/ShibayanBiswas/arw-ml-lab
 
@@ -30,7 +30,7 @@ preprocess → ONNX/skops → F*/FS7–15 → CLE/REE/CLU/DR/ANO → UCM → Opt
 
 | System | Status | Notes |
 |---|---|---|
-| CI | green at `f9e2fed` | https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43860454604 |
+| CI | green at `60a702a` | https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43861594013 |
 | Deploy migrate | **fails** until secrets | `SUPABASE_ACCESS_TOKEN` / `SUPABASE_DB_PASSWORD` missing (`PROJECT_ID` set) |
 | Deploy render/smoke | skipped honestly | until `RENDER_ENABLED=true` |
 | Vercel | READY / **200** | https://arw-ml-lab.vercel.app |

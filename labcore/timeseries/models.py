@@ -41,6 +41,7 @@ ModelKey = Literal[
     "mfles",
     "tbats",
     "arima",
+    "arima_fourier",
 ]
 
 
@@ -410,6 +411,30 @@ def forecast_arima(
     return _sf_point_forecast(y_train, h, ARIMA(order=order))
 
 
+def forecast_arima_fourier(
+    y_train: np.ndarray,
+    h: int,
+    *,
+    m: int = 12,
+    k: int = 2,
+    order: tuple[int, int, int] = (1, 1, 1),
+) -> np.ndarray:
+    """F13 — ARIMA with Fourier seasonal terms (utilsforecast + statsforecast)."""
+    from statsforecast import StatsForecast
+    from statsforecast.models import ARIMA
+    from utilsforecast.feature_engineering import fourier
+
+    ok, reason = seasonal_allowed(len(y_train), float(m), h)
+    if not ok:
+        raise ValueError(f"arima_fourier gate: {reason}")
+    df = to_nixtla_df(y_train)
+    train, x_future = fourier(df, freq=1, season_length=m, k=k, h=h)
+    sf = StatsForecast(models=[ARIMA(order=order)], freq=1, n_jobs=1)
+    fc = sf.forecast(df=train, h=h, X_df=x_future)
+    col = [c for c in fc.columns if c not in ("unique_id", "ds")][0]
+    return np.asarray(fc[col], dtype=float)
+
+
 def forecast_ucm_local_level(y_train: np.ndarray, h: int) -> tuple[np.ndarray, np.ndarray]:
     """F19 — UnobservedComponents local level (statsmodels)."""
     from statsmodels.tsa.statespace.structural import UnobservedComponents
@@ -560,6 +585,12 @@ def forecast(
         return {"key": key, "y_pred": forecast_tbats(y_train, h, m=m), "resid": None}
     if key == "arima":
         return {"key": key, "y_pred": forecast_arima(y_train, h), "resid": None}
+    if key == "arima_fourier":
+        return {
+            "key": key,
+            "y_pred": forecast_arima_fourier(y_train, h, m=m),
+            "resid": None,
+        }
     raise ValueError(f"unknown model key: {key}")
 
 
@@ -599,4 +630,9 @@ TS_MODEL_CATALOGUE: list[dict[str, str]] = [
     {"id": "mfles", "library": "statsforecast", "name": "MFLES"},
     {"id": "tbats", "library": "statsforecast", "name": "TBATS"},
     {"id": "arima", "library": "statsforecast", "name": "ARIMA"},
+    {
+        "id": "arima_fourier",
+        "library": "statsforecast+utilsforecast",
+        "name": "ARIMA+Fourier",
+    },
 ]

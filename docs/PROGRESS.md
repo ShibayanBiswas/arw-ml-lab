@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Current phase | One-shot Chunk C — continue §36/§39 / 8.2 |
-| Last completed step | oneshot-c50 CLE.P.CM_COST / CM_DELTA / COMPARE_BARS |
-| Last green commit | f9e2fed |
+| Last completed step | oneshot-c51 F13 ARIMA+Fourier |
+| Last green commit | 60a702a |
 | Open failures | Deploy migrate (Supabase secrets); Render unpaid |
-| Next action | Shibayan: secrets + Render. Agent: CLE.P/REE.P remainder / F13/F21 / §39 |
+| Next action | Shibayan: secrets + Render. Agent: F21 VAR / CLE/REE remainder / §39 |
 
 ## Blocked — needs Shibayan
 
