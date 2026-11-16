@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Current phase | One-shot Chunk C — continue 4A/5/5A/6B/7/8.2 ACs |
-| Last completed step | oneshot-c24 KNNImputer recipe |
-| Last green commit | 8b5fc2f (c23 CI green) |
+| Last completed step | oneshot-c25 RareLabelEncoder recipe |
+| Last green commit | f6cd789 (c24 CI green) |
 | Open failures | Deploy migrate (Supabase secrets); Render unpaid |
 | Next action | Shibayan: secrets + Render. Agent: full catalogues / WFO retune / Playwright |
 

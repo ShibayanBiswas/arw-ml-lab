@@ -1,7 +1,7 @@
 # ARW ML Lab — One-shot finish report (interim)
 
 **Date:** 16 Nov 2026 (IST)  
-**Tip:** oneshot-c24 KNNImputer (c23 green `8b5fc2f`)  
+**Tip:** oneshot-c25 RareLabelEncoder (c24 green `f6cd789`)  
 **Live frontend:** https://arw-ml-lab.vercel.app/login → **200**  
 **Repo:** https://github.com/ShibayanBiswas/arw-ml-lab
 
@@ -50,7 +50,8 @@ Honest interim closeout. Chunk A + deep B/C slices shipped with repeated **CI gr
 | bcc5718 | C.20 MI-11 drop test + FINAL tip |
 | f2958cf | C.21 nbformat reproduction notebook |
 | cd1a2e3 | C.22 POST /reports/notebook |
-| (c23) | C.23 ZAP baseline config |
+| 8b5fc2f | C.23 ZAP baseline config |
+| (c24) | C.24 KNNImputer recipe |
 
 ## CI / Deploy / Vercel
 

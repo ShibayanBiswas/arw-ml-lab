@@ -34,6 +34,7 @@ IMPORT_TO_PACKAGE = {
     "dice_ml": "dice-ml",
     "PyALE": "pyale",
     "interpret": "interpret",
+    "feature_engine": "feature-engine",
 }
 
 

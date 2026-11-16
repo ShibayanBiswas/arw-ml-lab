@@ -30,6 +30,9 @@ class RecipeSpec(BaseModel):
     # TargetEncoder cv folds (MI-02); used only when categorical_encoder=target
     target_encoder_cv: int = 5
     knn_n_neighbors: int = 5
+    # Collapse rare categories before encoding (feature_engine RareLabelEncoder)
+    rare_label_tol: float | None = None
+    rare_label_n_categories: int | None = 10
 
 
 def _split_columns(X: pd.DataFrame) -> tuple[list[str], list[str]]:
@@ -103,12 +106,26 @@ def compile_recipe(
             )
         else:
             enc = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
-        cat_pipe = Pipeline(
-            [
-                ("imputer", SimpleImputer(strategy=recipe.categorical_imputer)),
-                ("encoder", enc),
-            ]
-        )
+        cat_steps: list[tuple[str, Any]] = [
+            ("imputer", SimpleImputer(strategy=recipe.categorical_imputer)),
+        ]
+        if recipe.rare_label_tol is not None or recipe.rare_label_n_categories is not None:
+            from feature_engine.encoding import RareLabelEncoder
+
+            tol = float(recipe.rare_label_tol) if recipe.rare_label_tol is not None else 0.05
+            cat_steps.append(
+                (
+                    "rare",
+                    RareLabelEncoder(
+                        tol=tol,
+                        n_categories=int(recipe.rare_label_n_categories or 10),
+                        replace_with="Rare",
+                        missing_values="ignore",
+                    ),
+                )
+            )
+        cat_steps.append(("encoder", enc))
+        cat_pipe = Pipeline(cat_steps)
         transformers.append(("cat", cat_pipe, cat_cols))
 
     pre = ColumnTransformer(transformers, remainder="drop")
