@@ -1,7 +1,7 @@
 # ARW ML Lab — One-shot finish report (interim)
 
 **Date:** 16 Nov 2026 (IST)  
-**Tip:** `2529aed` (c37 REE.P REC/cum/scale-location; CI green)  
+**Tip:** `aface40` (c38 FS11; prior c37 CI https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43839812689)  
 **Live frontend:** https://arw-ml-lab.vercel.app/login → **200**  
 **Repo:** https://github.com/ShibayanBiswas/arw-ml-lab
 
