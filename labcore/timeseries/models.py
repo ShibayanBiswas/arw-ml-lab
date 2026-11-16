@@ -36,6 +36,7 @@ ModelKey = Literal[
     "tsb",
     "croston_sba",
     "ucm_local_level",
+    "ucm_local_linear_trend",
     "optimized_theta",
     "seasonal_ses_optimized",
     "mfles",
@@ -528,6 +529,18 @@ def forecast_ucm_local_level(y_train: np.ndarray, h: int) -> tuple[np.ndarray, n
     return pred, resid
 
 
+def forecast_ucm_local_linear_trend(y_train: np.ndarray, h: int) -> tuple[np.ndarray, np.ndarray]:
+    """F19/F26 — UnobservedComponents local linear trend (Kalman state-space)."""
+    from statsmodels.tsa.statespace.structural import UnobservedComponents
+
+    y = np.asarray(y_train, dtype=float)
+    model = UnobservedComponents(y, level="local linear trend")
+    fitted = model.fit(disp=False)
+    pred = np.asarray(fitted.forecast(h), dtype=float)
+    resid = np.asarray(fitted.resid, dtype=float)
+    return pred, resid
+
+
 def forecast_prophet(y_train: np.ndarray, h: int, *, freq: str = "D") -> np.ndarray:
     """F20 — Prophet (requires daily-like synthetic calendar index)."""
     from prophet import Prophet
@@ -649,6 +662,9 @@ def forecast(
     if key == "ucm_local_level":
         yhat, resid = forecast_ucm_local_level(y_train, h)
         return {"key": key, "y_pred": yhat, "resid": resid}
+    if key == "ucm_local_linear_trend":
+        yhat, resid = forecast_ucm_local_linear_trend(y_train, h)
+        return {"key": key, "y_pred": yhat, "resid": resid}
     if key == "optimized_theta":
         return {
             "key": key,
@@ -730,6 +746,11 @@ TS_MODEL_CATALOGUE: list[dict[str, str]] = [
     {"id": "tsb", "library": "statsforecast", "name": "TSB"},
     {"id": "croston_sba", "library": "statsforecast", "name": "CrostonSBA"},
     {"id": "ucm_local_level", "library": "statsmodels", "name": "UCM local level"},
+    {
+        "id": "ucm_local_linear_trend",
+        "library": "statsmodels",
+        "name": "UCM local linear trend",
+    },
     {"id": "optimized_theta", "library": "statsforecast", "name": "OptimizedTheta"},
     {
         "id": "seasonal_ses_optimized",
