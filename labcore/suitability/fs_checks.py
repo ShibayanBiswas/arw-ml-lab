@@ -1,8 +1,8 @@
 """FS financial labelling suitability (ARCHITECTURE §37).
 
-Implemented without TradingLab: FS1–FS12, FS14–FS15, FS19–FS20.
-FS13 / FS16–FS18 stay DEFERRED until vendor/tradinglab meta/trend adapters.
-FS7/FS9–FS12 use AFML-equivalent thin formulas until the submodule lands.
+Implemented without TradingLab: FS1–FS15, FS19–FS20.
+FS16–FS18 stay DEFERRED until vendor/tradinglab structural/trend/meta adapters.
+FS7/FS9–FS13 use AFML-equivalent thin formulas until the submodule lands.
 """
 
 from __future__ import annotations
@@ -352,6 +352,25 @@ def check_fs10_class_balance(df: pd.DataFrame, price_col: str | None) -> FSResul
     return FSResult("FS10", "FAIL", f"minority={minority:.1%} (<5%)", details)
 
 
+def check_fs13_effective_sample_size(df: pd.DataFrame, price_col: str | None) -> FSResult:
+    """FS13 — effective sample size n_events × mean ū (AFML thin).
+
+    PASS ≥200, WARN 50–199, FAIL <50.
+    """
+    u = check_fs12_average_uniqueness(df, price_col)
+    if "mean_uniqueness" not in u.details:
+        return FSResult("FS13", "FAIL", u.message, u.details)
+    n_spans = int(u.details.get("n_spans", 0))
+    mean_u = float(u.details["mean_uniqueness"])
+    n_eff = float(n_spans * mean_u)
+    details = {**u.details, "n_eff": n_eff}
+    if n_eff >= 200:
+        return FSResult("FS13", "PASS", f"n_eff={n_eff:.1f}", details)
+    if n_eff >= 50:
+        return FSResult("FS13", "WARN", f"n_eff={n_eff:.1f} (50–199)", details)
+    return FSResult("FS13", "FAIL", f"n_eff={n_eff:.1f} (<50)", details)
+
+
 def check_fs12_average_uniqueness(df: pd.DataFrame, price_col: str | None) -> FSResult:
     """FS12 — average uniqueness of trial label spans (AFML ch. 4 thin).
 
@@ -600,14 +619,8 @@ def run_suitability(
         check_fs10_class_balance(df, price),
         check_fs11_vertical_barrier_share(df, price),
         check_fs12_average_uniqueness(df, price),
+        check_fs13_effective_sample_size(df, price),
     ]
-    checks.append(
-        FSResult(
-            "FS13",
-            "DEFERRED",
-            "requires TradingLab effective sample size / sequential bootstrap adapters",
-        )
-    )
     checks.append(check_fs14_return_acf(df, price))
     checks.append(check_fs15_stationarity(df, price))
     for code in ("FS16", "FS17", "FS18"):
