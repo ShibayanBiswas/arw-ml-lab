@@ -30,6 +30,7 @@ IMPORT_TO_PACKAGE = {
     "imblearn": "imbalanced-learn",
     "netcal": "netcal",
     "MLstatkit": "MLstatkit",
+    "umap": "umap-learn",
 }
 
 
