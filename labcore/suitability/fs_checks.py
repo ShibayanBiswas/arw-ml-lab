@@ -223,13 +223,65 @@ def check_fs5_frequency(df: pd.DataFrame, time_col: str | None) -> FSResult:
     )
 
 
+def check_fs14_return_acf(df: pd.DataFrame, price_col: str | None) -> FSResult:
+    """FS14 — Ljung-Box on returns (informational, never FAIL)."""
+    from statsmodels.stats.diagnostic import acorr_ljungbox
+
+    if price_col and price_col in df.columns:
+        px = pd.to_numeric(df[price_col], errors="coerce")
+        r = px.pct_change(fill_method=None).dropna()
+    else:
+        rets_col = _detect_returns_col(df)
+        if not rets_col:
+            return FSResult("FS14", "INFO", "no returns series for ACF")
+        r = pd.to_numeric(df[rets_col], errors="coerce").dropna()
+    if len(r) < 30:
+        return FSResult("FS14", "INFO", "too few returns for Ljung-Box", {"n": len(r)})
+    lb = acorr_ljungbox(r, lags=[10], return_df=True)
+    pval = float(lb["lb_pvalue"].iloc[0])
+    return FSResult(
+        "FS14",
+        "INFO",
+        f"Ljung-Box lag10 p={pval:.4g}",
+        {"pvalue": pval, "lags": 10},
+    )
+
+
+def check_fs20_leakage(df: pd.DataFrame) -> FSResult:
+    """FS20 — flag suspicious future-dated / leaky column names."""
+    suspicious = []
+    for c in df.columns:
+        cl = str(c).lower()
+        if any(
+            tok in cl
+            for tok in (
+                "future_",
+                "fwd_",
+                "forward_",
+                "next_",
+                "t+1",
+                "lead_",
+                "target_leak",
+            )
+        ):
+            suspicious.append(str(c))
+    if suspicious:
+        return FSResult(
+            "FS20",
+            "FAIL",
+            f"confirmed future-looking columns: {suspicious}",
+            {"columns": suspicious},
+        )
+    return FSResult("FS20", "PASS", "no obvious future-dated feature names")
+
+
 def run_suitability(
     df: pd.DataFrame,
     *,
     time_col: str | None = None,
     asset: str | None = None,
 ) -> dict[str, Any]:
-    """Run FS1–FS5 for real; FS6–FS20 deferred until Phase 5 label adapters."""
+    """Run FS1–FS5 + FS14/FS20; remaining deferred until TradingLab labels."""
     price = _detect_price_col(df)
     checks = [
         check_fs1_time_index(df, time_col),
@@ -238,23 +290,7 @@ def run_suitability(
         check_fs4_ohlcv(df),
         check_fs5_frequency(df, time_col),
     ]
-    for code in (
-        "FS6",
-        "FS7",
-        "FS8",
-        "FS9",
-        "FS10",
-        "FS11",
-        "FS12",
-        "FS13",
-        "FS14",
-        "FS15",
-        "FS16",
-        "FS17",
-        "FS18",
-        "FS19",
-        "FS20",
-    ):
+    for code in ("FS6", "FS7", "FS8", "FS9", "FS10", "FS11", "FS12", "FS13"):
         checks.append(
             FSResult(
                 code,
@@ -262,6 +298,16 @@ def run_suitability(
                 "requires TradingLab label adapters (Phase 5)",
             )
         )
+    checks.append(check_fs14_return_acf(df, price))
+    for code in ("FS15", "FS16", "FS17", "FS18", "FS19"):
+        checks.append(
+            FSResult(
+                code,
+                "DEFERRED",
+                "requires TradingLab label adapters (Phase 5)",
+            )
+        )
+    checks.append(check_fs20_leakage(df))
 
     required_for_tb = {"FS1", "FS2", "FS3"}
     failed = [c.code for c in checks if c.status == "FAIL" and c.code in required_for_tb]

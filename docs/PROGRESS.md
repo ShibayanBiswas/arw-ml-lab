@@ -2,11 +2,11 @@
 
 | Field | Value |
 |---|---|
-| Current phase | One-shot finish — Chunk B deepening; C starting |
-| Last completed step | B.1–B.3: PV/purged/CPCV/explain/unsup/FS1–5, Celery batch, TS metrics+models |
-| Last green commit | *(awaiting CI on 7004399+)* |
-| Open failures | See **Blocked — needs Shibayan** |
-| Next action | Green CI → continue 4A/5B/5…8.2 → FINAL_REPORT |
+| Current phase | One-shot interim — see docs/FINAL_REPORT.md; continue 4A→8.2 |
+| Last completed step | oneshot-c3 insights+guards CI green; FS14/FS20 + interim FINAL_REPORT |
+| Last green commit | dbcb069 (CI https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43806362529) |
+| Open failures | Deploy migrate (missing Supabase secrets); Render unpaid |
+| Next action | Shibayan: secrets + Render payment. Agent: deepen 4A/5/5A/6B/7/8.2 |
 
 ## Blocked — needs Shibayan
 
@@ -18,23 +18,15 @@
 | `NVIDIA_API_KEY` on Render | Only after lab-api exists | Put key in Render `lab-shared` only — never Vercel |
 | GitHub Pro branch protection | Optional | Enable required checks on `main` if on Pro |
 | Supabase Storage 2 GB limit | Pro project setting | Dashboard → Storage → raise global file size |
-| TradingLab submodule | `vendor/tradinglab` absent | Needed for FS6–FS20 + AFML parity; purged/CPCV currently in-lab (ADR pending) |
+| TradingLab submodule | `vendor/tradinglab` absent | Needed for FS6–FS19 + AFML parity |
 
-**Note:** `SUPABASE_PROJECT_ID` = `ushtfpelbpjfkjoppklz`. Remote DB has 8 migrations. Deploy `render`/`smoke` skip unless `RENDER_ENABLED=true`.
+**Note:** `SUPABASE_PROJECT_ID` = `ushtfpelbpjfkjoppklz`. Remote DB has 8 migrations. Deploy `render`/`smoke` skip unless `RENDER_ENABLED=true` (and migrate secrets set).
 
 ## Phase log
 | Phase | Status | Report | Commit |
 |---|---|---|---|
-| 0 | done | docs/PHASE_0_REPORT.md | phase 0: foundations |
-| 1 | done | docs/PHASE_1_REPORT.md | phase 1: data + EDA + education |
-| 8.1 | done (partial hosted smoke) | docs/PHASE_8_1_REPORT.md | phase 8.1: hosted skeleton |
-| 1A | done | docs/PHASE_1A_REPORT.md | phase 1A: dataset intake |
-| 2 | done (thin) → deepening | docs/PHASE_2_REPORT.md | phase 2: auth brand thin supervised |
-| 2A | done (thin) → deepening | docs/PHASE_2A_REPORT.md | phase 2a: dl thin smoke |
-| 2B | done | docs/PHASE_2B_REPORT.md | phase 2b: workstation ui shell |
-| 3 | done (thin) → deepening | docs/PHASE_3_REPORT.md | phase 3: explain predict uq thin |
-| 3A | done (thin) → deepening | docs/PHASE_3A_REPORT.md | phase 3a: prediction studio thin |
-| 4 | done (thin) → deepening | docs/PHASE_4_REPORT.md | phase 4: timeseries thin |
-| One-shot A | done | deploy.yml honesty | deploy: gate render/smoke |
-| One-shot B.1 | done | docs/PHASE_ONESHOT_B1_REPORT.md | phase oneshot-b1 |
-| 4A–8.2 | not started | — | — |
+| 0–4 thin | done | PHASE_*_REPORT.md | prior |
+| One-shot A | done | deploy.yml | 6851ce9 |
+| One-shot B.1–B.3 | done | PHASE_ONESHOT_B1_REPORT.md | 5e7db5c…8dcd625 |
+| One-shot C.1–C.3 | done (partial 5/6/6A/8.2) | FINAL_REPORT.md | 8524aa6…dbcb069 |
+| 4A–8.2 full | in progress | FINAL_REPORT.md | — |
