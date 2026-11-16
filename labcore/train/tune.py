@@ -182,3 +182,77 @@ def run_optuna_tune(
         artefact["mlflow"] = {"logged": False, "reason": "MLFLOW_TRACKING_URI unset"}
 
     return artefact
+
+
+def run_halving_tune(
+    df: pd.DataFrame,
+    *,
+    target: str,
+    algorithm_key: str,
+    task: str = "binary",
+    n_splits: int = 3,
+    seed: int = 42,
+    recipe: RecipeSpec | None = None,
+    n_candidates: int = 12,
+) -> dict[str, Any]:
+    """Successive-halving search via sklearn ``HalvingRandomSearchCV`` (seed 42)."""
+    from sklearn.experimental import enable_halving_search_cv  # noqa: F401
+    from sklearn.model_selection import HalvingRandomSearchCV
+
+    recipe = recipe or RecipeSpec(seed=seed)
+    specs = {s.key: s for s in thin_algorithm_specs()}
+    if algorithm_key not in specs:
+        raise ValueError(f"unknown algorithm: {algorithm_key}")
+    spec = specs[algorithm_key]
+
+    y = df[target]
+    X = df.drop(columns=[target])
+    pre, _, _ = compile_recipe(X, recipe)
+    # Build a param distribution from ParamSpec ranges
+    param_dist: dict[str, Any] = {}
+    for p in spec.params:
+        if p.name == "random_state":
+            continue
+        key = f"model__{p.name}"
+        if p.type == "int" and p.low is not None and p.high is not None:
+            param_dist[key] = list(range(int(p.low), int(p.high) + 1))[:20]
+        elif p.type == "float" and p.low is not None and p.high is not None:
+            param_dist[key] = list(np.linspace(float(p.low), float(p.high), num=8))
+        elif p.type == "categorical" and p.choices:
+            param_dist[key] = list(p.choices)
+
+    if not param_dist:
+        raise ValueError(f"no searchable params for {algorithm_key}")
+
+    model = build_estimator(spec, {})
+    pipe = _with_model(pre, model)
+    splitter = build_splitter(
+        "stratified_kfold" if task != "regression" else "kfold",
+        n_splits=n_splits,
+        seed=seed,
+        task=task,
+    )
+    scoring = _primary_scoring(task)
+    search = HalvingRandomSearchCV(
+        pipe,
+        param_distributions=param_dist,
+        n_candidates=n_candidates,
+        factor=3,
+        cv=splitter,
+        scoring=scoring,
+        random_state=seed,
+        n_jobs=1,
+        aggressive_elimination=True,
+        error_score=np.nan,
+    )
+    search.fit(X, y)
+    return {
+        "algorithm_key": algorithm_key,
+        "method": "halving_random",
+        "seed": seed,
+        "scoring": scoring,
+        "best_params": dict(search.best_params_),
+        "best_value": float(search.best_score_),
+        "n_candidates": n_candidates,
+        "n_train": int(len(X)),
+    }
