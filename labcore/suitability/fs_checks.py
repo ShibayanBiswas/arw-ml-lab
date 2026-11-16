@@ -1,8 +1,8 @@
 """FS financial labelling suitability (ARCHITECTURE §37).
 
-Implemented without TradingLab: FS1–FS11, FS14–FS15, FS19–FS20.
-FS12–FS13 / FS16–FS18 stay DEFERRED until vendor/tradinglab uniqueness/meta adapters.
-FS7/FS9–FS11 use AFML-equivalent thin formulas until the submodule lands.
+Implemented without TradingLab: FS1–FS12, FS14–FS15, FS19–FS20.
+FS13 / FS16–FS18 stay DEFERRED until vendor/tradinglab meta/trend adapters.
+FS7/FS9–FS12 use AFML-equivalent thin formulas until the submodule lands.
 """
 
 from __future__ import annotations
@@ -352,6 +352,54 @@ def check_fs10_class_balance(df: pd.DataFrame, price_col: str | None) -> FSResul
     return FSResult("FS10", "FAIL", f"minority={minority:.1%} (<5%)", details)
 
 
+def check_fs12_average_uniqueness(df: pd.DataFrame, price_col: str | None) -> FSResult:
+    """FS12 — average uniqueness of trial label spans (AFML ch. 4 thin).
+
+    Build concurrent count c_t over trial ±1σ / 5-bar events; ū_i = mean(1/c_t)
+    over each event span; report mean ū. PASS ≥0.3, WARN 0.1–0.3, FAIL <0.1.
+    """
+    if price_col is None or price_col not in df.columns:
+        return FSResult("FS12", "FAIL", "no price column for uniqueness")
+    px = pd.to_numeric(df[price_col], errors="coerce").dropna()
+    if len(px) < 60:
+        return FSResult("FS12", "FAIL", "too few bars for uniqueness", {"n": len(px)})
+    log_p = np.log(px.to_numpy(dtype=float))
+    rets = np.diff(log_p)
+    vol = pd.Series(rets).ewm(span=100, min_periods=30).std().to_numpy()
+    horizon = 5
+    spans: list[tuple[int, int]] = []
+    for i in range(len(rets) - 1):
+        sigma = vol[i]
+        if not np.isfinite(sigma) or sigma <= 0:
+            continue
+        end = min(i + 1 + horizon, len(log_p) - 1)
+        t1 = end
+        path = log_p[i + 1 : end + 1] - log_p[i]
+        for j, r in enumerate(path):
+            if r >= sigma or r <= -sigma:
+                t1 = i + 1 + j
+                break
+        spans.append((i, t1))
+    if len(spans) < 20:
+        return FSResult("FS12", "FAIL", "too few spans for uniqueness", {"n_spans": len(spans)})
+    n_t = max(t1 for _t0, t1 in spans) + 1
+    concurrent = np.zeros(n_t, dtype=float)
+    for t0, t1 in spans:
+        concurrent[t0 : t1 + 1] += 1.0
+    uniques: list[float] = []
+    for t0, t1 in spans:
+        c = concurrent[t0 : t1 + 1]
+        c = np.maximum(c, 1.0)
+        uniques.append(float(np.mean(1.0 / c)))
+    mean_u = float(np.mean(uniques))
+    details = {"mean_uniqueness": mean_u, "n_spans": len(spans)}
+    if mean_u >= 0.3:
+        return FSResult("FS12", "PASS", f"mean ū={mean_u:.3f}", details)
+    if mean_u >= 0.1:
+        return FSResult("FS12", "WARN", f"mean ū={mean_u:.3f} (0.1–0.3)", details)
+    return FSResult("FS12", "FAIL", f"mean ū={mean_u:.3f} (<0.1)", details)
+
+
 def check_fs11_vertical_barrier_share(df: pd.DataFrame, price_col: str | None) -> FSResult:
     """FS11 — share of trial labels ended by vertical barrier (label 0).
 
@@ -551,15 +599,15 @@ def run_suitability(
         check_fs9_event_count(df, price),
         check_fs10_class_balance(df, price),
         check_fs11_vertical_barrier_share(df, price),
+        check_fs12_average_uniqueness(df, price),
     ]
-    for code in ("FS12", "FS13"):
-        checks.append(
-            FSResult(
-                code,
-                "DEFERRED",
-                "requires TradingLab uniqueness / sample-weight adapters (Phase 5)",
-            )
+    checks.append(
+        FSResult(
+            "FS13",
+            "DEFERRED",
+            "requires TradingLab effective sample size / sequential bootstrap adapters",
         )
+    )
     checks.append(check_fs14_return_acf(df, price))
     checks.append(check_fs15_stationarity(df, price))
     for code in ("FS16", "FS17", "FS18"):
