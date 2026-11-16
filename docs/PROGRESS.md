@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Current phase | One-shot Chunk C — continue §36/§39 / 8.2 |
-| Last completed step | oneshot-c59 F11 SARIMAX |
-| Last green commit | 2127693 |
+| Last completed step | oneshot-c60 REE.P.COMPARE_BARS |
+| Last green commit | 569420c |
 | Open failures | Deploy migrate (Supabase secrets); Render unpaid |
 | Next action | Shibayan: secrets + Render. Agent: CLE/REE remainder / §39 / neural F* |
 

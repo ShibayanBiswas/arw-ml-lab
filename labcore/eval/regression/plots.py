@@ -396,3 +396,42 @@ def plot_err_heatmap(
         "plotly": fig.to_plotly_json(),
         "numbers": {"stat": np.where(np.isnan(stat), None, stat).tolist()},
     }
+
+
+def plot_compare_bars_ree(
+    model_scores: dict[str, float],
+    *,
+    cis: dict[str, tuple[float, float]] | None = None,
+    metric: str = "rmse",
+) -> dict[str, Any]:
+    """REE.P.COMPARE_BARS — model comparison bars with optional 95% CI."""
+    import plotly.graph_objects as go
+
+    names = list(model_scores.keys())
+    vals = [float(model_scores[n]) for n in names]
+    err = None
+    if cis:
+        err = [
+            [float(model_scores[n] - cis[n][0]) if n in cis else 0.0 for n in names],
+            [float(cis[n][1] - model_scores[n]) if n in cis else 0.0 for n in names],
+        ]
+    fig = go.Figure(
+        go.Bar(
+            x=names,
+            y=vals,
+            error_y=(
+                {"type": "data", "symmetric": False, "array": err[1], "arrayminus": err[0]}
+                if err
+                else None
+            ),
+        )
+    )
+    fig.update_layout(
+        title=f"Regression model comparison ({metric})", yaxis_title=metric, height=360
+    )
+    return {
+        "id": "REE.P.COMPARE_BARS",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {"scores": model_scores, "cis": cis},
+    }
