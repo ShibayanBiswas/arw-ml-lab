@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Current phase | One-shot Chunk C — continue §36/§39 / 8.2 |
-| Last completed step | oneshot-c53 F23 VECM |
-| Last green commit | c218ddc |
+| Last completed step | oneshot-c54 F22 VARMAX |
+| Last green commit | 06ec69f |
 | Open failures | Deploy migrate (Supabase secrets); Render unpaid |
-| Next action | Shibayan: secrets + Render. Agent: F22 VARMAX / CLE/REE / §39 |
+| Next action | Shibayan: secrets + Render. Agent: CLE/REE/DL plots / §39 / neural F* |
 
 ## Blocked — needs Shibayan
 

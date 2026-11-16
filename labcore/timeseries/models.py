@@ -44,6 +44,7 @@ ModelKey = Literal[
     "arima_fourier",
     "var",
     "vecm",
+    "varmax",
 ]
 
 
@@ -490,6 +491,31 @@ def forecast_vecm(
     }
 
 
+def forecast_varmax(
+    y_train: np.ndarray,
+    h: int,
+    *,
+    order: tuple[int, int] = (1, 0),
+) -> dict[str, Any]:
+    """F22 — statsmodels VARMAX (constrained order for CI speed)."""
+    from statsmodels.tsa.statespace.varmax import VARMAX
+
+    Y = np.asarray(y_train, dtype=float)
+    if Y.ndim != 2 or Y.shape[1] < 2:
+        raise ValueError("varmax requires y_train with shape (n, k), k≥2")
+    if Y.shape[0] < 40:
+        raise ValueError(f"varmax needs n ≥ 40 (got n={Y.shape[0]})")
+    model = VARMAX(Y, order=order, trend="c")
+    fitted = model.fit(disp=False, maxiter=50)
+    pred = np.asarray(fitted.forecast(steps=h), dtype=float)
+    return {
+        "y_pred": pred,
+        "resid": np.asarray(fitted.resid, dtype=float),
+        "order": order,
+        "aic": float(fitted.aic),
+    }
+
+
 def forecast_ucm_local_level(y_train: np.ndarray, h: int) -> tuple[np.ndarray, np.ndarray]:
     """F19 — UnobservedComponents local level (statsmodels)."""
     from statsmodels.tsa.statespace.structural import UnobservedComponents
@@ -665,6 +691,15 @@ def forecast(
             "resid": out["resid"],
             "extra": {"coint_rank": out["coint_rank"], "k_ar_diff": out["k_ar_diff"]},
         }
+    if key == "varmax":
+        Y = endog if endog is not None else y_train
+        out = forecast_varmax(Y, h)
+        return {
+            "key": key,
+            "y_pred": out["y_pred"],
+            "resid": out["resid"],
+            "extra": {"order": out["order"], "aic": out["aic"]},
+        }
     raise ValueError(f"unknown model key: {key}")
 
 
@@ -711,4 +746,5 @@ TS_MODEL_CATALOGUE: list[dict[str, str]] = [
     },
     {"id": "var", "library": "statsmodels", "name": "VAR"},
     {"id": "vecm", "library": "statsmodels", "name": "VECM"},
+    {"id": "varmax", "library": "statsmodels", "name": "VARMAX"},
 ]
