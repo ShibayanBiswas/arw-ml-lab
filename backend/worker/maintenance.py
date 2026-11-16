@@ -15,22 +15,66 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 log = logging.getLogger("lab.maintenance")
 
 
+STALE_SECONDS = 10 * 60  # 10 minutes without progress → failed
+PREDICTION_RETENTION_SECONDS = 30 * 24 * 3600  # 30 days (§46 OPS-06)
+
+
 def reaper_stale_heartbeats() -> dict[str, int]:
-    """Mark jobs without heartbeat for 10 min as failed (Phase 8.2)."""
-    log.info("reaper_stale_heartbeats: deferred to Phase 8.2 (no-op)")
-    return {"marked_failed": 0}
+    """Mark queued/running jobs older than 10 min without progress as failed."""
+    import time
+
+    from backend.app.jobs_store import JOB_STORE
+
+    now = time.time()
+    marked = 0
+    for job_id, rec in list(getattr(JOB_STORE, "_jobs", {}).items()):
+        if rec.status not in ("queued", "running"):
+            continue
+        age = now - float(rec.created_at)
+        if age >= STALE_SECONDS and float(rec.progress) < 1.0:
+            JOB_STORE.update(
+                job_id,
+                status="error",
+                error=f"stale heartbeat after {int(age)}s",
+            )
+            marked += 1
+    log.info("reaper_stale_heartbeats: marked_failed=%s", marked)
+    return {"marked_failed": marked}
 
 
 def retention_expired_predictions() -> dict[str, int]:
-    """Delete expired prediction artefacts (Phase 8.2 / §45)."""
-    log.info("retention_expired_predictions: deferred to Phase 8.2 (no-op)")
-    return {"deleted": 0}
+    """Delete in-memory MODEL_STORE entries older than retention (when stamped)."""
+    import time
+
+    from backend.app.model_store import MODEL_STORE
+
+    now = time.time()
+    deleted = 0
+    store = getattr(MODEL_STORE, "_models", None)
+    if isinstance(store, dict):
+        for mid, rec in list(store.items()):
+            created = getattr(rec, "created_at", None)
+            if created is None:
+                continue
+            if now - float(created) > PREDICTION_RETENTION_SECONDS:
+                store.pop(mid, None)
+                deleted += 1
+    log.info("retention_expired_predictions: deleted=%s", deleted)
+    return {"deleted": deleted}
 
 
 def storage_lifecycle() -> dict[str, int]:
-    """Storage lifecycle sweep (Phase 8.2)."""
-    log.info("storage_lifecycle: deferred to Phase 8.2 (no-op)")
-    return {"touched": 0}
+    """Count artefacts under local scratch (hosted storage sweep in 8.2-cont)."""
+    from pathlib import Path
+
+    scratch = Path("tmp") / "artefacts"
+    touched = 0
+    if scratch.exists():
+        for p in scratch.rglob("*"):
+            if p.is_file():
+                touched += 1
+    log.info("storage_lifecycle: touched=%s", touched)
+    return {"touched": touched}
 
 
 def run_all() -> dict[str, object]:
