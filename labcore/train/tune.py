@@ -80,10 +80,18 @@ def run_optuna_tune(
     recipe: RecipeSpec | None = None,
     fixed_params: dict[str, Any] | None = None,
     n_trials: int | None = None,
+    sampler: str = "tpe",
+    use_hyperband: bool = False,
 ) -> dict[str, Any]:
-    """TPE study; objective = CV mean primary metric. Returns best params + history."""
+    """Optuna study; objective = CV mean primary metric. Returns best params + history.
+
+    ``sampler``: ``tpe`` (default) or ``nsga2`` (multi-objective: score + -n_params).
+    ``use_hyperband``: attach ``HyperbandPruner`` (requires intermediate reports — thin
+    path still evaluates full CV per trial; pruner is wired for future step reports).
+    """
     import optuna
-    from optuna.samplers import TPESampler
+    from optuna.pruners import HyperbandPruner, NopPruner
+    from optuna.samplers import NSGAIISampler, TPESampler
 
     recipe = recipe or RecipeSpec(seed=seed)
     preset_cfg = get_tuning_preset(preset)
@@ -110,12 +118,21 @@ def run_optuna_tune(
     scoring = _primary_scoring(task)
 
     optuna.logging.set_verbosity(optuna.logging.WARNING)
-    study = optuna.create_study(
-        direction="maximize",
-        sampler=TPESampler(seed=seed),
-    )
+    multi = sampler.lower() in {"nsga2", "nsga-ii", "nsgaii"}
+    if multi:
+        study = optuna.create_study(
+            directions=["maximize", "minimize"],
+            sampler=NSGAIISampler(seed=seed),
+            pruner=HyperbandPruner() if use_hyperband else NopPruner(),
+        )
+    else:
+        study = optuna.create_study(
+            direction="maximize",
+            sampler=TPESampler(seed=seed),
+            pruner=HyperbandPruner() if use_hyperband else NopPruner(),
+        )
 
-    def objective(trial: optuna.Trial) -> float:
+    def objective(trial: optuna.Trial) -> float | tuple[float, float]:
         params = _suggest_params(trial, spec)
         if fixed_params:
             params.update(fixed_params)
@@ -133,7 +150,10 @@ def run_optuna_tune(
         )
         mean = float(np.nanmean(scores))
         if np.isnan(mean):
-            return float("-inf")
+            mean = float("-inf")
+        if multi:
+            complexity = float(len(params))
+            return mean, complexity
         return mean
 
     study.optimize(objective, n_trials=trials, show_progress_bar=False)
@@ -141,13 +161,21 @@ def run_optuna_tune(
     history = [
         {
             "number": t.number,
-            "value": t.value,
+            "value": t.values if multi else t.value,
             "params": dict(t.params),
             "state": str(t.state),
         }
         for t in study.trials
     ]
-    best_params = dict(study.best_params)
+    if multi:
+        # pick Pareto trial with best primary score
+        pareto = study.best_trials
+        best_trial = max(pareto, key=lambda t: float(t.values[0])) if pareto else None
+        best_params = dict(best_trial.params) if best_trial else {}
+        best_value = float(best_trial.values[0]) if best_trial else None
+    else:
+        best_params = dict(study.best_params)
+        best_value = float(study.best_value) if study.best_trial else None
     if fixed_params:
         # ensure user fixed params are recorded on the artefact
         best_params = {**best_params, **fixed_params}
@@ -158,12 +186,15 @@ def run_optuna_tune(
         "n_trials": trials,
         "seed": seed,
         "scoring": scoring,
+        "sampler": sampler,
+        "hyperband": use_hyperband,
         "nested_default": use_nested,
         "n_train": int(len(X)),
-        "best_value": float(study.best_value) if study.best_trial else None,
+        "best_value": best_value,
         "best_params": best_params,
         "trials": history,
         "dropped_high_card": drop_cols,
+        "n_pareto": len(study.best_trials) if multi else None,
     }
 
     uri = os.environ.get("MLFLOW_TRACKING_URI")
