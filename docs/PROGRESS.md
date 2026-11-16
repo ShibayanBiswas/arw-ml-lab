@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Current phase | One-shot Chunk C — continue §36/§39 / 8.2 |
-| Last completed step | oneshot-c63 F18 AutoMFLES |
-| Last green commit | 88287c2 |
+| Last completed step | oneshot-c64 CLE.P.CM_MULTILABEL |
+| Last green commit | 632f498 |
 | Open failures | Deploy migrate (Supabase secrets); Render unpaid |
 | Next action | Shibayan: secrets + Render. Agent: CLE/REE remainder / §39 / neural F* |
 

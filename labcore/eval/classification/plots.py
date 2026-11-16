@@ -911,3 +911,46 @@ def plot_cm_cv(
             "pooled_counts": pooled.tolist(),
         },
     }
+
+
+def plot_cm_multilabel(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    *,
+    label_names: list[str] | None = None,
+) -> dict[str, Any]:
+    """CLE.P.CM_MULTILABEL — per-label 2×2 from sklearn multilabel_confusion_matrix."""
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+    from sklearn.metrics import multilabel_confusion_matrix
+
+    yt = np.asarray(y_true)
+    yp = np.asarray(y_pred)
+    mcm = multilabel_confusion_matrix(yt, yp)
+    n = mcm.shape[0]
+    names = label_names or [f"L{i}" for i in range(n)]
+    cols = min(4, n)
+    rows = int(np.ceil(n / cols))
+    fig = make_subplots(rows=rows, cols=cols, subplot_titles=names[:n])
+    for i in range(n):
+        r, c = divmod(i, cols)
+        fig.add_trace(
+            go.Heatmap(
+                z=mcm[i],
+                x=["pred0", "pred1"],
+                y=["true0", "true1"],
+                colorscale="Blues",
+                text=mcm[i],
+                texttemplate="%{text}",
+                showscale=(i == 0),
+            ),
+            row=r + 1,
+            col=c + 1,
+        )
+    fig.update_layout(title="Multilabel 2×2 CMs", height=260 * rows)
+    return {
+        "id": "CLE.P.CM_MULTILABEL",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {"matrices": mcm.tolist(), "labels": names},
+    }
