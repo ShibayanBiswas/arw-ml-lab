@@ -5,6 +5,12 @@ on:
     types: [completed]
     branches: [main]
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "supabase db push --dry-run only (no apply, no Render)"
+        type: boolean
+        default: false
+
 jobs:
   migrate:
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
@@ -15,33 +21,46 @@ jobs:
       SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
       SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: supabase/setup-cli@v1
-        with: { version: "3.1.0" }  # pinned Phase 0 (ST-OPS-10); bump deliberately
+        with: { version: "3.1.0" } # pinned Phase 0 (ST-OPS-10); bump deliberately
       - name: Require Supabase secrets
         run: |
-          test -n "$SUPABASE_ACCESS_TOKEN" || (echo "SUPABASE_ACCESS_TOKEN missing" && exit 1)
-          test -n "$SUPABASE_PROJECT_ID" || (echo "SUPABASE_PROJECT_ID missing" && exit 1)
+          test -n "$SUPABASE_ACCESS_TOKEN" || (echo "SUPABASE_ACCESS_TOKEN missing — set GitHub Environment production secret" && exit 1)
+          test -n "$SUPABASE_PROJECT_ID" || (echo "SUPABASE_PROJECT_ID missing — set GitHub Environment production secret (e.g. ushtfpelbpjfkjoppklz)" && exit 1)
+          test -n "$SUPABASE_DB_PASSWORD" || (echo "SUPABASE_DB_PASSWORD missing — set GitHub Environment production secret" && exit 1)
       - run: supabase link --project-ref "$SUPABASE_PROJECT_ID"
-      - run: supabase db push --remote --yes
+      - name: Migration dry-run
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run == true }}
+        run: supabase db push --dry-run --yes
+      - name: Apply migrations
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run == true) }}
+        run: supabase db push --remote --yes
 
   render:
     needs: migrate
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run == true) }}
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - name: Trigger Render deploys after migrations (autoDeployTrigger=off)
+      - name: Render deploy (gated)
         env:
+          RENDER_ENABLED: ${{ vars.RENDER_ENABLED }}
           HOOK_API: ${{ secrets.RENDER_DEPLOY_HOOK_API }}
           HOOK_LIGHT: ${{ secrets.RENDER_DEPLOY_HOOK_WORKER_LIGHT }}
           HOOK_TRAIN: ${{ secrets.RENDER_DEPLOY_HOOK_WORKER_TRAIN }}
         run: |
+          if [ "${RENDER_ENABLED}" != "true" ]; then
+            echo "Render not provisioned (need_payment_info / RENDER_ENABLED!=true), skipped"
+            echo "Set vars.RENDER_ENABLED=true and RENDER_DEPLOY_HOOK_* secrets after Blueprint is live."
+            exit 0
+          fi
           missing=0
           for name_h in "API:$HOOK_API" "LIGHT:$HOOK_LIGHT" "TRAIN:$HOOK_TRAIN"; do
             name="${name_h%%:*}"
             h="${name_h#*:}"
             if [ -z "$h" ]; then
-              echo "WARN: RENDER_DEPLOY_HOOK_$name empty"
+              echo "ERROR: RENDER_DEPLOY_HOOK_$name empty while RENDER_ENABLED=true"
               missing=1
             else
               curl -fsS -X POST "$h" > /dev/null
@@ -57,30 +76,34 @@ jobs:
 
   smoke:
     needs: render
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run == true) }}
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - uses: actions/checkout@v4
-      - name: Wait for lab-api healthz
-        env: { LAB_API_URL: "${{ vars.LAB_API_URL }}" }
+      - uses: actions/checkout@v5
+      - name: Hosted smoke (gated on Render)
+        env:
+          RENDER_ENABLED: ${{ vars.RENDER_ENABLED }}
+          LAB_API_URL: ${{ vars.LAB_API_URL }}
+          SMOKE_EDA: ${{ vars.SMOKE_EDA }}
         run: |
-          test -n "$LAB_API_URL" || (echo "LAB_API_URL variable missing" && exit 1)
+          if [ "${RENDER_ENABLED}" != "true" ]; then
+            echo "Render not provisioned (need_payment_info / RENDER_ENABLED!=true), skipped"
+            echo "Hosted smoke requires vars.LAB_API_URL after lab-api is live."
+            exit 0
+          fi
+          test -n "$LAB_API_URL" || (echo "LAB_API_URL variable missing while RENDER_ENABLED=true" && exit 1)
           for i in $(seq 1 30); do
             if curl -fsS "$LAB_API_URL/healthz"; then
               echo
               echo "healthz ok"
+              if [ "${SMOKE_EDA}" = "true" ]; then
+                bash scripts/smoke_hosted.sh
+              else
+                echo "SMOKE_EDA not true — healthz only"
+              fi
               exit 0
             fi
             sleep 20
           done
           exit 1
-      - name: Optional DS1 EDA smoke (when AUTH_TEST_BYPASS enabled on staging only)
-        env:
-          LAB_API_URL: ${{ vars.LAB_API_URL }}
-          SMOKE_EDA: ${{ vars.SMOKE_EDA }}
-        run: |
-          if [ "${SMOKE_EDA}" != "true" ]; then
-            echo "SMOKE_EDA not true — skipping sample EDA (set vars.SMOKE_EDA=true for staging)"
-            exit 0
-          fi
-          bash scripts/smoke_hosted.sh
