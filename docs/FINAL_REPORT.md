@@ -1,7 +1,7 @@
 # ARW ML Lab — One-shot finish report (interim)
 
 **Date:** 16 Nov 2026 (IST)  
-**Tip:** `47665c6` (MLflow nested + URI isolation; CI green)  
+**Tip:** `22147fa` oneshot-c27 pipeline graph (CI green)  
 **Live frontend:** https://arw-ml-lab.vercel.app/login → **200**  
 **Repo:** https://github.com/ShibayanBiswas/arw-ml-lab
 
@@ -53,13 +53,14 @@ Honest interim closeout. Chunk A + deep B/C slices shipped with repeated **CI gr
 | 8b5fc2f | C.23 ZAP baseline config |
 | f6cd789 | C.24 KNNImputer recipe |
 | 807203e | C.25 RareLabelEncoder recipe |
-| (c26) | C.26 MLflow nested runs |
+| 3a212c3 | C.26 MLflow nested runs |
+| 47665c6 | fix: MLflow URI isolation + RareLabel off-by-default |
 
 ## CI / Deploy / Vercel
 
 | System | Status | Notes |
 |---|---|---|
-| CI | green through c25 (`807203e`) | (Actions tip runs) |
+| CI | green through `47665c6` | https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43828634374 |
 | Deploy migrate | **fails** | missing `SUPABASE_ACCESS_TOKEN` / `SUPABASE_DB_PASSWORD` |
 | Deploy render/smoke | skipped honestly | until `RENDER_ENABLED=true` + migrate secrets |
 | Vercel | READY / **200** | https://arw-ml-lab.vercel.app |

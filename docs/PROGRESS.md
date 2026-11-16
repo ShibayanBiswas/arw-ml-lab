@@ -4,7 +4,7 @@
 |---|---|
 | Current phase | One-shot Chunk C — continue 4A/5/5A/6B/7/8.2 ACs |
 | Last completed step | oneshot-c27 pipeline graph HTML |
-| Last green commit | 47665c6 (docs tip 62daf7a) |
+| Last green commit | 22147fa |
 | Open failures | Deploy migrate (Supabase secrets); Render unpaid |
 | Next action | Shibayan: secrets + Render. Agent: full catalogues / WFO retune / Playwright |
 
