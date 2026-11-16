@@ -8,6 +8,8 @@ from typing import Any, Literal
 import pandas as pd
 from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Query, UploadFile
 from fastapi.responses import Response
+from labcore.explain.dice_cf import dice_counterfactuals
+from labcore.explain.lime_tabular import lime_explain_row
 from labcore.explain.permutation import permutation_explain
 from labcore.explain.shap_trees import tree_shap_explain
 from labcore.predict.score import predict_batch, predict_single
@@ -41,8 +43,9 @@ class PredictBatchBody(BaseModel):
 
 class ExplainBody(BaseModel):
     rows: list[dict[str, Any]] = Field(min_length=1, max_length=200)
-    method: Literal["shap", "permutation"] = "shap"
+    method: Literal["shap", "permutation", "lime", "dice"] = "shap"
     target_values: list[Any] | None = None
+    total_cfs: int = Field(default=3, ge=1, le=10)
 
 
 class StudioBatchBody(BaseModel):
@@ -328,6 +331,7 @@ def explain_model(
     m = _get_model(model_id)
     X = pd.DataFrame(body.rows)
     model = m.pipeline
+    feats = [c for c in m.feature_names if c in X.columns]
     if body.method == "permutation":
         if not body.target_values or len(body.target_values) != len(body.rows):
             raise HTTPException(
@@ -336,12 +340,41 @@ def explain_model(
             )
         y = body.target_values
         try:
-            return permutation_explain(model, X[m.feature_names], y, seed=42)
+            return permutation_explain(model, X[feats], y, seed=42)
+        except Exception as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+    if body.method == "lime":
+        try:
+            return lime_explain_row(
+                model,
+                X[feats],
+                X[feats].iloc[0],
+                num_features=min(10, len(feats)),
+                num_samples=1000,
+                seed=42,
+            )
+        except Exception as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+    if body.method == "dice":
+        if not body.target_values or len(body.target_values) != len(body.rows):
+            raise HTTPException(
+                status_code=422,
+                detail="dice explain requires target_values aligned to rows",
+            )
+        try:
+            return dice_counterfactuals(
+                model,
+                X[feats],
+                body.target_values,
+                X[feats].iloc[[0]],
+                total_cfs=body.total_cfs,
+                seed=42,
+            )
         except Exception as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
     if hasattr(model, "named_steps") and "model" in model.named_steps:
         pre = model[:-1]
         leaf = model.named_steps["model"]
-        Xt = pre.transform(X[m.feature_names])
+        Xt = pre.transform(X[feats])
         return tree_shap_explain(leaf, Xt)
-    return tree_shap_explain(model, X[m.feature_names])
+    return tree_shap_explain(model, X[feats])

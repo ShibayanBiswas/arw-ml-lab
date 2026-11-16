@@ -130,6 +130,18 @@ export default async function ModuleSubPage({ params }: Props) {
   ) {
     return <ExperimentsWorkbench mode={page} />;
   }
+  if (
+    slug === "admin" &&
+    (page === "users" ||
+      page === "workspaces" ||
+      page === "quotas" ||
+      page === "workers" ||
+      page === "vlm" ||
+      page === "audit" ||
+      page === "health")
+  ) {
+    return <AdminWorkbench mode={page} />;
+  }
 
   return (
     <ModulePlaceholder

@@ -1,7 +1,7 @@
 # ARW ML Lab — One-shot finish report (interim)
 
 **Date:** 16 Nov 2026 (IST)  
-**Tip:** `c2390a5` (oneshot-c10 NSGA-II/Hyperband)  
+**Tip:** oneshot-c12 (LIME + DiCE; prior green `6fd12fa` c11)  
 **Live frontend:** https://arw-ml-lab.vercel.app/login → **200**  
 **Repo:** https://github.com/ShibayanBiswas/arw-ml-lab
 
@@ -14,7 +14,7 @@ Honest interim closeout. Chunk A + deep B/C slices shipped with repeated **CI gr
 | 0–2B, 8.1 thin | done | `docs/PHASE_*_REPORT.md` |
 | 2 deepen | partial | expanded registry (~84), Halving + NSGA-II/Hyperband |
 | 2A deepen | partial | train-window-only scaler; DeepWorkbench |
-| 3 deepen | partial | ExplainWorkbench, permutation + TreeSHAP |
+| 3 deepen | partial | ExplainWorkbench, TreeSHAP, permutation, LIME, DiCE |
 | 3A deepen | partial | PV02/03/10/14/15, Celery batch ≤1M, cancel |
 | 4 deepen | partial | Theta/AutoETS/HistoricAverage; §35.7 metrics expand |
 | 4A | partial | metrics/models only — not full F*/TS.P.* |
@@ -38,12 +38,14 @@ Honest interim closeout. Chunk A + deep B/C slices shipped with repeated **CI gr
 | 566c6ef…5ba9e44 | C.4–C.6 WFO/reports/drift |
 | 666a2ba…3109058 | C.7–C.8 Experiments/Admin UI |
 | 17e4ccc…c2390a5 | C.9–C.10 Halving + NSGA-II/Hyperband |
+| 6fd12fa | C.11 Friedman–Nemenyi CD diagram |
+| (c12) | C.12 LIME + DiCE explain |
 
 ## CI / Deploy / Vercel
 
 | System | Status | Notes |
 |---|---|---|
-| CI | green on tip lineage (c6–c10) | e.g. https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43809826060 |
+| CI | green through c11 (`6fd12fa`) | https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43814152988 |
 | Deploy migrate | **fails** | missing `SUPABASE_ACCESS_TOKEN` / `SUPABASE_DB_PASSWORD` |
 | Deploy render/smoke | skipped honestly | until `RENDER_ENABLED=true` + migrate secrets |
 | Vercel | READY / **200** | https://arw-ml-lab.vercel.app |

@@ -31,6 +31,7 @@ IMPORT_TO_PACKAGE = {
     "netcal": "netcal",
     "MLstatkit": "MLstatkit",
     "umap": "umap-learn",
+    "dice_ml": "dice-ml",
 }
 
 

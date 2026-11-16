@@ -324,11 +324,20 @@ export async function predictBatchUpload(modelId: string, file: File) {
   };
 }
 
-export async function explainRows(modelId: string, rows: Record<string, unknown>[]) {
+export async function explainRows(
+  modelId: string,
+  rows: Record<string, unknown>[],
+  method: "shap" | "permutation" | "lime" | "dice" = "shap",
+  targetValues?: unknown[]
+) {
   const res = await fetch(`${labApiBase()}/api/v1/explain/${modelId}`, {
     method: "POST",
     headers: { ...labAuthHeaders(), "Content-Type": "application/json" },
-    body: JSON.stringify({ rows, method: "shap" }),
+    body: JSON.stringify({
+      rows,
+      method,
+      ...(targetValues !== undefined ? { target_values: targetValues } : {}),
+    }),
   });
   if (!res.ok) throw new Error(`explain: ${res.status}`);
   return (await res.json()) as Record<string, unknown>;
@@ -339,17 +348,7 @@ export async function permutationExplain(
   rows: Record<string, unknown>[],
   targetValues: unknown[]
 ) {
-  const res = await fetch(`${labApiBase()}/api/v1/explain/${modelId}`, {
-    method: "POST",
-    headers: { ...labAuthHeaders(), "Content-Type": "application/json" },
-    body: JSON.stringify({
-      rows,
-      method: "permutation",
-      target_values: targetValues,
-    }),
-  });
-  if (!res.ok) throw new Error(`permutation explain: ${res.status}`);
-  return (await res.json()) as Record<string, unknown>;
+  return explainRows(modelId, rows, "permutation", targetValues);
 }
 
 export async function runUnsupervised(

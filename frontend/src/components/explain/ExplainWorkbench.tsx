@@ -1,21 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  explainRows,
-  getModelSampleRow,
-  listModels,
-  permutationExplain,
-} from "@/lib/api";
+import { explainRows, getModelSampleRow, listModels } from "@/lib/api";
 
 type Mode = "home" | "global" | "local" | "interactions" | "financial" | "compare";
+type Method = "shap" | "permutation" | "lime" | "dice";
 
 export function ExplainWorkbench({ mode }: { mode: Mode }) {
   const [models, setModels] = useState<
     Array<{ id: string; task: string; target: string | null; dataset_id: string }>
   >([]);
   const [modelId, setModelId] = useState("");
-  const [method, setMethod] = useState<"shap" | "permutation">("shap");
+  const [method, setMethod] = useState<Method>("shap");
   const [status, setStatus] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<Record<string, unknown> | null>(null);
@@ -40,15 +36,14 @@ export function ExplainWorkbench({ mode }: { mode: Mode }) {
       const sample = await getModelSampleRow(modelId);
       const row = (sample.row ?? sample) as Record<string, unknown>;
       const rows = [row, row, row, row, row];
-      if (method === "permutation") {
+      const needsY = method === "permutation" || method === "dice";
+      let targetValues: unknown[] | undefined;
+      if (needsY) {
         const target = models.find((m) => m.id === modelId)?.target;
-        const y = rows.map((r) => (target && target in r ? r[target] : 0));
-        const out = await permutationExplain(modelId, rows, y);
-        setResult(out);
-      } else {
-        const out = await explainRows(modelId, rows);
-        setResult(out);
+        targetValues = rows.map((r) => (target && target in r ? r[target] : 0));
       }
+      const out = await explainRows(modelId, rows, method, targetValues);
+      setResult(out);
       setStatus("Done");
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -61,7 +56,7 @@ export function ExplainWorkbench({ mode }: { mode: Mode }) {
       <header>
         <h1 className="font-display text-2xl text-[var(--ink)]">Explain · {mode}</h1>
         <p className="mt-1 text-sm text-[var(--muted)]">
-          TreeSHAP waterfall / additivity and sklearn permutation importance (seed 42).
+          TreeSHAP, LIME, DiCE counterfactuals, and sklearn permutation (seed 42).
         </p>
       </header>
 
@@ -86,9 +81,11 @@ export function ExplainWorkbench({ mode }: { mode: Mode }) {
           <select
             className="ml-2 border border-[var(--line)] bg-transparent px-2 py-1"
             value={method}
-            onChange={(e) => setMethod(e.target.value as "shap" | "permutation")}
+            onChange={(e) => setMethod(e.target.value as Method)}
           >
             <option value="shap">TreeSHAP</option>
+            <option value="lime">LIME</option>
+            <option value="dice">DiCE</option>
             <option value="permutation">Permutation</option>
           </select>
         </label>
