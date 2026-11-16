@@ -1,0 +1,48 @@
+"""MLflow nested run helpers (ARCHITECTURE §17 / §21) — thin wrappers."""
+
+from __future__ import annotations
+
+from collections.abc import Iterator
+from contextlib import contextmanager
+from typing import Any
+
+
+@contextmanager
+def nested_run(
+    *,
+    experiment: str,
+    run_name: str,
+    nested: bool = True,
+    tags: dict[str, str] | None = None,
+    tracking_uri: str | None = None,
+) -> Iterator[Any]:
+    """
+    Yield an active MLflow run (optionally nested).
+
+    Prefer a DB tracking URI (e.g. ``sqlite:///mlflow.db``). No fabricated
+    metrics — callers must ``log_metric`` / ``log_param`` from real values.
+    """
+    import mlflow
+
+    if tracking_uri:
+        mlflow.set_tracking_uri(tracking_uri)
+    mlflow.set_experiment(experiment)
+    with mlflow.start_run(run_name=run_name, nested=nested) as run:
+        if tags:
+            mlflow.set_tags(tags)
+        yield run
+
+
+def log_fold_metrics(
+    fold: int,
+    metrics: dict[str, float],
+    *,
+    prefix: str = "fold",
+) -> None:
+    """Log per-fold scalars onto the active MLflow run."""
+    import mlflow
+
+    for key, value in metrics.items():
+        if value is None:
+            continue
+        mlflow.log_metric(f"{prefix}_{fold}_{key}", float(value))

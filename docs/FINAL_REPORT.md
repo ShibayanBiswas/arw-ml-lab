@@ -1,7 +1,7 @@
 # ARW ML Lab — One-shot finish report (interim)
 
 **Date:** 16 Nov 2026 (IST)  
-**Tip:** oneshot-c25 RareLabelEncoder (c24 green `f6cd789`)  
+**Tip:** oneshot-c26 MLflow nested (c25 green `807203e`)  
 **Live frontend:** https://arw-ml-lab.vercel.app/login → **200**  
 **Repo:** https://github.com/ShibayanBiswas/arw-ml-lab
 
@@ -51,13 +51,14 @@ Honest interim closeout. Chunk A + deep B/C slices shipped with repeated **CI gr
 | f2958cf | C.21 nbformat reproduction notebook |
 | cd1a2e3 | C.22 POST /reports/notebook |
 | 8b5fc2f | C.23 ZAP baseline config |
-| (c24) | C.24 KNNImputer recipe |
+| f6cd789 | C.24 KNNImputer recipe |
+| (c25) | C.25 RareLabelEncoder recipe |
 
 ## CI / Deploy / Vercel
 
 | System | Status | Notes |
 |---|---|---|
-| CI | green through c22 (`cd1a2e3`) | https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43823651571 |
+| CI | green through c24 (`f6cd789`) | https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43825638066 |
 | Deploy migrate | **fails** | missing `SUPABASE_ACCESS_TOKEN` / `SUPABASE_DB_PASSWORD` |
 | Deploy render/smoke | skipped honestly | until `RENDER_ENABLED=true` + migrate secrets |
 | Vercel | READY / **200** | https://arw-ml-lab.vercel.app |
