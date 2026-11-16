@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Current phase | One-shot Chunk C — continue §36/§39 / 8.2 |
-| Last completed step | oneshot-c55 CLE.P.DISCRIMINATION |
-| Last green commit | 6ea227a |
+| Last completed step | oneshot-c56 REE.P.ERR_SEGMENT + ERR_HEATMAP |
+| Last green commit | 5e0f63c |
 | Open failures | Deploy migrate (Supabase secrets); Render unpaid |
 | Next action | Shibayan: secrets + Render. Agent: CLE/REE remainder / §39 / neural F* |
 

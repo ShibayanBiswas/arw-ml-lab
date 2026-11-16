@@ -301,3 +301,98 @@ def plot_calibration_bins(
         "plotly": fig.to_plotly_json(),
         "numbers": {"mean_pred": mean_pred, "mean_true": mean_true},
     }
+
+
+def plot_err_segment(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    *,
+    n_bins: int = 10,
+) -> dict[str, Any]:
+    """REE.P.ERR_SEGMENT — MAE and bias by ŷ-decile via fairlearn MetricFrame."""
+    import plotly.graph_objects as go
+    from fairlearn.metrics import MetricFrame
+    from sklearn.metrics import mean_absolute_error
+
+    yt = np.asarray(y_true, dtype=float)
+    yp = np.asarray(y_pred, dtype=float)
+    try:
+        edges = np.quantile(yp, np.linspace(0, 1, n_bins + 1))
+        edges = np.unique(edges)
+        if len(edges) < 3:
+            raise ValueError("too few unique bins")
+        labels = np.digitize(yp, edges[1:-1], right=True)
+    except Exception:
+        labels = np.zeros(len(yp), dtype=int)
+
+    def _bias(y_t: np.ndarray, y_p: np.ndarray) -> float:
+        return float(np.nanmean(np.asarray(y_p, dtype=float) - np.asarray(y_t, dtype=float)))
+
+    mf = MetricFrame(
+        metrics={"mae": mean_absolute_error, "bias": _bias},
+        y_true=yt,
+        y_pred=yp,
+        sensitive_features=labels,
+    )
+    by = mf.by_group
+    xs = [str(i) for i in by.index.tolist()]
+    fig = go.Figure()
+    fig.add_trace(go.Bar(name="MAE", x=xs, y=by["mae"].tolist()))
+    fig.add_trace(go.Bar(name="bias", x=xs, y=by["bias"].tolist()))
+    overall_mae = float(mf.overall["mae"])
+    fig.add_hline(y=overall_mae, line_dash="dash", annotation_text="overall MAE")
+    fig.update_layout(
+        barmode="group",
+        title="Error by ŷ decile",
+        xaxis_title="ŷ bin",
+        yaxis_title="value",
+        height=360,
+    )
+    return {
+        "id": "REE.P.ERR_SEGMENT",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "overall_mae": overall_mae,
+            "by_group": {
+                str(k): {"mae": float(v["mae"]), "bias": float(v["bias"])} for k, v in by.iterrows()
+            },
+        },
+    }
+
+
+def plot_err_heatmap(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    x: np.ndarray,
+    z: np.ndarray,
+    *,
+    bins: int = 8,
+) -> dict[str, Any]:
+    """REE.P.ERR_HEATMAP — mean |e| over a 2-feature grid (scipy binned_statistic_2d)."""
+    import plotly.graph_objects as go
+    from scipy.stats import binned_statistic_2d
+
+    abs_e = np.abs(np.asarray(y_true, dtype=float) - np.asarray(y_pred, dtype=float))
+    stat, x_e, y_e, _ = binned_statistic_2d(
+        np.asarray(x, dtype=float),
+        np.asarray(z, dtype=float),
+        abs_e,
+        statistic="mean",
+        bins=bins,
+    )
+    fig = go.Figure(
+        data=go.Heatmap(
+            z=stat.T,
+            x=[f"{a:.2f}" for a in 0.5 * (x_e[:-1] + x_e[1:])],
+            y=[f"{a:.2f}" for a in 0.5 * (y_e[:-1] + y_e[1:])],
+            colorscale="YlOrRd",
+        )
+    )
+    fig.update_layout(title="Mean |error| grid", height=400)
+    return {
+        "id": "REE.P.ERR_HEATMAP",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {"stat": np.where(np.isnan(stat), None, stat).tolist()},
+    }
