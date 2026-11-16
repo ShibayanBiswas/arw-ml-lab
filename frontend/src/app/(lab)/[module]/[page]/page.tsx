@@ -4,6 +4,7 @@ import { DataWorkbench } from "@/components/data/DataWorkbench";
 import { IntakeReview } from "@/components/data/IntakeReview";
 import { DeepWorkbench } from "@/components/deep/DeepWorkbench";
 import { EdaWorkbench } from "@/components/eda/EdaWorkbench";
+import { ExperimentsWorkbench } from "@/components/experiments/ExperimentsWorkbench";
 import { ExplainWorkbench } from "@/components/explain/ExplainWorkbench";
 import { SuitabilityWorkbench } from "@/components/finance/SuitabilityWorkbench";
 import { LogicAtlas } from "@/components/learn/LogicAtlas";
@@ -116,6 +117,17 @@ export default async function ModuleSubPage({ params }: Props) {
     (page === "home" || page === "builder" || page === "templates" || page === "history")
   ) {
     return <ReportsWorkbench mode={page} />;
+  }
+  if (
+    slug === "experiments" &&
+    (page === "home" ||
+      page === "runs" ||
+      page === "compare" ||
+      page === "registry" ||
+      page === "lineage" ||
+      page === "artifacts")
+  ) {
+    return <ExperimentsWorkbench mode={page} />;
   }
 
   return (
