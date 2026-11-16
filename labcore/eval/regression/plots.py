@@ -263,3 +263,41 @@ def plot_metric_folds_ree(fold_metrics: dict[str, list[float]]) -> dict[str, Any
         fig.add_trace(go.Box(y=v, name=name, boxpoints="all", jitter=0.3))
     fig.update_layout(title="Regression metric by fold", yaxis_title="score", height=400)
     return {"id": "REE.P.METRIC_FOLDS", "kind": "plot", "plotly": fig.to_plotly_json()}
+
+
+def plot_calibration_bins(
+    y_true: np.ndarray, y_pred: np.ndarray, *, n_bins: int = 10
+) -> dict[str, Any]:
+    """REE.P.CALIBRATION_BINS — mean y vs mean ŷ by decile with y=x."""
+    import plotly.graph_objects as go
+
+    yt = np.asarray(y_true, dtype=float)
+    yp = np.asarray(y_pred, dtype=float)
+    order = np.argsort(yp)
+    yt, yp = yt[order], yp[order]
+    edges = np.array_split(np.arange(len(yp)), n_bins)
+    mean_pred, mean_true = [], []
+    for idx in edges:
+        if len(idx) == 0:
+            continue
+        mean_pred.append(float(np.nanmean(yp[idx])))
+        mean_true.append(float(np.nanmean(yt[idx])))
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=mean_pred, y=mean_true, mode="markers+lines", name="bins"))
+    lo = min(mean_pred + mean_true) if mean_pred else 0.0
+    hi = max(mean_pred + mean_true) if mean_pred else 1.0
+    fig.add_trace(
+        go.Scatter(x=[lo, hi], y=[lo, hi], mode="lines", name="y=x", line={"dash": "dash"})
+    )
+    fig.update_layout(
+        title="Regression calibration (deciles)",
+        xaxis_title="mean ŷ",
+        yaxis_title="mean y",
+        height=360,
+    )
+    return {
+        "id": "REE.P.CALIBRATION_BINS",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {"mean_pred": mean_pred, "mean_true": mean_true},
+    }

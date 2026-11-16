@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Current phase | One-shot Chunk C — continue §36/§39 / 8.2 |
-| Last completed step | oneshot-c51 F13 ARIMA+Fourier |
-| Last green commit | 60a702a |
+| Last completed step | oneshot-c52 F21 VAR + REE calibration bins |
+| Last green commit | 9a0a97b |
 | Open failures | Deploy migrate (Supabase secrets); Render unpaid |
-| Next action | Shibayan: secrets + Render. Agent: F21 VAR / CLE/REE remainder / §39 |
+| Next action | Shibayan: secrets + Render. Agent: F22/F23 / CLE/REE remainder / §39 |
 
 ## Blocked — needs Shibayan
 

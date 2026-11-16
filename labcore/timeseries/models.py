@@ -42,6 +42,7 @@ ModelKey = Literal[
     "tbats",
     "arima",
     "arima_fourier",
+    "var",
 ]
 
 
@@ -435,6 +436,32 @@ def forecast_arima_fourier(
     return np.asarray(fc[col], dtype=float)
 
 
+def forecast_var(
+    y_train: np.ndarray,
+    h: int,
+    *,
+    maxlags: int = 5,
+) -> dict[str, Any]:
+    """F21 — statsmodels VAR (multivariate; y_train shape (n, k), k≥2)."""
+    from statsmodels.tsa.api import VAR
+
+    Y = np.asarray(y_train, dtype=float)
+    if Y.ndim != 2 or Y.shape[1] < 2:
+        raise ValueError("var requires y_train with shape (n, k), k≥2")
+    if Y.shape[0] < maxlags + 10:
+        raise ValueError(f"var needs n ≥ maxlags+10 (got n={Y.shape[0]}, maxlags={maxlags})")
+    model = VAR(Y)
+    fitted = model.fit(maxlags=maxlags, ic="aic")
+    lag_order = int(fitted.k_ar)
+    pred = np.asarray(fitted.forecast(Y[-lag_order:], steps=h), dtype=float)
+    return {
+        "y_pred": pred,
+        "resid": np.asarray(fitted.resid, dtype=float),
+        "lag_order": lag_order,
+        "aic": float(fitted.aic),
+    }
+
+
 def forecast_ucm_local_level(y_train: np.ndarray, h: int) -> tuple[np.ndarray, np.ndarray]:
     """F19 — UnobservedComponents local level (statsmodels)."""
     from statsmodels.tsa.statespace.structural import UnobservedComponents
@@ -500,6 +527,7 @@ def forecast(
     h: int,
     *,
     m: int = 12,
+    endog: np.ndarray | None = None,
 ) -> dict[str, Any]:
     if key == "seasonal_naive":
         yhat = forecast_seasonal_naive(y_train, h, m=m)
@@ -591,6 +619,15 @@ def forecast(
             "y_pred": forecast_arima_fourier(y_train, h, m=m),
             "resid": None,
         }
+    if key == "var":
+        Y = endog if endog is not None else y_train
+        out = forecast_var(Y, h)
+        return {
+            "key": key,
+            "y_pred": out["y_pred"],
+            "resid": out["resid"],
+            "extra": {"lag_order": out["lag_order"], "aic": out["aic"]},
+        }
     raise ValueError(f"unknown model key: {key}")
 
 
@@ -635,4 +672,5 @@ TS_MODEL_CATALOGUE: list[dict[str, str]] = [
         "library": "statsforecast+utilsforecast",
         "name": "ARIMA+Fourier",
     },
+    {"id": "var", "library": "statsmodels", "name": "VAR"},
 ]
