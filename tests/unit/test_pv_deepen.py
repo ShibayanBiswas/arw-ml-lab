@@ -68,9 +68,7 @@ def test_pv14_constant_column(contract_bundle):
     rows = [sample_row_from_contract(contract, feature_names=names) for _ in range(8)]
     # force a numeric feature constant
     num = next(
-        f["name"]
-        for f in contract["features"]
-        if f["name"] in names and f.get("kind") == "numeric"
+        f["name"] for f in contract["features"] if f["name"] in names and f.get("kind") == "numeric"
     )
     for r in rows:
         r[num] = 1.0

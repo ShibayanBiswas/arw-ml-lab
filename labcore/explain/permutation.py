@@ -19,9 +19,11 @@ def permutation_explain(
     seed: int = 42,
 ) -> dict[str, Any]:
     """Global permutation importance (mean ± std over repeats)."""
-    feature_names = list(X.columns) if isinstance(X, pd.DataFrame) else [
-        f"f{i}" for i in range(np.asarray(X).shape[1])
-    ]
+    feature_names = (
+        list(X.columns)
+        if isinstance(X, pd.DataFrame)
+        else [f"f{i}" for i in range(np.asarray(X).shape[1])]
+    )
     X_arr = np.asarray(X, dtype=float)
     y_arr = np.asarray(y).ravel()
     kwargs: dict[str, Any] = {
