@@ -1,7 +1,7 @@
 # ARW ML Lab — One-shot finish report (interim)
 
 **Date:** 16 Nov 2026 (IST)  
-**Tip:** `9a0a97b` (c51 F13 ARIMA+Fourier CI green)  
+**Tip:** `c218ddc` (c52 VAR + calibration CI green; c53 VECM pending)  
 **Live frontend:** https://arw-ml-lab.vercel.app/login → **200**  
 **Repo:** https://github.com/ShibayanBiswas/arw-ml-lab
 
@@ -16,7 +16,7 @@ Honest interim closeout. Chunk A + deep B/C slices shipped with repeated **CI gr
 | 2A deepen | partial | train-window-only scaler; DeepWorkbench |
 | 3 deepen | partial | LIME/DiCE/ALE/EBM + **ONNX/skops**; Anchors off (BSL) |
 | 3A deepen | partial | PV02/03/10/14/15, Celery batch ≤1M, cancel |
-| 4 / 4A | partial | F1–F20/F24/F25 + F16 TBATS + F18 MFLES (statsforecast + arch + Prophet + UCM) |
+| 4 / 4A | partial | F1–F25 classical + F13 Fourier + F16/F18/F21/F23 (TBATS/MFLES/VAR/VECM) |
 | 5B | partial | **FS1–FS15**, FS19–20; FS16–18 deferred (TradingLab) |
 | 5 / 5A | partial | purged/CPCV + PBO; WFO Ridge retune |
 | 6 / 6A / 6B | partial | unsupervised + VLM guards + CLU/DR/ANO/CLE/REE plots |
@@ -30,7 +30,7 @@ preprocess → ONNX/skops → F*/FS7–15 → CLE/REE/CLU/DR/ANO → UCM → Opt
 
 | System | Status | Notes |
 |---|---|---|
-| CI | green at `9a0a97b` | https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43862985295 |
+| CI | green at `c218ddc` | https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43864276432 |
 | Deploy migrate | **fails** until secrets | `SUPABASE_ACCESS_TOKEN` / `SUPABASE_DB_PASSWORD` missing (`PROJECT_ID` set) |
 | Deploy render/smoke | skipped honestly | until `RENDER_ENABLED=true` |
 | Vercel | READY / **200** | https://arw-ml-lab.vercel.app |

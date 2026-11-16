@@ -43,6 +43,7 @@ ModelKey = Literal[
     "arima",
     "arima_fourier",
     "var",
+    "vecm",
 ]
 
 
@@ -462,6 +463,33 @@ def forecast_var(
     }
 
 
+def forecast_vecm(
+    y_train: np.ndarray,
+    h: int,
+    *,
+    k_ar_diff: int = 2,
+) -> dict[str, Any]:
+    """F23 — statsmodels VECM with Johansen trace rank selection."""
+    from statsmodels.tsa.vector_ar.vecm import VECM, select_coint_rank
+
+    Y = np.asarray(y_train, dtype=float)
+    if Y.ndim != 2 or Y.shape[1] < 2:
+        raise ValueError("vecm requires y_train with shape (n, k), k≥2")
+    if Y.shape[0] < k_ar_diff + 30:
+        raise ValueError(f"vecm needs n ≥ k_ar_diff+30 (got n={Y.shape[0]})")
+    rank_res = select_coint_rank(Y, det_order=0, k_ar_diff=k_ar_diff, method="trace", signif=0.05)
+    coint_rank = max(int(rank_res.rank), 1)
+    model = VECM(Y, k_ar_diff=k_ar_diff, coint_rank=coint_rank, deterministic="ci")
+    fitted = model.fit()
+    pred = np.asarray(fitted.predict(steps=h), dtype=float)
+    return {
+        "y_pred": pred,
+        "resid": np.asarray(fitted.resid, dtype=float),
+        "coint_rank": coint_rank,
+        "k_ar_diff": k_ar_diff,
+    }
+
+
 def forecast_ucm_local_level(y_train: np.ndarray, h: int) -> tuple[np.ndarray, np.ndarray]:
     """F19 — UnobservedComponents local level (statsmodels)."""
     from statsmodels.tsa.statespace.structural import UnobservedComponents
@@ -628,6 +656,15 @@ def forecast(
             "resid": out["resid"],
             "extra": {"lag_order": out["lag_order"], "aic": out["aic"]},
         }
+    if key == "vecm":
+        Y = endog if endog is not None else y_train
+        out = forecast_vecm(Y, h)
+        return {
+            "key": key,
+            "y_pred": out["y_pred"],
+            "resid": out["resid"],
+            "extra": {"coint_rank": out["coint_rank"], "k_ar_diff": out["k_ar_diff"]},
+        }
     raise ValueError(f"unknown model key: {key}")
 
 
@@ -673,4 +710,5 @@ TS_MODEL_CATALOGUE: list[dict[str, str]] = [
         "name": "ARIMA+Fourier",
     },
     {"id": "var", "library": "statsmodels", "name": "VAR"},
+    {"id": "vecm", "library": "statsmodels", "name": "VECM"},
 ]
