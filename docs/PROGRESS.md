@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Current phase | One-shot Chunk C — continue 4A/5/5A/6B/7/8.2 ACs |
-| Last completed step | oneshot-c21 reproduction notebook export |
-| Last green commit | bcc5718 (c20 CI green) |
+| Last completed step | oneshot-c22 reports notebook API |
+| Last green commit | f2958cf (c21 CI green) |
 | Open failures | Deploy migrate (Supabase secrets); Render unpaid |
 | Next action | Shibayan: secrets + Render. Agent: full catalogues / WFO retune / Playwright |
 
