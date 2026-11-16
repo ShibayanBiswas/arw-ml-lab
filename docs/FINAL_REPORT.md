@@ -1,94 +1,66 @@
 # ARW ML Lab — One-shot finish report (interim)
 
 **Date:** 16 Nov 2026 (IST)  
-**Tip commit at write:** `f2972ac` — CI https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43808768000  
-**Prior green:** `f63eb59` / `566c6ef` / `dbcb069` / `43806362529`  
-**Live frontend:** https://arw-ml-lab.vercel.app → `/login` **200**  
+**Tip:** `c2390a5` (oneshot-c10 NSGA-II/Hyperband)  
+**Live frontend:** https://arw-ml-lab.vercel.app/login → **200**  
 **Repo:** https://github.com/ShibayanBiswas/arw-ml-lab
 
-This is an **honest interim** closeout of the autonomous one-shot. Chunk A and a large Chunk B/C slice shipped with green CI; full AC closure for 4A→8.2 and every STRESS_TEST item is **not** complete. Blocked hosted items remain with Shibayan.
+Honest interim closeout. Chunk A + deep B/C slices shipped with repeated **CI green**. Full AC closure for 4A→8.2 and every STRESS_TEST item is **not** done. Hosted Deploy remains blocked on secrets/Render payment.
 
 ## Per-phase status
 
 | Phase | Status | Evidence |
 |---|---|---|
-| 0 | done | docs/PHASE_0_REPORT.md |
-| 1 | done | docs/PHASE_1_REPORT.md |
-| 8.1 | done (partial hosted) | docs/PHASE_8_1_REPORT.md |
-| 1A | done | docs/PHASE_1A_REPORT.md |
-| 2 | thin → deepened (registry ~84 specs) | docs/PHASE_2_REPORT.md + oneshot-b1 |
-| 2A | thin → DL scaler leakage fixed | scaler_fit_on=train_windows_only |
-| 2B | done | docs/PHASE_2B_REPORT.md |
-| 3 | thin → ExplainWorkbench + permutation | oneshot-b1 |
-| 3A | thin → PV02/03/10/14/15 + Celery batch | oneshot-b1/b2 |
-| 4 | thin → TS models + §35.7 metrics expand | oneshot-b2/b3 |
-| 4A | **partial** (metrics/models only) | not full F1–F54 / TS.P.* |
-| 5B | **partial** FS1–FS5 + FS14/FS20 | FS6–13,15–19 deferred (no TradingLab) |
-| 5 | **partial** purged/CPCV + PBO in-lab | no TradingLab contract parity |
-| 5A | not started | WFO |
-| 6 | **partial** unsupervised workbench + mock AI | not full §18/§40 catalogue |
-| 6A | **partial** deterministic guards | no full VLM eval harness |
-| 6B | not started | per-family catalogue |
-| 7 | not started | reports/monitoring/Playwright/Locust/ZAP |
-| 8.2 | **partial** maintenance reaper/retention | not full §39.13 / STRESS closure |
+| 0–2B, 8.1 thin | done | `docs/PHASE_*_REPORT.md` |
+| 2 deepen | partial | expanded registry (~84), Halving + NSGA-II/Hyperband |
+| 2A deepen | partial | train-window-only scaler; DeepWorkbench |
+| 3 deepen | partial | ExplainWorkbench, permutation + TreeSHAP |
+| 3A deepen | partial | PV02/03/10/14/15, Celery batch ≤1M, cancel |
+| 4 deepen | partial | Theta/AutoETS/HistoricAverage; §35.7 metrics expand |
+| 4A | partial | metrics/models only — not full F*/TS.P.* |
+| 5B | partial | FS1–FS5, FS14, FS20; rest deferred (no TradingLab) |
+| 5 | partial | purged/CPCV + PBO in-lab |
+| 5A | partial | WFO planner only (no retune loop) |
+| 6 | partial | unsupervised API/UI + mock AI insights |
+| 6A | partial | deterministic VLM guards |
+| 6B | not started | |
+| 7 | partial | reports builder, KS drift, Experiments/Admin UI |
+| 8.2 | partial | maintenance reaper/retention |
 
-Cont slices: `docs/PHASE_ONESHOT_B1_REPORT.md`; commits `phase oneshot-b1` … `c3`.
+## One-shot commits
+
+| Commit | Summary |
+|---|---|
+| 6851ce9 | Deploy RENDER_ENABLED gate, checkout@v5 |
+| 5e7db5c…8dcd625 | B.1–B.3 PV/purged/Celery/TS |
+| 8524aa6…dbcb069 | C.1–C.3 PBO/AI/guards |
+| f63eb59 | interim FINAL + FS14/20 |
+| 566c6ef…5ba9e44 | C.4–C.6 WFO/reports/drift |
+| 666a2ba…3109058 | C.7–C.8 Experiments/Admin UI |
+| 17e4ccc…c2390a5 | C.9–C.10 Halving + NSGA-II/Hyperband |
 
 ## CI / Deploy / Vercel
 
-| System | Status | URL / note |
+| System | Status | Notes |
 |---|---|---|
-| CI (c3) | **success** | https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43806362529 |
-| CI (c1) | **success** | https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43804801385 |
-| Deploy migrate | **fails** (expected) | `SUPABASE_ACCESS_TOKEN` / `SUPABASE_DB_PASSWORD` missing |
-| Deploy render/smoke | **skipped honestly** when `RENDER_ENABLED!=true` or migrate fails | deploy.yml |
-| Vercel | READY / live **200** | https://arw-ml-lab.vercel.app/login |
-
-## Smoke
-
-- Frontend login 200 verified 16 Nov 2026.
-- Hosted API DS1 EDA smoke: **not run** (no lab-api — Render unpaid).
-
-## STRESS_TEST closure
-
-Most STRESS_TEST items remain open. Closed/partial in this one-shot:
-
-| Area | Notes |
-|---|---|
-| Deploy honesty | RENDER_ENABLED gate; no fake success |
-| PV matrix | PV02/03/10/14/15 real; zip-bomb guard |
-| Leakage (DL) | train-window-only scaler |
-| Import allowlist | `umap` → `umap-learn` |
-| Maintenance | reaper/retention against in-memory stores |
-
-Full matrix → still open for Phase 8.2.
+| CI | green on tip lineage (c6–c10) | e.g. https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43809826060 |
+| Deploy migrate | **fails** | missing `SUPABASE_ACCESS_TOKEN` / `SUPABASE_DB_PASSWORD` |
+| Deploy render/smoke | skipped honestly | until `RENDER_ENABLED=true` + migrate secrets |
+| Vercel | READY / **200** | https://arw-ml-lab.vercel.app |
 
 ## Blocked — needs Shibayan
 
-| Item | Exact action |
-|---|---|
-| `SUPABASE_ACCESS_TOKEN` | Create token → `gh secret set SUPABASE_ACCESS_TOKEN --env production --repo ShibayanBiswas/arw-ml-lab` |
-| `SUPABASE_DB_PASSWORD` | `gh secret set SUPABASE_DB_PASSWORD --env production --repo ShibayanBiswas/arw-ml-lab` |
-| Render payment | Approve Blueprint `exs-dbsnkbpsrm7s73drvi90`; set `vars.RENDER_ENABLED=true`, `vars.LAB_API_URL`, deploy-hook secrets; set Vercel `NEXT_PUBLIC_LAB_API_URL` |
-| `NVIDIA_API_KEY` | Render `lab-shared` only — never Vercel |
-| TradingLab submodule | Vendor `vendor/tradinglab` for FS6–19 + AFML parity |
-| GitHub Pro branch protection | Optional |
-| Supabase Storage 2 GB | Dashboard raise if needed |
+1. `gh secret set SUPABASE_ACCESS_TOKEN --env production --repo ShibayanBiswas/arw-ml-lab`
+2. `gh secret set SUPABASE_DB_PASSWORD --env production --repo ShibayanBiswas/arw-ml-lab`
+3. Pay/approve Render Blueprint → `vars.RENDER_ENABLED=true`, `vars.LAB_API_URL`, deploy-hook secrets, Vercel `NEXT_PUBLIC_LAB_API_URL`
+4. `NVIDIA_API_KEY` in Render `lab-shared` only
+5. Vendor `vendor/tradinglab` for FS6–19 + AFML parity
+6. Optional: GitHub Pro branch protection; Supabase Storage 2 GB
 
-## What landed in this one-shot (code)
+## STRESS_TEST
 
-- Deploy gate + checkout@v5 + dry-run
-- Expanded algorithm registry + coverage tests
-- PV deepen, purged K-fold/CPCV, Celery `q.predict.batch` + cancel
-- Explain / Unsupervised / Suitability / Deep workbenches
-- TS HistoricAverage/Theta/AutoETS + ME/MAPE/WAPE/DA/Theil U2
-- PBO CSCV; maintenance reaper/retention
-- Mock NVIDIA client + insights validator + `/api/v1/insights/run`
-- VLM deterministic guards (§38 thin)
-- e2e/load/contract_tradinglab directories wired (honest skips)
+Most items still open. Closed/partial: deploy honesty, PV deepen, DL leakage scaler, import allowlist (`umap`→`umap-learn`), maintenance reaper, KS drift.
 
-## Next agent action
+## Next
 
-1. Wait for Shibayan secrets/Render payment → Deploy green.  
-2. Continue Chunk C: 4A full catalogue → 5B remaining FS → 5/5A TradingLab → 6–8.2.  
-3. Replace this interim FINAL_REPORT when §39.13 AC is green.
+Continue agent work on full 4A catalogue, TradingLab contracts, WFO retune, Playwright/Locust, §39.13 AC — then replace this interim FINAL_REPORT.
