@@ -27,6 +27,9 @@ ModelKey = Literal[
     "window_average",
     "auto_theta",
     "prophet",
+    "croston_optimized",
+    "imapa",
+    "ses_optimized",
 ]
 
 
@@ -260,6 +263,27 @@ def forecast_auto_theta(y_train: np.ndarray, h: int, *, m: int = 12) -> np.ndarr
     return _sf_point_forecast(y_train, h, AutoTheta(season_length=season_length))
 
 
+def forecast_croston_optimized(y_train: np.ndarray, h: int) -> np.ndarray:
+    """F25 — CrostonOptimized via statsforecast."""
+    from statsforecast.models import CrostonOptimized
+
+    return _sf_point_forecast(y_train, h, CrostonOptimized())
+
+
+def forecast_imapa(y_train: np.ndarray, h: int) -> np.ndarray:
+    """F25 — IMAPA intermittent demand via statsforecast."""
+    from statsforecast.models import IMAPA
+
+    return _sf_point_forecast(y_train, h, IMAPA())
+
+
+def forecast_ses_optimized(y_train: np.ndarray, h: int) -> np.ndarray:
+    """F5 — SimpleExponentialSmoothingOptimized."""
+    from statsforecast.models import SimpleExponentialSmoothingOptimized
+
+    return _sf_point_forecast(y_train, h, SimpleExponentialSmoothingOptimized())
+
+
 def forecast_prophet(y_train: np.ndarray, h: int, *, freq: str = "D") -> np.ndarray:
     """F20 — Prophet (requires daily-like synthetic calendar index)."""
     from prophet import Prophet
@@ -357,6 +381,12 @@ def forecast(
         return {"key": key, "y_pred": forecast_auto_theta(y_train, h, m=m), "resid": None}
     if key == "prophet":
         return {"key": key, "y_pred": forecast_prophet(y_train, h), "resid": None}
+    if key == "croston_optimized":
+        return {"key": key, "y_pred": forecast_croston_optimized(y_train, h), "resid": None}
+    if key == "imapa":
+        return {"key": key, "y_pred": forecast_imapa(y_train, h), "resid": None}
+    if key == "ses_optimized":
+        return {"key": key, "y_pred": forecast_ses_optimized(y_train, h), "resid": None}
     raise ValueError(f"unknown model key: {key}")
 
 
@@ -378,4 +408,7 @@ TS_MODEL_CATALOGUE: list[dict[str, str]] = [
     {"id": "window_average", "library": "statsforecast", "name": "WindowAverage"},
     {"id": "auto_theta", "library": "statsforecast", "name": "AutoTheta"},
     {"id": "prophet", "library": "prophet", "name": "Prophet"},
+    {"id": "croston_optimized", "library": "statsforecast", "name": "CrostonOptimized"},
+    {"id": "imapa", "library": "statsforecast", "name": "IMAPA"},
+    {"id": "ses_optimized", "library": "statsforecast", "name": "SESOptimized"},
 ]

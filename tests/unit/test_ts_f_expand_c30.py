@@ -25,6 +25,9 @@ def test_catalogue_includes_f3_f6_f15_f25():
         "croston_classic",
         "window_average",
         "auto_theta",
+        "croston_optimized",
+        "imapa",
+        "ses_optimized",
     }
 
 
@@ -32,7 +35,16 @@ def test_rwd_holt_window_shapes():
     y = _airline_y()
     h = 12
     train = y[:-h]
-    for key in ("random_walk_drift", "holt", "window_average", "auto_theta", "croston_classic"):
+    for key in (
+        "random_walk_drift",
+        "holt",
+        "window_average",
+        "auto_theta",
+        "croston_classic",
+        "croston_optimized",
+        "imapa",
+        "ses_optimized",
+    ):
         out = forecast(key, train, h, m=12)  # type: ignore[arg-type]
         assert len(out["y_pred"]) == h
         assert np.isfinite(out["y_pred"]).all(), key
