@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { AdminWorkbench } from "@/components/admin/AdminWorkbench";
 import { DataWorkbench } from "@/components/data/DataWorkbench";
 import { IntakeReview } from "@/components/data/IntakeReview";
 import { DeepWorkbench } from "@/components/deep/DeepWorkbench";
