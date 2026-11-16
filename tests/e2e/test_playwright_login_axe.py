@@ -21,7 +21,7 @@ pytestmark = pytest.mark.skipif(
 
 def test_login_page_loads_and_axe_critical() -> None:
     playwright = pytest.importorskip("playwright.sync_api")
-    axe_playwright = pytest.importorskip("axe_playwright_python")
+    pytest.importorskip("axe_playwright_python")
 
     with playwright.sync_playwright() as p:
         browser = p.chromium.launch(headless=True)

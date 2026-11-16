@@ -1,7 +1,7 @@
 # ARW ML Lab — One-shot finish report (interim)
 
 **Date:** 16 Nov 2026 (IST)  
-**Tip:** `4ddcf5f` (mypy fix after c29 ONNX; c30 F*/FS7–9 at `3c4b02e`)  
+**Tip:** `8ab5d2d` (c33 CLU.P.K_SWEEP; prior c29–c32 ONNX/FS7–9/CLE learning)  
 **Live frontend:** https://arw-ml-lab.vercel.app/login → **200**  
 **Repo:** https://github.com/ShibayanBiswas/arw-ml-lab
 

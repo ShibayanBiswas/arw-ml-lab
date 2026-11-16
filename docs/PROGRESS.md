@@ -2,11 +2,11 @@
 
 | Field | Value |
 |---|---|
-| Current phase | One-shot Chunk C — continue catalogues / Playwright / 8.2 |
-| Last completed step | oneshot-c30 F* + FS7/FS9 |
-| Last green commit | 6ad7cd7 (c29; c30 pending CI) |
+| Current phase | One-shot Chunk C — continue catalogues / 8.2 |
+| Last completed step | oneshot-c33 CLU.P.K_SWEEP (+ ruff fix for playwright e2e) |
+| Last green commit | (awaiting CI on tip) |
 | Open failures | Deploy migrate (Supabase secrets); Render unpaid |
-| Next action | Shibayan: secrets + Render. Agent: Playwright / remaining FS / FINAL tip |
+| Next action | Shibayan: secrets + Render. Agent: tip CI green → more §36/§39 |
 
 ## Blocked — needs Shibayan
 
