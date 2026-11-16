@@ -1,8 +1,8 @@
 """FS financial labelling suitability (ARCHITECTURE §37).
 
-Implemented without TradingLab: FS1–FS10, FS14–FS15, FS19–FS20.
-FS11–FS13 / FS16–FS18 stay DEFERRED until vendor/tradinglab uniqueness/meta adapters.
-FS7/FS9/FS10 use AFML-equivalent thin formulas until the submodule lands.
+Implemented without TradingLab: FS1–FS11, FS14–FS15, FS19–FS20.
+FS12–FS13 / FS16–FS18 stay DEFERRED until vendor/tradinglab uniqueness/meta adapters.
+FS7/FS9–FS11 use AFML-equivalent thin formulas until the submodule lands.
 """
 
 from __future__ import annotations
@@ -352,6 +352,23 @@ def check_fs10_class_balance(df: pd.DataFrame, price_col: str | None) -> FSResul
     return FSResult("FS10", "FAIL", f"minority={minority:.1%} (<5%)", details)
 
 
+def check_fs11_vertical_barrier_share(df: pd.DataFrame, price_col: str | None) -> FSResult:
+    """FS11 — share of trial labels ended by vertical barrier (label 0).
+
+    Reuses FS10 trial labelling; PASS <60%, WARN 60–85%, FAIL >85%.
+    """
+    base = check_fs10_class_balance(df, price_col)
+    if base.status == "FAIL" and "minority" not in base.message:
+        return FSResult("FS11", "FAIL", base.message, base.details)
+    zero_share = float(base.details.get("zero_share", 1.0))
+    details = {**base.details, "vertical_barrier_share": zero_share}
+    if zero_share < 0.60:
+        return FSResult("FS11", "PASS", f"vertical-barrier share={zero_share:.1%}", details)
+    if zero_share <= 0.85:
+        return FSResult("FS11", "WARN", f"vertical-barrier share={zero_share:.1%}", details)
+    return FSResult("FS11", "FAIL", f"vertical-barrier share={zero_share:.1%} (>85%)", details)
+
+
 def check_fs8_stale_prices(df: pd.DataFrame, price_col: str | None) -> FSResult:
     """FS8 — share of zero returns (<5% PASS, 5–20% WARN, >20% FAIL)."""
     if price_col and price_col in df.columns:
@@ -533,8 +550,9 @@ def run_suitability(
         check_fs8_stale_prices(df, price),
         check_fs9_event_count(df, price),
         check_fs10_class_balance(df, price),
+        check_fs11_vertical_barrier_share(df, price),
     ]
-    for code in ("FS11", "FS12", "FS13"):
+    for code in ("FS12", "FS13"):
         checks.append(
             FSResult(
                 code,
