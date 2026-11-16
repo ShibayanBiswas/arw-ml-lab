@@ -36,6 +36,8 @@ ModelKey = Literal[
     "tsb",
     "croston_sba",
     "ucm_local_level",
+    "optimized_theta",
+    "seasonal_ses_optimized",
 ]
 
 
@@ -341,6 +343,28 @@ def forecast_mstl(y_train: np.ndarray, h: int, *, m: int = 12) -> np.ndarray:
     )
 
 
+def forecast_optimized_theta(y_train: np.ndarray, h: int, *, m: int = 12) -> np.ndarray:
+    """F14 — OptimizedTheta via statsforecast."""
+    from statsforecast.models import OptimizedTheta
+
+    ok, reason = seasonal_allowed(len(y_train), float(m), h)
+    season_length = m if ok else 1
+    _ = reason
+    return _sf_point_forecast(y_train, h, OptimizedTheta(season_length=season_length))
+
+
+def forecast_seasonal_ses_optimized(y_train: np.ndarray, h: int, *, m: int = 12) -> np.ndarray:
+    """F5/F7 — SeasonalExponentialSmoothingOptimized."""
+    from statsforecast.models import SeasonalExponentialSmoothingOptimized
+
+    ok, reason = seasonal_allowed(len(y_train), float(m), h)
+    if not ok:
+        raise ValueError(f"seasonal_ses_optimized gate: {reason}")
+    return _sf_point_forecast(
+        y_train, h, SeasonalExponentialSmoothingOptimized(season_length=m)
+    )
+
+
 def forecast_ucm_local_level(y_train: np.ndarray, h: int) -> tuple[np.ndarray, np.ndarray]:
     """F19 — UnobservedComponents local level (statsmodels)."""
     from statsmodels.tsa.statespace.structural import UnobservedComponents
@@ -473,6 +497,18 @@ def forecast(
     if key == "ucm_local_level":
         yhat, resid = forecast_ucm_local_level(y_train, h)
         return {"key": key, "y_pred": yhat, "resid": resid}
+    if key == "optimized_theta":
+        return {
+            "key": key,
+            "y_pred": forecast_optimized_theta(y_train, h, m=m),
+            "resid": None,
+        }
+    if key == "seasonal_ses_optimized":
+        return {
+            "key": key,
+            "y_pred": forecast_seasonal_ses_optimized(y_train, h, m=m),
+            "resid": None,
+        }
     raise ValueError(f"unknown model key: {key}")
 
 
@@ -503,4 +539,10 @@ TS_MODEL_CATALOGUE: list[dict[str, str]] = [
     {"id": "tsb", "library": "statsforecast", "name": "TSB"},
     {"id": "croston_sba", "library": "statsforecast", "name": "CrostonSBA"},
     {"id": "ucm_local_level", "library": "statsmodels", "name": "UCM local level"},
+    {"id": "optimized_theta", "library": "statsforecast", "name": "OptimizedTheta"},
+    {
+        "id": "seasonal_ses_optimized",
+        "library": "statsforecast",
+        "name": "SeasonalSESOptimized",
+    },
 ]
