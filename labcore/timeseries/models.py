@@ -38,6 +38,8 @@ ModelKey = Literal[
     "ucm_local_level",
     "optimized_theta",
     "seasonal_ses_optimized",
+    "mfles",
+    "tbats",
 ]
 
 
@@ -363,6 +365,38 @@ def forecast_seasonal_ses_optimized(y_train: np.ndarray, h: int, *, m: int = 12)
     return _sf_point_forecast(y_train, h, SeasonalExponentialSmoothingOptimized(season_length=m))
 
 
+def forecast_mfles(y_train: np.ndarray, h: int, *, m: int = 12) -> np.ndarray:
+    """F18 — MFLES via statsforecast (fixed hyperparams for CI speed)."""
+    from statsforecast.models import MFLES
+
+    ok, reason = seasonal_allowed(len(y_train), float(m), h)
+    season_length = m if ok else None
+    _ = reason
+    return _sf_point_forecast(
+        y_train, h, MFLES(season_length=season_length, max_rounds=25, changepoints=False)
+    )
+
+
+def forecast_tbats(y_train: np.ndarray, h: int, *, m: int = 12) -> np.ndarray:
+    """F16 — TBATS via statsforecast (constrained flags for CI speed)."""
+    from statsforecast.models import TBATS
+
+    ok, reason = seasonal_allowed(len(y_train), float(m), h)
+    if not ok:
+        raise ValueError(f"tbats gate: {reason}")
+    return _sf_point_forecast(
+        y_train,
+        h,
+        TBATS(
+            season_length=m,
+            use_boxcox=False,
+            use_trend=True,
+            use_damped_trend=False,
+            use_arma_errors=False,
+        ),
+    )
+
+
 def forecast_ucm_local_level(y_train: np.ndarray, h: int) -> tuple[np.ndarray, np.ndarray]:
     """F19 — UnobservedComponents local level (statsmodels)."""
     from statsmodels.tsa.statespace.structural import UnobservedComponents
@@ -507,6 +541,10 @@ def forecast(
             "y_pred": forecast_seasonal_ses_optimized(y_train, h, m=m),
             "resid": None,
         }
+    if key == "mfles":
+        return {"key": key, "y_pred": forecast_mfles(y_train, h, m=m), "resid": None}
+    if key == "tbats":
+        return {"key": key, "y_pred": forecast_tbats(y_train, h, m=m), "resid": None}
     raise ValueError(f"unknown model key: {key}")
 
 
@@ -543,4 +581,6 @@ TS_MODEL_CATALOGUE: list[dict[str, str]] = [
         "library": "statsforecast",
         "name": "SeasonalSESOptimized",
     },
+    {"id": "mfles", "library": "statsforecast", "name": "MFLES"},
+    {"id": "tbats", "library": "statsforecast", "name": "TBATS"},
 ]

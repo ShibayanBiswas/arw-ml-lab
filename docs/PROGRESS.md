@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Current phase | One-shot Chunk C — continue §36/§39 / 8.2 |
-| Last completed step | oneshot-c45 UCM local level F19 |
-| Last green commit | 9cc95c0 |
+| Last completed step | oneshot-c47 MFLES + TBATS |
+| Last green commit | 373baed |
 | Open failures | Deploy migrate (Supabase secrets); Render unpaid |
-| Next action | Shibayan: secrets + Render. Agent: remaining FS/F*/§39 AC |
+| Next action | Shibayan: secrets + Render. Agent: F9/F13/F21+ / CLE.P remainder / §39 |
 
 ## Blocked — needs Shibayan
 
