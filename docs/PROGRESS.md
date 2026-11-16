@@ -2,11 +2,11 @@
 
 | Field | Value |
 |---|---|
-| Current phase | One-shot finish — Chunk B.1 landed; continuing B deepen + C |
-| Last completed step | B.1: PV deepen, purged/CPCV, explain/unsup/FS1–5 UI, DL scaler fix, registry expand |
-| Last green commit | *(pending push of B.1)* |
+| Current phase | One-shot finish — Chunk B deepening; C starting |
+| Last completed step | B.1–B.3: PV/purged/CPCV/explain/unsup/FS1–5, Celery batch, TS metrics+models |
+| Last green commit | *(awaiting CI on 7004399+)* |
 | Open failures | See **Blocked — needs Shibayan** |
-| Next action | Keep deepening B (plots/tuning/Celery predict) → Chunk C 4A…8.2 → FINAL_REPORT |
+| Next action | Green CI → continue 4A/5B/5…8.2 → FINAL_REPORT |
 
 ## Blocked — needs Shibayan
 
