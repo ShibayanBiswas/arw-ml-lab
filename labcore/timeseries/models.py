@@ -18,6 +18,7 @@ ModelKey = Literal[
     "auto_arima",
     "naive",
     "seasonal_window_average",
+    "garch11",
 ]
 
 
@@ -181,6 +182,35 @@ def forecast_seasonal_window_average(
     return np.asarray(fc[col], dtype=float)
 
 
+def forecast_garch11(y_train: np.ndarray, h: int) -> dict[str, Any]:
+    """GARCH(1,1) variance forecast via ``arch`` (returns + conditional σ)."""
+    from arch import arch_model
+
+    y = np.asarray(y_train, dtype=float)
+    # Prefer returns if levels look like prices
+    if np.nanmin(y) > 0 and np.nanmax(y) / max(np.nanmin(y), 1e-12) > 2:
+        r = 100.0 * np.diff(np.log(y))
+    else:
+        r = y.copy()
+    if len(r) < 50:
+        raise ValueError(f"garch11 needs ≥50 returns (got {len(r)})")
+    am = arch_model(r, vol="Garch", p=1, q=1, mean="Constant", rescale=False)
+    fitted = am.fit(disp="off")
+    fc = fitted.forecast(horizon=h)
+    var = np.asarray(fc.variance.values[-1], dtype=float)
+    sigma = np.sqrt(np.maximum(var, 0.0))
+    mu = float(fitted.params.get("mu", 0.0))
+    # Point path: mean + 0 (variance path is the primary artefact)
+    yhat = np.full(h, mu, dtype=float)
+    return {
+        "y_pred": yhat,
+        "sigma": sigma,
+        "variance": var.tolist(),
+        "params": {k: float(v) for k, v in fitted.params.items()},
+        "resid": np.asarray(fitted.resid, dtype=float),
+    }
+
+
 def forecast(
     key: ModelKey,
     y_train: np.ndarray,
@@ -212,6 +242,9 @@ def forecast(
     if key == "seasonal_window_average":
         yhat = forecast_seasonal_window_average(y_train, h, m=m)
         return {"key": key, "y_pred": yhat, "resid": None}
+    if key == "garch11":
+        out = forecast_garch11(y_train, h)
+        return {"key": key, "y_pred": out["y_pred"], "resid": out["resid"], "extra": out}
     raise ValueError(f"unknown model key: {key}")
 
 
@@ -224,4 +257,5 @@ TS_MODEL_CATALOGUE: list[dict[str, str]] = [
     {"id": "auto_arima", "library": "statsforecast", "name": "AutoARIMA"},
     {"id": "naive", "library": "statsforecast", "name": "Naive"},
     {"id": "seasonal_window_average", "library": "statsforecast", "name": "SeasonalWindowAverage"},
+    {"id": "garch11", "library": "arch", "name": "GARCH(1,1)"},
 ]

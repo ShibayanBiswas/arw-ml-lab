@@ -1,7 +1,7 @@
 # ARW ML Lab — One-shot finish report (interim)
 
 **Date:** 16 Nov 2026 (IST)  
-**Tip:** oneshot-c16 (WFO retune; c15 green `6aef99b`)  
+**Tip:** oneshot-c17 (GARCH; c16 green `abe28cc`)  
 **Live frontend:** https://arw-ml-lab.vercel.app/login → **200**  
 **Repo:** https://github.com/ShibayanBiswas/arw-ml-lab
 
@@ -20,7 +20,7 @@ Honest interim closeout. Chunk A + deep B/C slices shipped with repeated **CI gr
 | 4A | partial | metrics/models expand — not full F*/TS.P.* |
 | 5B | partial | FS1–FS6, FS8, FS14–15, FS19–20; FS7/9–13/16–18 deferred |
 | 5 | partial | purged/CPCV + PBO in-lab |
-| 5A | partial | WFO planner only (no retune loop) |
+| 5A | partial | WFO planner + Ridge OOS retune loop |
 | 6 | partial | unsupervised API/UI + mock AI insights |
 | 6A | partial | deterministic VLM guards |
 | 6B | not started | |
@@ -42,13 +42,14 @@ Honest interim closeout. Chunk A + deep B/C slices shipped with repeated **CI gr
 | a4d7e55 | C.12 LIME + DiCE explain |
 | 27cf517 | C.13 ALE + AutoARIMA/Naive/SWA |
 | 62da077 | C.14 FS6/8/15/19 (CI format fail → fixed c15) |
-| (c15) | C.15 e2e httpx + Locust skeleton |
+| 6aef99b | C.15 e2e httpx + Locust skeleton |
+| (c16) | C.16 WFO Ridge retune loop |
 
 ## CI / Deploy / Vercel
 
 | System | Status | Notes |
 |---|---|---|
-| CI | green through c13 (`27cf517`) | https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43816672348 |
+| CI | green through c15 (`6aef99b`) | https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43817898315 |
 | Deploy migrate | **fails** | missing `SUPABASE_ACCESS_TOKEN` / `SUPABASE_DB_PASSWORD` |
 | Deploy render/smoke | skipped honestly | until `RENDER_ENABLED=true` + migrate secrets |
 | Vercel | READY / **200** | https://arw-ml-lab.vercel.app |

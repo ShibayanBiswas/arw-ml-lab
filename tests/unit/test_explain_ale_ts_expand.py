@@ -48,3 +48,19 @@ def test_auto_arima_forecast_finite():
     out = forecast("auto_arima", y, h=4, m=12)
     assert out["y_pred"].shape == (4,)
     assert np.all(np.isfinite(out["y_pred"]))
+
+
+def test_garch11_variance_forecast():
+    rng = np.random.default_rng(42)
+    # Simulated returns with mild clustering
+    e = rng.normal(0, 1, size=400)
+    r = np.zeros(400)
+    sig = 1.0
+    for t in range(1, 400):
+        sig = np.sqrt(0.1 + 0.1 * r[t - 1] ** 2 + 0.8 * sig**2)
+        r[t] = sig * e[t]
+    out = forecast("garch11", r, h=5)
+    assert out["y_pred"].shape == (5,)
+    assert "extra" in out and "sigma" in out["extra"]
+    assert np.all(np.isfinite(out["extra"]["sigma"]))
+    assert np.all(out["extra"]["sigma"] > 0)
