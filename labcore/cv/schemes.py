@@ -28,6 +28,8 @@ CVScheme = Literal[
     "time_series_split",
     "leave_one_out",
     "nested",
+    "purged_kfold",
+    "cpcv",
 ]
 
 CV_SCHEME_IDS: list[str] = [
@@ -42,6 +44,8 @@ CV_SCHEME_IDS: list[str] = [
     "time_series_split",
     "leave_one_out",
     "nested",
+    "purged_kfold",
+    "cpcv",
 ]
 
 
@@ -58,6 +62,8 @@ def list_cv_schemes() -> list[dict[str, str]]:
         "time_series_split": "TimeSeriesSplit",
         "leave_one_out": "LeaveOneOut",
         "nested": "Nested CV (outer)",
+        "purged_kfold": "Purged K-Fold + embargo",
+        "cpcv": "Combinatorial Purged CV (CPCV)",
     }
     return [{"id": k, "name": names[k]} for k in CV_SCHEME_IDS]
 
@@ -74,8 +80,11 @@ def build_splitter(
     seed: int = 42,
     task: str = "binary",
     n_repeats: int = 2,
+    pct_embargo: float = 0.01,
+    n_test_splits: int = 2,
+    samples_info_sets: Any = None,
 ) -> Any:
-    """Return a sklearn splitter (or None for holdout — caller uses train_test_split)."""
+    """Return a sklearn-compatible splitter (or None for holdout)."""
     key = scheme.lower()
     if key in ("holdout",):
         return None
@@ -100,6 +109,25 @@ def build_splitter(
         return TimeSeriesSplit(n_splits=n_splits)
     if key == "leave_one_out":
         return LeaveOneOut()
+    if key in ("purged_kfold", "purged"):
+        from labcore.cv.purged import PurgedKFold
+
+        _ = seed
+        return PurgedKFold(
+            n_splits=n_splits,
+            samples_info_sets=samples_info_sets,
+            pct_embargo=pct_embargo,
+        )
+    if key == "cpcv":
+        from labcore.cv.purged import CombinatorialPurgedKFold
+
+        _ = seed
+        return CombinatorialPurgedKFold(
+            n_splits=n_splits,
+            n_test_splits=n_test_splits,
+            samples_info_sets=samples_info_sets,
+            pct_embargo=pct_embargo,
+        )
     raise ValueError(f"unknown cv scheme: {scheme}")
 
 

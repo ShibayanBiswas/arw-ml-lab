@@ -327,10 +327,69 @@ export async function predictBatchUpload(modelId: string, file: File) {
 export async function explainRows(modelId: string, rows: Record<string, unknown>[]) {
   const res = await fetch(`${labApiBase()}/api/v1/explain/${modelId}`, {
     method: "POST",
-    headers: labAuthHeaders(),
-    body: JSON.stringify({ rows }),
+    headers: { ...labAuthHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ rows, method: "shap" }),
   });
   if (!res.ok) throw new Error(`explain: ${res.status}`);
+  return (await res.json()) as Record<string, unknown>;
+}
+
+export async function permutationExplain(
+  modelId: string,
+  rows: Record<string, unknown>[],
+  targetValues: unknown[]
+) {
+  const res = await fetch(`${labApiBase()}/api/v1/explain/${modelId}`, {
+    method: "POST",
+    headers: { ...labAuthHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({
+      rows,
+      method: "permutation",
+      target_values: targetValues,
+    }),
+  });
+  if (!res.ok) throw new Error(`permutation explain: ${res.status}`);
+  return (await res.json()) as Record<string, unknown>;
+}
+
+export async function runUnsupervised(
+  family: "clustering" | "dr" | "anomaly",
+  body: {
+    rows: Record<string, unknown>[];
+    algorithm: string;
+    n_clusters?: number;
+    n_components?: number;
+    contamination?: number;
+    seed?: number;
+  }
+) {
+  const res = await fetch(`${labApiBase()}/api/v1/unsupervised/${family}`, {
+    method: "POST",
+    headers: { ...labAuthHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(`unsupervised ${family}: ${res.status} ${detail}`);
+  }
+  return (await res.json()) as Record<string, unknown>;
+}
+
+export async function runSuitability(body: {
+  sample_id?: string;
+  rows?: Record<string, unknown>[];
+  time_col?: string;
+  asset?: string;
+}) {
+  const res = await fetch(`${labApiBase()}/api/v1/suitability/run`, {
+    method: "POST",
+    headers: { ...labAuthHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(`suitability: ${res.status} ${detail}`);
+  }
   return (await res.json()) as Record<string, unknown>;
 }
 

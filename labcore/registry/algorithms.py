@@ -295,4 +295,8 @@ def build_estimator(spec: AlgorithmSpec, params: dict[str, Any] | None = None) -
         defaults.setdefault("thread_count", 1)
     if spec.key.startswith("clf.logistic"):
         defaults.setdefault("solver", "lbfgs")
+    from labcore.registry.algorithms_extra import COMPOSITE_KEYS, build_composite
+
+    if spec.key in COMPOSITE_KEYS:
+        return build_composite(spec.key, defaults)
     return cls(**defaults)

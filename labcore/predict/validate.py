@@ -1,11 +1,14 @@
-"""Prediction upload validation — PV core (ARCHITECTURE §45.3).
+"""Prediction upload validation — PV01–PV16 (ARCHITECTURE §45.3).
 
-Thin Phase 3A: PV01 (extension), PV04–PV09. Other codes return deferred /
-``not computed`` stubs so callers can surface them without blocking.
+Implemented: PV01–PV09, PV10 (contract-stat OOD), PV14, PV15.
+Deferred until sequential/TS suites: PV11–PV13, PV16 (PII).
 """
 
 from __future__ import annotations
 
+import csv
+import io
+import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
@@ -17,6 +20,12 @@ Severity = Literal["block", "warn", "info", "sanitise", "deferred"]
 
 _BOOL_TRUE = {"true", "1", "yes", "y", "t"}
 _BOOL_FALSE = {"false", "0", "no", "n", "f"}
+_FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
+
+DEFAULT_MAX_BYTES = 50 * 1024 * 1024  # 50 MB
+DEFAULT_MAX_ROWS = 1_000_000
+ZIP_BOMB_RATIO = 100
+ZIP_BOMB_UNCOMPRESSED = 500 * 1024 * 1024
 
 
 @dataclass
@@ -150,20 +159,123 @@ def _coerce_numeric(series: pd.Series, *, integer: bool) -> tuple[pd.Series, pd.
     return nums, fail
 
 
+def check_zip_bomb(path: Path) -> PVIssue | None:
+    """PV01 zip-bomb guard for XLSX (uncompressed/compressed > 100 or > 500 MB)."""
+    if path.suffix.lower() not in {".xlsx", ".xls"}:
+        return None
+    try:
+        with zipfile.ZipFile(path) as zf:
+            compressed = sum(i.compress_size for i in zf.infolist()) or 1
+            uncompressed = sum(i.file_size for i in zf.infolist())
+            ratio = uncompressed / compressed
+            if uncompressed > ZIP_BOMB_UNCOMPRESSED or ratio > ZIP_BOMB_RATIO:
+                return PVIssue(
+                    code="PV01",
+                    severity="block",
+                    message="zip-bomb guard: XLSX compression ratio or size rejected",
+                    details={
+                        "uncompressed": uncompressed,
+                        "compressed": compressed,
+                        "ratio": ratio,
+                    },
+                )
+    except zipfile.BadZipFile:
+        return PVIssue(
+            code="PV01",
+            severity="block",
+            message="invalid XLSX/ZIP archive",
+            details={"source": str(path)},
+        )
+    return None
+
+
+def sniff_csv_meta(raw: bytes) -> dict[str, Any]:
+    """PV03 — encoding + delimiter sniff (UTF-8 / UTF-8-BOM / cp1252)."""
+    encoding = "utf-8"
+    if raw.startswith(b"\xef\xbb\xbf"):
+        encoding = "utf-8-sig"
+        text = raw.decode("utf-8-sig", errors="replace")
+    else:
+        try:
+            text = raw.decode("utf-8")
+            encoding = "utf-8"
+        except UnicodeDecodeError:
+            text = raw.decode("cp1252", errors="replace")
+            encoding = "cp1252"
+    sample = text[:8192]
+    try:
+        dialect = csv.Sniffer().sniff(sample, delimiters=",\t|;")
+        delimiter = dialect.delimiter
+    except csv.Error:
+        delimiter = "\t" if sample.count("\t") > sample.count(",") else ","
+    # header + duplicate column names
+    reader = csv.reader(io.StringIO(sample), delimiter=delimiter)
+    try:
+        header = next(reader)
+    except StopIteration:
+        header = []
+    dupes = [h for h in header if header.count(h) > 1]
+    return {
+        "encoding": encoding,
+        "delimiter": delimiter,
+        "header": header,
+        "duplicate_headers": sorted(set(dupes)),
+        "has_header": bool(header),
+    }
+
+
+def _sanitise_formula_cell(val: Any) -> tuple[Any, bool]:
+    """PV15 — treat formula-like cells as text (prefix with ')."""
+    if not isinstance(val, str):
+        return val, False
+    if val and val[0] in _FORMULA_PREFIXES:
+        return "'" + val, True
+    return val, False
+
+
+def _row_ood_scores(
+    work: pd.DataFrame,
+    feat_by_name: dict[str, dict[str, Any]],
+    required: list[str],
+) -> np.ndarray:
+    """PV10 proxy: max |z| vs contract median / (p99−p01) scale (no refit)."""
+    n = len(work)
+    scores = np.zeros(n, dtype=float)
+    for name in required:
+        feat = feat_by_name.get(name, {})
+        if feat.get("kind") != "numeric":
+            continue
+        med = feat.get("median")
+        p01, p99 = feat.get("p01"), feat.get("p99")
+        if med is None or p01 is None or p99 is None:
+            continue
+        scale = abs(float(p99) - float(p01)) / 2.33
+        if scale < 1e-12:
+            scale = 1.0
+        col = pd.to_numeric(work[name], errors="coerce")
+        z = ((col - float(med)) / scale).abs().fillna(0.0).to_numpy(dtype=float)
+        scores = np.maximum(scores, z)
+    return scores
+
+
 def validate_predict_frame(
     df: pd.DataFrame,
     contract: dict[str, Any],
     *,
     required_names: list[str] | None = None,
     source_name: str | None = None,
+    max_rows: int = DEFAULT_MAX_ROWS,
+    max_bytes: int | None = None,
+    source_bytes: int | None = None,
+    csv_meta: dict[str, Any] | None = None,
 ) -> ValidationReport:
-    """Run PV core checks; return coerced frame aligned to required feature names."""
+    """Run PV checks; return coerced frame aligned to required feature names."""
     report = ValidationReport(ok=True)
     target = contract.get("target")
     required = _required_feature_names(contract, required_names)
     feat_by_name = {str(f["name"]): f for f in _feature_specs(contract)}
 
-    # PV01 — thin: extension hint only when source_name provided
+    # PV01 — extension hint when source_name provided
     if source_name:
         suf = Path(source_name).suffix.lower()
         if suf and suf not in {".csv", ".tsv", ".xlsx", ".xls", ".parquet"}:
@@ -176,7 +288,75 @@ def validate_predict_frame(
                 )
             )
 
-    rename, missing, extra = _match_columns(list(df.columns), required)
+    # PV02 — size / row caps
+    n_rows = int(len(df))
+    if n_rows > max_rows:
+        report.blocking.append(
+            PVIssue(
+                code="PV02",
+                severity="block",
+                message=f"row count {n_rows} exceeds cap {max_rows}",
+                n_rows=n_rows,
+                details={"max_rows": max_rows},
+            )
+        )
+    cap_bytes = DEFAULT_MAX_BYTES if max_bytes is None else max_bytes
+    if source_bytes is not None and source_bytes > cap_bytes:
+        report.blocking.append(
+            PVIssue(
+                code="PV02",
+                severity="block",
+                message=f"upload size {source_bytes} exceeds cap {cap_bytes}",
+                details={"source_bytes": source_bytes, "max_bytes": cap_bytes},
+            )
+        )
+    else:
+        report.info.append(
+            PVIssue(
+                code="PV02",
+                severity="info",
+                message=f"rows={n_rows} within cap {max_rows}",
+                n_rows=n_rows,
+            )
+        )
+
+    # PV03 — encoding / delimiter / duplicate headers
+    if csv_meta is not None:
+        dups = list(csv_meta.get("duplicate_headers") or [])
+        if dups:
+            report.blocking.append(
+                PVIssue(
+                    code="PV03",
+                    severity="block",
+                    message=f"duplicate column names: {dups}",
+                    details=csv_meta,
+                )
+            )
+        else:
+            report.info.append(
+                PVIssue(
+                    code="PV03",
+                    severity="info",
+                    message=(
+                        f"encoding={csv_meta.get('encoding')} "
+                        f"delimiter={csv_meta.get('delimiter')!r}"
+                    ),
+                    details=csv_meta,
+                )
+            )
+    else:
+        # still check duplicate columns on the frame
+        dups = [c for c in df.columns if list(df.columns).count(c) > 1]
+        if dups:
+            report.blocking.append(
+                PVIssue(
+                    code="PV03",
+                    severity="block",
+                    message=f"duplicate column names: {sorted(set(map(str, dups)))}",
+                )
+            )
+
+    rename, missing, extra = _match_columns(list(map(str, df.columns)), required)
     report.rename_map = {k: v for k, v in rename.items() if k != v}
 
     # PV04 missing required
@@ -215,17 +395,12 @@ def validate_predict_frame(
         )
     report.dropped_columns = drop_cols
 
-    # Deferred stubs for full §45 matrix
+    # Deferred: drift / sequential / TS / PII
     for code, msg in (
-        ("PV02", "size/row caps not computed in thin 3A"),
-        ("PV03", "encoding/delimiter sniff not computed in thin 3A"),
-        ("PV10", "row-level OOD not computed in thin 3A"),
-        ("PV11", "batch drift PSI/KS not computed in thin 3A"),
-        ("PV12", "sequential history checks not computed in thin 3A"),
-        ("PV13", "TS horizon checks not computed in thin 3A"),
-        ("PV14", "constant/all-NaN column scan not computed in thin 3A"),
-        ("PV15", "formula sanitise applied on export only in thin 3A"),
-        ("PV16", "PII masking not computed in thin 3A"),
+        ("PV11", "batch drift PSI/KS not computed yet"),
+        ("PV12", "sequential history checks not computed yet"),
+        ("PV13", "TS horizon checks not computed yet"),
+        ("PV16", "PII masking not computed yet"),
     ):
         report.deferred.append(PVIssue(code=code, severity="deferred", message=msg))
 
@@ -353,21 +528,132 @@ def validate_predict_frame(
         report.coerced = work
         return report
 
+    # PV14 — constant / all-NaN columns
+    for name in required:
+        col = work[name]
+        if col.isna().all():
+            report.warnings.append(
+                PVIssue(
+                    code="PV14",
+                    severity="warn",
+                    message=f"column '{name}' is all-NaN in upload",
+                    column=name,
+                )
+            )
+        elif col.nunique(dropna=True) <= 1:
+            report.warnings.append(
+                PVIssue(
+                    code="PV14",
+                    severity="warn",
+                    message=f"column '{name}' is constant in upload",
+                    column=name,
+                )
+            )
+
+    # PV15 — formula injection sanitise on string-like cells
+    sanitised = 0
+    for name in required:
+        if feat_by_name.get(name, {}).get("kind") == "numeric":
+            continue
+        if name not in work.columns:
+            continue
+        new_vals = []
+        changed = False
+        for v in work[name].tolist():
+            nv, hit = _sanitise_formula_cell(v)
+            new_vals.append(nv)
+            if hit:
+                sanitised += 1
+                changed = True
+        if changed:
+            work[name] = new_vals
+    if sanitised:
+        report.info.append(
+            PVIssue(
+                code="PV15",
+                severity="sanitise",
+                message=f"sanitised {sanitised} formula-like cell(s) with leading '",
+                n_rows=sanitised,
+            )
+        )
+    else:
+        report.info.append(
+            PVIssue(code="PV15", severity="info", message="no formula-like cells found")
+        )
+
+    # PV10 — row-level OOD from contract numeric stats
+    ood = _row_ood_scores(work, feat_by_name, required)
+    if ood.size and np.any(ood > 0):
+        # flag above ~99th of a unit half-normal proxy: z > 3
+        flagged = ood > 3.0
+        n_flag = int(flagged.sum())
+        if n_flag:
+            report.warnings.append(
+                PVIssue(
+                    code="PV10",
+                    severity="warn",
+                    message=f"row-level OOD flag on {n_flag} rows (contract-stat z>3)",
+                    n_rows=n_flag,
+                    details={
+                        "threshold": 3.0,
+                        "max_score": float(np.max(ood)),
+                        "flagged_row_indices": np.where(flagged)[0][:50].tolist(),
+                    },
+                )
+            )
+        else:
+            report.info.append(
+                PVIssue(
+                    code="PV10",
+                    severity="info",
+                    message="no row-level OOD flags",
+                    details={"max_score": float(np.max(ood))},
+                )
+            )
+    else:
+        report.info.append(
+            PVIssue(
+                code="PV10",
+                severity="info",
+                message="OOD not scored (no numeric contract stats)",
+            )
+        )
+
     report.coerced = work[required]
     report.ok = True
     return report
 
 
-def load_predict_table(path: str | Path, *, max_rows: int | None = 100_000) -> pd.DataFrame:
-    """Load CSV/TSV/XLSX/Parquet for thin predict validation."""
+def load_predict_table(
+    path: str | Path,
+    *,
+    max_rows: int | None = 100_000,
+) -> tuple[pd.DataFrame, dict[str, Any]]:
+    """Load CSV/TSV/XLSX/Parquet; return (frame, meta) with PV01/PV03 hints."""
     p = Path(path)
     suf = p.suffix.lower()
+    meta: dict[str, Any] = {
+        "source_bytes": p.stat().st_size if p.exists() else None,
+        "csv_meta": None,
+    }
+    bomb = check_zip_bomb(p)
+    if bomb is not None:
+        raise ValueError(bomb.message)
+
     if suf in {".csv", ".tsv"}:
-        sep = "\t" if suf == ".tsv" else ","
-        return pd.read_csv(p, sep=sep, nrows=max_rows)
+        raw = p.read_bytes()
+        csv_meta = sniff_csv_meta(raw)
+        if suf == ".tsv":
+            csv_meta["delimiter"] = "\t"
+        meta["csv_meta"] = csv_meta
+        sep = csv_meta["delimiter"]
+        encoding = csv_meta["encoding"]
+        df = pd.read_csv(p, sep=sep, nrows=max_rows, encoding=encoding)
+        return df, meta
     if suf in {".xlsx", ".xls"}:
-        return pd.read_excel(p, engine="calamine", nrows=max_rows)
+        df = pd.read_excel(p, engine="calamine", nrows=max_rows)
+        return df, meta
     if suf == ".parquet":
         df = pd.read_parquet(p)
-        return df if max_rows is None else df.iloc[:max_rows]
+        return (df if max_rows is None else df.iloc[:max_rows]), meta
     raise ValueError(f"unsupported predict file type: {suf}")

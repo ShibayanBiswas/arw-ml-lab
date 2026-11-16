@@ -191,13 +191,9 @@ def fit_sequential(
     """Window + Lightning train for LSTM/TCN; optional LR finder."""
     set_seed(seed)
     window = window or WindowSpec()
-    # z-score features for stable CPU smokes (fit stats on full series is ok for thin smoke;
-    # production path will fit scalers inside purged folds in 2A-cont)
+    # Leakage-safe: build windows on raw series, then fit z-score on train windows only
     X = np.asarray(X, dtype=np.float64)
-    mu = X.mean(axis=0, keepdims=True)
-    sigma = X.std(axis=0, keepdims=True)
-    sigma = np.where(sigma < 1e-8, 1.0, sigma)
-    X = (X - mu) / sigma
+    y = np.asarray(y, dtype=np.float64)
     Xw, yw, ends = build_windows(
         X, y, lookback=window.lookback, horizon=window.horizon, stride=window.stride
     )
@@ -222,9 +218,16 @@ def fit_sequential(
             continue
     if not keep_tr:
         raise ValueError("purge/embargo removed all train windows — shorten gaps or series")
-    X_tr, y_tr = Xw[keep_tr], yw[keep_tr]
+    X_tr_raw, y_tr = Xw[keep_tr], yw[keep_tr]
     ends_tr = ends[keep_tr]
-    X_va, y_va = Xw[split:], yw[split:]
+    X_va_raw, y_va = Xw[split:], yw[split:]
+    # Fit scaler on train window observations only (no val leakage)
+    flat_tr = X_tr_raw.reshape(-1, X_tr_raw.shape[-1])
+    mu = flat_tr.mean(axis=0, keepdims=True)
+    sigma = flat_tr.std(axis=0, keepdims=True)
+    sigma = np.where(sigma < 1e-8, 1.0, sigma)
+    X_tr = (X_tr_raw - mu) / sigma
+    X_va = (X_va_raw - mu) / sigma
     assert_no_window_label_overlap(
         ends_tr,
         val_labels,
@@ -309,6 +312,7 @@ def fit_sequential(
         "restored_best": restored_best,
         "stopped_epoch": int(getattr(trainer, "current_epoch", 0)),
         "seed": seed,
+        "scaler_fit_on": "train_windows_only",
         "library": "torch+lightning" if model == "lstm" else "pytorch-tcn+lightning",
     }
 

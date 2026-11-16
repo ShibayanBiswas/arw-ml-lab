@@ -17,12 +17,15 @@ from backend.app.routers import (
     auth,
     catalog,
     datasets,
+    deep,
     eda,
     experiments,
     intake,
     jobs,
     predict,
+    suitability,
     timeseries,
+    unsupervised,
 )
 from backend.app.schemas import Healthz
 from backend.app.settings import get_settings
@@ -80,6 +83,9 @@ def create_app() -> FastAPI:
     app.include_router(experiments.router)
     app.include_router(predict.router)
     app.include_router(timeseries.router)
+    app.include_router(unsupervised.router)
+    app.include_router(suitability.router)
+    app.include_router(deep.router)
     return app
 
 

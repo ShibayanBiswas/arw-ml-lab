@@ -8,6 +8,7 @@ from typing import Any, Literal
 import pandas as pd
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import Response
+from labcore.explain.permutation import permutation_explain
 from labcore.explain.shap_trees import tree_shap_explain
 from labcore.predict.score import predict_batch, predict_single
 from labcore.predict.template import (
@@ -37,7 +38,9 @@ class PredictBatchBody(BaseModel):
 
 
 class ExplainBody(BaseModel):
-    rows: list[dict[str, Any]] = Field(min_length=1, max_length=50)
+    rows: list[dict[str, Any]] = Field(min_length=1, max_length=200)
+    method: Literal["shap", "permutation"] = "shap"
+    target_values: list[Any] | None = None
 
 
 class StudioBatchBody(BaseModel):
@@ -292,6 +295,17 @@ def explain_model(
     m = _get_model(model_id)
     X = pd.DataFrame(body.rows)
     model = m.pipeline
+    if body.method == "permutation":
+        if not body.target_values or len(body.target_values) != len(body.rows):
+            raise HTTPException(
+                status_code=422,
+                detail="permutation explain requires target_values aligned to rows",
+            )
+        y = body.target_values
+        try:
+            return permutation_explain(model, X[m.feature_names], y, seed=42)
+        except Exception as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
     if hasattr(model, "named_steps") and "model" in model.named_steps:
         pre = model[:-1]
         leaf = model.named_steps["model"]

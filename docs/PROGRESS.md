@@ -2,11 +2,11 @@
 
 | Field | Value |
 |---|---|
-| Current phase | One-shot finish (Chunk A → B → C) — in progress |
-| Last completed step | Chunk A deploy.yml honesty + checkout@v5; remote migrations verified via MCP |
-| Last green commit | *(pending)* |
+| Current phase | One-shot finish — Chunk B.1 landed; continuing B deepen + C |
+| Last completed step | B.1: PV deepen, purged/CPCV, explain/unsup/FS1–5 UI, DL scaler fix, registry expand |
+| Last green commit | *(pending push of B.1)* |
 | Open failures | See **Blocked — needs Shibayan** |
-| Next action | Chunk B deepen 2/2A/3/3A/4 → Chunk C 4A…8.2 → FINAL_REPORT |
+| Next action | Keep deepening B (plots/tuning/Celery predict) → Chunk C 4A…8.2 → FINAL_REPORT |
 
 ## Blocked — needs Shibayan
 
@@ -18,8 +18,9 @@
 | `NVIDIA_API_KEY` on Render | Only after lab-api exists | Put key in Render `lab-shared` only — never Vercel |
 | GitHub Pro branch protection | Optional | Enable required checks on `main` if on Pro |
 | Supabase Storage 2 GB limit | Pro project setting | Dashboard → Storage → raise global file size |
+| TradingLab submodule | `vendor/tradinglab` absent | Needed for FS6–FS20 + AFML parity; purged/CPCV currently in-lab (ADR pending) |
 
-**Note:** `SUPABASE_PROJECT_ID` can be set to `ushtfpelbpjfkjoppklz` (already attempted via agent). Remote DB already has 8 migrations applied (MCP `list_migrations`). Deploy `render`/`smoke` now skip honestly unless `RENDER_ENABLED=true`.
+**Note:** `SUPABASE_PROJECT_ID` = `ushtfpelbpjfkjoppklz`. Remote DB has 8 migrations. Deploy `render`/`smoke` skip unless `RENDER_ENABLED=true`.
 
 ## Phase log
 | Phase | Status | Report | Commit |
@@ -34,4 +35,6 @@
 | 3 | done (thin) → deepening | docs/PHASE_3_REPORT.md | phase 3: explain predict uq thin |
 | 3A | done (thin) → deepening | docs/PHASE_3A_REPORT.md | phase 3a: prediction studio thin |
 | 4 | done (thin) → deepening | docs/PHASE_4_REPORT.md | phase 4: timeseries thin |
+| One-shot A | done | deploy.yml honesty | deploy: gate render/smoke |
+| One-shot B.1 | done | docs/PHASE_ONESHOT_B1_REPORT.md | phase oneshot-b1 |
 | 4A–8.2 | not started | — | — |

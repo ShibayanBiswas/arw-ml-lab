@@ -1,5 +1,12 @@
 # Architecture decision records
 
+## ADR-0015 — One-shot B.1 deepen: in-lab purged/CPCV + PV matrix (2026-11-16)
+
+- **Purged K-fold / CPCV** implemented in `labcore/cv/purged.py` citing AFML ch. 7/12 because `vendor/tradinglab` is not present. When the submodule is added, swap adapters to TradingLab primitives and keep the same public API (`PurgedKFold`, `CombinatorialPurgedKFold`, `ml_get_train_times`).
+- **PV02/03/10/14/15** promoted from deferred stubs to real checks; PV10 uses contract median/p01/p99 z-scores (no IsolationForest refit at predict — training-time IF detector still Phase 3A-cont).
+- **FS1–FS5** live in `labcore/suitability`; FS6–FS20 stay DEFERRED until TradingLab label adapters (Phase 5 / 5B).
+- DL sequential z-score now fits on **purged train windows only** (`scaler_fit_on=train_windows_only`).
+
 ## ADR-0014 — Phase 4 Time Series thin (2026-11-15)
 
 - Thin smoke of §19/§20 only: canonical `labcore/timeseries/horizon_guard.py` (Steps 1–2–4; Step 3 soft h* after backtest); SeasonalNaive (statsforecast) + airline SARIMA (statsmodels); rolling-origin W=4; MASE/MAE/RMSE/sMAPE + Ljung-Box; STL/classical/ACF analysis; sync API + minimal `TsWorkbench`.

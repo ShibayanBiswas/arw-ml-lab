@@ -1,4 +1,4 @@
-"""Additional §12 R*/C* specs to reach ≥30 for Phase 2-cont."""
+"""Additional §12 R*/C* specs to reach ≥30, then the sklearn R1–R51 / C1–C35 expansion."""
 
 from __future__ import annotations
 
@@ -454,5 +454,662 @@ def extra_algorithm_specs() -> list[AlgorithmSpec]:
             needs_scaling=True,
             edu_key="clf.perceptron",
             tags=["linear"],
+        ),
+    ] + expanded_algorithm_specs()
+
+
+# Composites are built in build_composite so catalogue defaults stay JSON-safe.
+COMPOSITE_KEYS = frozenset(
+    {
+        "reg.poly_ridge",
+        "reg.gam",
+        "reg.stack",
+        "reg.vote",
+        "clf.stack",
+        "clf.vote",
+        "clf.ovr",
+        "clf.ovo",
+        "clf.output_code",
+        "clf.calibrated",
+    }
+)
+
+
+def _seed(params: dict[str, Any]) -> int:
+    return int(params.get("random_state", 42))
+
+
+def build_composite(key: str, params: dict[str, Any]) -> Any:
+    """Map primitive spec params onto sklearn Pipeline / ensemble / wrapper classes."""
+    seed = _seed(params)
+    if key == "reg.poly_ridge":
+        from sklearn.linear_model import Ridge
+        from sklearn.pipeline import Pipeline
+        from sklearn.preprocessing import PolynomialFeatures
+
+        return Pipeline(
+            [
+                (
+                    "poly",
+                    PolynomialFeatures(degree=int(params.get("degree", 2)), include_bias=False),
+                ),
+                ("ridge", Ridge(alpha=float(params.get("alpha", 1.0)), random_state=seed)),
+            ]
+        )
+    if key == "reg.gam":
+        from sklearn.linear_model import Ridge
+        from sklearn.pipeline import Pipeline
+        from sklearn.preprocessing import SplineTransformer
+
+        return Pipeline(
+            [
+                ("spline", SplineTransformer(n_knots=int(params.get("n_knots", 10)), degree=3)),
+                ("ridge", Ridge(alpha=float(params.get("alpha", 1.0)), random_state=seed)),
+            ]
+        )
+    if key == "reg.stack":
+        from sklearn.ensemble import StackingRegressor
+        from sklearn.linear_model import Ridge
+        from sklearn.tree import DecisionTreeRegressor
+
+        ridge = Ridge(alpha=1.0, random_state=seed)
+        return StackingRegressor(
+            estimators=[
+                ("ridge", ridge),
+                ("dt", DecisionTreeRegressor(max_depth=4, random_state=seed)),
+            ],
+            final_estimator=Ridge(alpha=1.0, random_state=seed),
+            passthrough=bool(params.get("passthrough", False)),
+            cv=int(params.get("cv", 5)),
+        )
+    if key == "reg.vote":
+        from sklearn.ensemble import VotingRegressor
+        from sklearn.linear_model import Ridge
+        from sklearn.tree import DecisionTreeRegressor
+
+        return VotingRegressor(
+            estimators=[
+                ("ridge", Ridge(alpha=1.0, random_state=seed)),
+                ("dt", DecisionTreeRegressor(max_depth=4, random_state=seed)),
+            ]
+        )
+    if key == "clf.stack":
+        from sklearn.ensemble import StackingClassifier
+        from sklearn.linear_model import LogisticRegression
+        from sklearn.tree import DecisionTreeClassifier
+
+        return StackingClassifier(
+            estimators=[
+                ("lr", _logreg(seed)),
+                ("dt", DecisionTreeClassifier(max_depth=4, random_state=seed)),
+            ],
+            final_estimator=LogisticRegression(max_iter=500, solver="lbfgs", random_state=seed),
+            passthrough=bool(params.get("passthrough", False)),
+            stack_method="predict_proba",
+            cv=int(params.get("cv", 5)),
+        )
+    if key == "clf.vote":
+        from sklearn.ensemble import VotingClassifier
+        from sklearn.tree import DecisionTreeClassifier
+
+        return VotingClassifier(
+            estimators=[
+                ("lr", _logreg(seed)),
+                ("dt", DecisionTreeClassifier(max_depth=4, random_state=seed)),
+            ],
+            voting=str(params.get("voting", "soft")),
+        )
+    if key in {"clf.ovr", "clf.ovo", "clf.output_code"}:
+        from sklearn.multiclass import (
+            OneVsOneClassifier,
+            OneVsRestClassifier,
+            OutputCodeClassifier,
+        )
+
+        base = _logreg(seed, C=float(params.get("C", 1.0)))
+        if key == "clf.ovr":
+            return OneVsRestClassifier(estimator=base)
+        if key == "clf.ovo":
+            return OneVsOneClassifier(estimator=base)
+        return OutputCodeClassifier(
+            estimator=base,
+            code_size=float(params.get("code_size", 1.5)),
+            random_state=seed,
+        )
+    if key == "clf.calibrated":
+        from sklearn.calibration import CalibratedClassifierCV
+
+        return CalibratedClassifierCV(
+            estimator=_logreg(seed, C=float(params.get("C", 1.0))),
+            method=str(params.get("method", "sigmoid")),
+            cv=int(params.get("cv", 5)),
+        )
+    raise KeyError(key)
+
+
+def _logreg(seed: int, C: float = 1.0) -> Any:
+    from sklearn.linear_model import LogisticRegression
+
+    return LogisticRegression(C=C, max_iter=500, solver="lbfgs", random_state=seed)
+
+
+def expanded_algorithm_specs() -> list[AlgorithmSpec]:
+    """§12 rows still missing, limited to sklearn (no TabPFN / optional / DL)."""
+    rs = _p("random_state", "int", 42, "seed")
+    return [
+        AlgorithmSpec(
+            id="R5b",
+            key="reg.lars",
+            family="regression",
+            name="Lars",
+            library="sklearn",
+            estimator="sklearn.linear_model.Lars",
+            params=[_p("n_nonzero_coefs", "int", 500, "lars_nnz", low=1, high=500), rs],
+            supports={"regression"},
+            needs_scaling=True,
+            edu_key="reg.lars",
+            tags=["linear"],
+        ),
+        AlgorithmSpec(
+            id="R10b",
+            key="reg.ransac",
+            family="regression",
+            name="RANSACRegressor",
+            library="sklearn",
+            estimator="sklearn.linear_model.RANSACRegressor",
+            params=[
+                _p("min_samples", "float_or_none", None, "ransac_min"),
+                _p("max_trials", "int", 100, "ransac_trials", low=50, high=500),
+                rs,
+            ],
+            supports={"regression"},
+            needs_scaling=True,
+            edu_key="reg.ransac",
+            tags=["robust"],
+        ),
+        AlgorithmSpec(
+            id="R12b",
+            key="reg.quantile",
+            family="regression",
+            name="QuantileRegressor",
+            library="sklearn",
+            estimator="sklearn.linear_model.QuantileRegressor",
+            params=[
+                _p("quantile", "float", 0.5, "qreg_q", low=0.05, high=0.95),
+                _p("alpha", "float", 0.0, "qreg_alpha", low=1e-6, high=1.0, log=True),
+                _p(
+                    "solver",
+                    "categorical",
+                    "highs",
+                    "qreg_solver",
+                    choices=["highs", "highs-ds", "highs-ipm"],
+                ),
+            ],
+            supports={"regression"},
+            needs_scaling=True,
+            edu_key="reg.quantile",
+            tags=["linear"],
+        ),
+        AlgorithmSpec(
+            id="R13b",
+            key="reg.glm_poisson",
+            family="regression",
+            name="PoissonRegressor",
+            library="sklearn",
+            estimator="sklearn.linear_model.PoissonRegressor",
+            params=[_p("alpha", "float", 1.0, "glm_alpha", low=1e-4, high=10, log=True)],
+            supports={"regression"},
+            needs_scaling=True,
+            edu_key="reg.glm_poisson",
+            tags=["glm"],
+        ),
+        AlgorithmSpec(
+            id="R13c",
+            key="reg.glm_gamma",
+            family="regression",
+            name="GammaRegressor",
+            library="sklearn",
+            estimator="sklearn.linear_model.GammaRegressor",
+            params=[_p("alpha", "float", 1.0, "glm_alpha", low=1e-4, high=10, log=True)],
+            supports={"regression"},
+            needs_scaling=True,
+            edu_key="reg.glm_gamma",
+            tags=["glm"],
+        ),
+        AlgorithmSpec(
+            id="R13d",
+            key="reg.glm_tweedie",
+            family="regression",
+            name="TweedieRegressor",
+            library="sklearn",
+            estimator="sklearn.linear_model.TweedieRegressor",
+            params=[
+                _p("power", "float", 1.5, "tweedie_power", low=1.0, high=2.0),
+                _p("alpha", "float", 1.0, "glm_alpha", low=1e-4, high=10, log=True),
+            ],
+            supports={"regression"},
+            needs_scaling=True,
+            edu_key="reg.glm_tweedie",
+            tags=["glm"],
+        ),
+        AlgorithmSpec(
+            id="R15b",
+            key="reg.pa",
+            family="regression",
+            name="PassiveAggressiveRegressor",
+            library="sklearn",
+            estimator="sklearn.linear_model.PassiveAggressiveRegressor",
+            params=[
+                _p("C", "float", 1.0, "pa_C", low=1e-3, high=10, log=True),
+                _p("max_iter", "int", 1000, "pa_iter"),
+                rs,
+            ],
+            supports={"regression"},
+            needs_scaling=True,
+            edu_key="reg.pa",
+            tags=["linear"],
+        ),
+        AlgorithmSpec(
+            id="R16b",
+            key="reg.poly_ridge",
+            family="regression",
+            name="PolynomialFeatures + Ridge",
+            library="sklearn",
+            estimator="sklearn.pipeline.Pipeline",
+            params=[
+                _p("degree", "categorical", 2, "poly_degree", choices=[2, 3]),
+                _p("alpha", "float", 1.0, "ridge_alpha", low=1e-3, high=1e3, log=True),
+                rs,
+            ],
+            supports={"regression"},
+            needs_scaling=True,
+            edu_key="reg.poly_ridge",
+            tags=["linear", "composite"],
+        ),
+        AlgorithmSpec(
+            id="R17",
+            key="reg.gam",
+            family="regression",
+            name="SplineTransformer + Ridge",
+            library="sklearn",
+            estimator="sklearn.pipeline.Pipeline",
+            params=[
+                _p("n_knots", "int", 10, "gam_knots", low=5, high=25),
+                _p("alpha", "float", 1.0, "ridge_alpha", low=1e-3, high=1e3, log=True),
+                rs,
+            ],
+            supports={"regression"},
+            needs_scaling=True,
+            edu_key="reg.gam",
+            tags=["linear", "composite"],
+        ),
+        AlgorithmSpec(
+            id="R19",
+            key="reg.radius_nn",
+            family="regression",
+            name="RadiusNeighborsRegressor",
+            library="sklearn",
+            estimator="sklearn.neighbors.RadiusNeighborsRegressor",
+            params=[
+                _p("radius", "float", 1.0, "radius", low=0.1, high=10, log=True),
+                _p(
+                    "weights",
+                    "categorical",
+                    "uniform",
+                    "nn_weights",
+                    choices=["uniform", "distance"],
+                ),
+            ],
+            supports={"regression"},
+            needs_scaling=True,
+            edu_key="reg.radius_nn",
+            tags=["neighbors"],
+        ),
+        AlgorithmSpec(
+            id="R21b",
+            key="reg.linear_svr",
+            family="regression",
+            name="LinearSVR",
+            library="sklearn",
+            estimator="sklearn.svm.LinearSVR",
+            params=[
+                _p("C", "float", 1.0, "lsvr_C", low=1e-3, high=1e2, log=True),
+                _p("epsilon", "float", 0.0, "lsvr_eps", low=0.0, high=1.0),
+                _p(
+                    "loss",
+                    "categorical",
+                    "epsilon_insensitive",
+                    "lsvr_loss",
+                    choices=["epsilon_insensitive", "squared_epsilon_insensitive"],
+                ),
+                rs,
+            ],
+            supports={"regression"},
+            needs_scaling=True,
+            edu_key="reg.linear_svr",
+            tags=["kernel"],
+        ),
+        AlgorithmSpec(
+            id="R24",
+            key="reg.gp",
+            family="regression",
+            name="GaussianProcessRegressor",
+            library="sklearn",
+            estimator="sklearn.gaussian_process.GaussianProcessRegressor",
+            params=[
+                _p("alpha", "float", 1e-10, "gp_alpha", low=1e-10, high=1e-1, log=True),
+                _p("n_restarts_optimizer", "int", 0, "gp_restarts", low=0, high=5),
+                rs,
+            ],
+            supports={"regression"},
+            needs_scaling=True,
+            max_rows_hint=5000,
+            edu_key="reg.gp",
+            tags=["kernel"],
+        ),
+        AlgorithmSpec(
+            id="R26",
+            key="reg.extra_tree",
+            family="regression",
+            name="ExtraTreeRegressor",
+            library="sklearn",
+            estimator="sklearn.tree.ExtraTreeRegressor",
+            params=[_p("max_depth", "int_or_none", 6, "dt_depth"), rs],
+            supports={"regression"},
+            edu_key="reg.extra_tree",
+            tags=["tree"],
+        ),
+        AlgorithmSpec(
+            id="R39",
+            key="reg.stack",
+            family="regression",
+            name="StackingRegressor",
+            library="sklearn",
+            estimator="sklearn.ensemble.StackingRegressor",
+            params=[
+                _p("passthrough", "bool", False, "stack_pass"),
+                _p("cv", "int", 5, "stack_cv", low=2, high=10),
+                rs,
+            ],
+            supports={"regression"},
+            edu_key="reg.stack",
+            tags=["ensemble", "composite"],
+        ),
+        AlgorithmSpec(
+            id="R40",
+            key="reg.vote",
+            family="regression",
+            name="VotingRegressor",
+            library="sklearn",
+            estimator="sklearn.ensemble.VotingRegressor",
+            params=[rs],
+            supports={"regression"},
+            edu_key="reg.vote",
+            tags=["ensemble", "composite"],
+        ),
+        AlgorithmSpec(
+            id="R43",
+            key="reg.mlp_sk",
+            family="regression",
+            name="MLPRegressor",
+            library="sklearn",
+            estimator="sklearn.neural_network.MLPRegressor",
+            params=[
+                _p("hidden_layer_sizes", "tuple", (128, 64), "mlp_layers"),
+                _p("activation", "categorical", "relu", "mlp_act", choices=["relu", "tanh"]),
+                _p("alpha", "float", 1e-4, "mlp_alpha", low=1e-6, high=1e-1, log=True),
+                _p(
+                    "learning_rate_init",
+                    "float",
+                    1e-3,
+                    "mlp_lr",
+                    low=1e-4,
+                    high=1e-2,
+                    log=True,
+                ),
+                _p("early_stopping", "bool", True, "mlp_es"),
+                _p("max_iter", "int", 200, "mlp_iter"),
+                rs,
+            ],
+            supports={"regression"},
+            needs_scaling=True,
+            edu_key="reg.mlp_sk",
+            tags=["neural"],
+        ),
+        AlgorithmSpec(
+            id="C8b",
+            key="clf.multinomial_nb",
+            family="classification",
+            name="MultinomialNB",
+            library="sklearn",
+            estimator="sklearn.naive_bayes.MultinomialNB",
+            params=[_p("alpha", "float", 1.0, "nb_alpha", low=1e-3, high=10, log=True)],
+            supports={"binary", "multiclass"},
+            edu_key="clf.multinomial_nb",
+            tags=["bayes"],
+        ),
+        AlgorithmSpec(
+            id="C8c",
+            key="clf.complement_nb",
+            family="classification",
+            name="ComplementNB",
+            library="sklearn",
+            estimator="sklearn.naive_bayes.ComplementNB",
+            params=[_p("alpha", "float", 1.0, "nb_alpha", low=1e-3, high=10, log=True)],
+            supports={"binary", "multiclass"},
+            edu_key="clf.complement_nb",
+            tags=["bayes"],
+        ),
+        AlgorithmSpec(
+            id="C8d",
+            key="clf.categorical_nb",
+            family="classification",
+            name="CategoricalNB",
+            library="sklearn",
+            estimator="sklearn.naive_bayes.CategoricalNB",
+            params=[_p("alpha", "float", 1.0, "nb_alpha", low=1e-3, high=10, log=True)],
+            supports={"binary", "multiclass"},
+            edu_key="clf.categorical_nb",
+            tags=["bayes"],
+        ),
+        AlgorithmSpec(
+            id="C10b",
+            key="clf.nearest_centroid",
+            family="classification",
+            name="NearestCentroid",
+            library="sklearn",
+            estimator="sklearn.neighbors.NearestCentroid",
+            params=[_p("shrink_threshold", "float_or_none", None, "nc_shrink")],
+            supports={"binary", "multiclass"},
+            needs_scaling=True,
+            edu_key="clf.nearest_centroid",
+            tags=["neighbors"],
+        ),
+        AlgorithmSpec(
+            id="C10c",
+            key="clf.radius_nn",
+            family="classification",
+            name="RadiusNeighborsClassifier",
+            library="sklearn",
+            estimator="sklearn.neighbors.RadiusNeighborsClassifier",
+            params=[
+                _p("radius", "float", 1.0, "radius", low=0.1, high=10, log=True),
+                _p(
+                    "weights",
+                    "categorical",
+                    "uniform",
+                    "nn_weights",
+                    choices=["uniform", "distance"],
+                ),
+            ],
+            supports={"binary", "multiclass"},
+            needs_scaling=True,
+            edu_key="clf.radius_nn",
+            tags=["neighbors"],
+        ),
+        AlgorithmSpec(
+            id="C12b",
+            key="clf.linear_svc",
+            family="classification",
+            name="LinearSVC",
+            library="sklearn",
+            estimator="sklearn.svm.LinearSVC",
+            params=[
+                _p("C", "float", 1.0, "lsvc_C", low=1e-3, high=1e3, log=True),
+                _p(
+                    "loss",
+                    "categorical",
+                    "squared_hinge",
+                    "lsvc_loss",
+                    choices=["hinge", "squared_hinge"],
+                ),
+                _p("max_iter", "int", 1000, "lsvc_iter"),
+                rs,
+            ],
+            supports={"binary", "multiclass"},
+            needs_scaling=True,
+            edu_key="clf.linear_svc",
+            tags=["kernel"],
+        ),
+        AlgorithmSpec(
+            id="C13b",
+            key="clf.gp",
+            family="classification",
+            name="GaussianProcessClassifier",
+            library="sklearn",
+            estimator="sklearn.gaussian_process.GaussianProcessClassifier",
+            params=[_p("n_restarts_optimizer", "int", 0, "gp_restarts", low=0, high=5), rs],
+            supports={"binary", "multiclass"},
+            needs_scaling=True,
+            max_rows_hint=3000,
+            edu_key="clf.gp",
+            tags=["kernel"],
+        ),
+        AlgorithmSpec(
+            id="C27",
+            key="clf.stack",
+            family="classification",
+            name="StackingClassifier",
+            library="sklearn",
+            estimator="sklearn.ensemble.StackingClassifier",
+            params=[
+                _p("passthrough", "bool", False, "stack_pass"),
+                _p("cv", "int", 5, "stack_cv", low=2, high=10),
+                rs,
+            ],
+            supports={"binary", "multiclass"},
+            edu_key="clf.stack",
+            tags=["ensemble", "composite"],
+        ),
+        AlgorithmSpec(
+            id="C28",
+            key="clf.vote",
+            family="classification",
+            name="VotingClassifier",
+            library="sklearn",
+            estimator="sklearn.ensemble.VotingClassifier",
+            params=[
+                _p("voting", "categorical", "soft", "vote_kind", choices=["soft", "hard"]),
+                rs,
+            ],
+            supports={"binary", "multiclass"},
+            edu_key="clf.vote",
+            tags=["ensemble", "composite"],
+        ),
+        AlgorithmSpec(
+            id="C30",
+            key="clf.ovr",
+            family="classification",
+            name="OneVsRestClassifier",
+            library="sklearn",
+            estimator="sklearn.multiclass.OneVsRestClassifier",
+            params=[_p("C", "float", 1.0, "logreg_C", low=1e-3, high=100, log=True), rs],
+            supports={"binary", "multiclass"},
+            needs_scaling=True,
+            edu_key="clf.ovr",
+            tags=["linear", "composite"],
+        ),
+        AlgorithmSpec(
+            id="C30b",
+            key="clf.ovo",
+            family="classification",
+            name="OneVsOneClassifier",
+            library="sklearn",
+            estimator="sklearn.multiclass.OneVsOneClassifier",
+            params=[_p("C", "float", 1.0, "logreg_C", low=1e-3, high=100, log=True), rs],
+            supports={"binary", "multiclass"},
+            needs_scaling=True,
+            edu_key="clf.ovo",
+            tags=["linear", "composite"],
+        ),
+        AlgorithmSpec(
+            id="C30c",
+            key="clf.output_code",
+            family="classification",
+            name="OutputCodeClassifier",
+            library="sklearn",
+            estimator="sklearn.multiclass.OutputCodeClassifier",
+            params=[
+                _p("C", "float", 1.0, "logreg_C", low=1e-3, high=100, log=True),
+                _p("code_size", "float", 1.5, "code_size", low=0.5, high=3.0),
+                rs,
+            ],
+            supports={"binary", "multiclass"},
+            needs_scaling=True,
+            edu_key="clf.output_code",
+            tags=["linear", "composite"],
+        ),
+        AlgorithmSpec(
+            id="C32",
+            key="clf.calibrated",
+            family="classification",
+            name="CalibratedClassifierCV",
+            library="sklearn",
+            estimator="sklearn.calibration.CalibratedClassifierCV",
+            params=[
+                _p("C", "float", 1.0, "logreg_C", low=1e-3, high=100, log=True),
+                _p(
+                    "method",
+                    "categorical",
+                    "sigmoid",
+                    "cal_method",
+                    choices=["sigmoid", "isotonic"],
+                ),
+                _p("cv", "int", 5, "cal_cv", low=2, high=10),
+                rs,
+            ],
+            supports={"binary", "multiclass"},
+            needs_scaling=True,
+            edu_key="clf.calibrated",
+            tags=["linear", "composite"],
+        ),
+        AlgorithmSpec(
+            id="C33",
+            key="clf.mlp_sk",
+            family="classification",
+            name="MLPClassifier",
+            library="sklearn",
+            estimator="sklearn.neural_network.MLPClassifier",
+            params=[
+                _p("hidden_layer_sizes", "tuple", (128, 64), "mlp_layers"),
+                _p("activation", "categorical", "relu", "mlp_act", choices=["relu", "tanh"]),
+                _p("alpha", "float", 1e-4, "mlp_alpha", low=1e-6, high=1e-1, log=True),
+                _p(
+                    "learning_rate_init",
+                    "float",
+                    1e-3,
+                    "mlp_lr",
+                    low=1e-4,
+                    high=1e-2,
+                    log=True,
+                ),
+                _p("early_stopping", "bool", True, "mlp_es"),
+                _p("max_iter", "int", 200, "mlp_iter"),
+                rs,
+            ],
+            supports={"binary", "multiclass"},
+            needs_scaling=True,
+            edu_key="clf.mlp_sk",
+            tags=["neural"],
         ),
     ]
