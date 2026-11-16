@@ -69,5 +69,7 @@ def test_fs6_fs8_fs15_fs19_nifty():
     assert by["FS8"]["status"] in {"PASS", "WARN"}
     assert by["FS15"]["status"] in {"PASS", "WARN", "INFO"}
     assert by["FS19"]["status"] in {"PASS", "WARN", "FAIL"}
-    assert by["FS7"]["status"] == "DEFERRED"
+    assert by["FS7"]["status"] in {"PASS", "WARN", "FAIL"}
+    assert by["FS9"]["status"] in {"PASS", "WARN", "FAIL"}
+    assert by["FS10"]["status"] == "DEFERRED"
     assert "adf_returns_pvalue" in by["FS15"].get("details", {}) or by["FS15"]["status"] == "INFO"

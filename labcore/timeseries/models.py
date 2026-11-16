@@ -19,7 +19,24 @@ ModelKey = Literal[
     "naive",
     "seasonal_window_average",
     "garch11",
+    "random_walk_drift",
+    "holt",
+    "holt_winters",
+    "auto_ces",
+    "croston_classic",
+    "window_average",
+    "auto_theta",
 ]
+
+
+def _sf_point_forecast(y_train: np.ndarray, h: int, model: Any) -> np.ndarray:
+    from statsforecast import StatsForecast
+
+    df = to_nixtla_df(y_train)
+    sf = StatsForecast(models=[model], freq=1, n_jobs=1)
+    fc = sf.forecast(df=df, h=h)
+    col = [c for c in fc.columns if c not in ("unique_id", "ds")][0]
+    return np.asarray(fc[col], dtype=float)
 
 
 def to_nixtla_df(
@@ -182,6 +199,66 @@ def forecast_seasonal_window_average(
     return np.asarray(fc[col], dtype=float)
 
 
+def forecast_random_walk_drift(y_train: np.ndarray, h: int) -> np.ndarray:
+    """F3 — RandomWalkWithDrift via statsforecast."""
+    from statsforecast.models import RandomWalkWithDrift
+
+    return _sf_point_forecast(y_train, h, RandomWalkWithDrift())
+
+
+def forecast_holt(y_train: np.ndarray, h: int) -> np.ndarray:
+    """F6 — Holt linear trend via statsforecast."""
+    from statsforecast.models import Holt
+
+    return _sf_point_forecast(y_train, h, Holt())
+
+
+def forecast_holt_winters(y_train: np.ndarray, h: int, *, m: int = 12) -> np.ndarray:
+    """F7 — HoltWinters; requires seasonal gate n ≥ 2m+h."""
+    from statsforecast.models import HoltWinters
+
+    ok, reason = seasonal_allowed(len(y_train), float(m), h)
+    if not ok:
+        raise ValueError(f"holt_winters seasonal gate: {reason}")
+    return _sf_point_forecast(y_train, h, HoltWinters(season_length=m))
+
+
+def forecast_auto_ces(y_train: np.ndarray, h: int, *, m: int = 12) -> np.ndarray:
+    """F15 — AutoCES via statsforecast."""
+    from statsforecast.models import AutoCES
+
+    ok, reason = seasonal_allowed(len(y_train), float(m), h)
+    season_length = m if ok else 1
+    _ = reason
+    return _sf_point_forecast(y_train, h, AutoCES(season_length=season_length))
+
+
+def forecast_croston_classic(y_train: np.ndarray, h: int) -> np.ndarray:
+    """F25 — CrostonClassic (intermittent demand)."""
+    from statsforecast.models import CrostonClassic
+
+    return _sf_point_forecast(y_train, h, CrostonClassic())
+
+
+def forecast_window_average(y_train: np.ndarray, h: int, *, window_size: int = 12) -> np.ndarray:
+    """F4 — WindowAverage via statsforecast."""
+    from statsforecast.models import WindowAverage
+
+    if len(y_train) < window_size:
+        raise ValueError(f"window_average needs n≥window ({len(y_train)}<{window_size})")
+    return _sf_point_forecast(y_train, h, WindowAverage(window_size=window_size))
+
+
+def forecast_auto_theta(y_train: np.ndarray, h: int, *, m: int = 12) -> np.ndarray:
+    """F14 — AutoTheta via statsforecast."""
+    from statsforecast.models import AutoTheta
+
+    ok, reason = seasonal_allowed(len(y_train), float(m), h)
+    season_length = m if ok else 1
+    _ = reason
+    return _sf_point_forecast(y_train, h, AutoTheta(season_length=season_length))
+
+
 def forecast_garch11(y_train: np.ndarray, h: int) -> dict[str, Any]:
     """GARCH(1,1) variance forecast via ``arch`` (returns + conditional σ)."""
     from arch import arch_model
@@ -245,6 +322,20 @@ def forecast(
     if key == "garch11":
         out = forecast_garch11(y_train, h)
         return {"key": key, "y_pred": out["y_pred"], "resid": out["resid"], "extra": out}
+    if key == "random_walk_drift":
+        return {"key": key, "y_pred": forecast_random_walk_drift(y_train, h), "resid": None}
+    if key == "holt":
+        return {"key": key, "y_pred": forecast_holt(y_train, h), "resid": None}
+    if key == "holt_winters":
+        return {"key": key, "y_pred": forecast_holt_winters(y_train, h, m=m), "resid": None}
+    if key == "auto_ces":
+        return {"key": key, "y_pred": forecast_auto_ces(y_train, h, m=m), "resid": None}
+    if key == "croston_classic":
+        return {"key": key, "y_pred": forecast_croston_classic(y_train, h), "resid": None}
+    if key == "window_average":
+        return {"key": key, "y_pred": forecast_window_average(y_train, h), "resid": None}
+    if key == "auto_theta":
+        return {"key": key, "y_pred": forecast_auto_theta(y_train, h, m=m), "resid": None}
     raise ValueError(f"unknown model key: {key}")
 
 
@@ -258,4 +349,11 @@ TS_MODEL_CATALOGUE: list[dict[str, str]] = [
     {"id": "naive", "library": "statsforecast", "name": "Naive"},
     {"id": "seasonal_window_average", "library": "statsforecast", "name": "SeasonalWindowAverage"},
     {"id": "garch11", "library": "arch", "name": "GARCH(1,1)"},
+    {"id": "random_walk_drift", "library": "statsforecast", "name": "RandomWalkWithDrift"},
+    {"id": "holt", "library": "statsforecast", "name": "Holt"},
+    {"id": "holt_winters", "library": "statsforecast", "name": "HoltWinters"},
+    {"id": "auto_ces", "library": "statsforecast", "name": "AutoCES"},
+    {"id": "croston_classic", "library": "statsforecast", "name": "CrostonClassic"},
+    {"id": "window_average", "library": "statsforecast", "name": "WindowAverage"},
+    {"id": "auto_theta", "library": "statsforecast", "name": "AutoTheta"},
 ]

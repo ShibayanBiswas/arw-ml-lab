@@ -1,7 +1,8 @@
 """FS financial labelling suitability (ARCHITECTURE §37).
 
-Implemented without TradingLab: FS1–FS6, FS8, FS14–FS15, FS19–FS20.
-FS7/9–13/16–18 stay DEFERRED until vendor/tradinglab is available.
+Implemented without TradingLab: FS1–FS9, FS14–FS15, FS19–FS20.
+FS10–FS13 / FS16–FS18 stay DEFERRED until vendor/tradinglab label adapters.
+FS7/FS9 use AFML-equivalent thin formulas (EWMA vol, CUSUM) until the submodule lands.
 """
 
 from __future__ import annotations
@@ -234,6 +235,73 @@ def check_fs6_length(df: pd.DataFrame) -> FSResult:
     return FSResult("FS6", "FAIL", f"n={n} bars (<500)", {"n": n})
 
 
+def check_fs7_daily_vol(df: pd.DataFrame, price_col: str | None, *, span: int = 100) -> FSResult:
+    """FS7 — EWMA volatility estimable (AFML ``get_daily_vol`` equivalent).
+
+    Uses ``pandas.Series.ewm(span=span).std()`` on close-to-close returns.
+    PASS if ≥95% non-null after warm-up and vol > 0; WARN 80–95%; else FAIL.
+    """
+    if price_col is None or price_col not in df.columns:
+        return FSResult("FS7", "FAIL", "no price column for EWMA vol")
+    px = pd.to_numeric(df[price_col], errors="coerce")
+    rets = px.pct_change(fill_method=None)
+    vol = rets.ewm(span=span, min_periods=max(span // 2, 10)).std()
+    warm = vol.iloc[span:] if len(vol) > span else vol.dropna()
+    if len(warm) == 0:
+        return FSResult("FS7", "FAIL", "insufficient bars for EWMA vol warm-up", {"span": span})
+    non_null = float(warm.notna().mean())
+    positive = float((warm.fillna(0) > 0).mean())
+    details = {
+        "span": span,
+        "non_null_share": non_null,
+        "positive_share": positive,
+        "median_vol": float(warm.median()) if warm.notna().any() else None,
+    }
+    if non_null >= 0.95 and positive >= 0.95:
+        return FSResult("FS7", "PASS", f"EWMA vol ok (non-null={non_null:.1%})", details)
+    if non_null >= 0.80 and positive >= 0.80:
+        return FSResult("FS7", "WARN", f"EWMA vol thin (non-null={non_null:.1%})", details)
+    return FSResult("FS7", "FAIL", f"EWMA vol not estimable (non-null={non_null:.1%})", details)
+
+
+def check_fs9_event_count(df: pd.DataFrame, price_col: str | None) -> FSResult:
+    """FS9 — CUSUM event count with h = mean daily EWMA σ (AFML cusum_filter thin).
+
+    PASS ≥300 events, WARN 100–299, FAIL <100.
+    """
+    if price_col is None or price_col not in df.columns:
+        return FSResult("FS9", "FAIL", "no price column for CUSUM events")
+    px = pd.to_numeric(df[price_col], errors="coerce").dropna()
+    if len(px) < 50:
+        return FSResult("FS9", "FAIL", "too few prices for CUSUM", {"n": len(px)})
+    log_r = np.log(px).diff().dropna()
+    vol = log_r.ewm(span=100, min_periods=50).std()
+    h = float(vol.dropna().mean())
+    if not np.isfinite(h) or h <= 0:
+        return FSResult("FS9", "FAIL", "CUSUM threshold h not positive", {"h": h})
+    # Symmetric CUSUM filter (AFML ch. 2)
+    s_pos = 0.0
+    s_neg = 0.0
+    events = 0
+    for r in log_r.to_numpy(dtype=float):
+        if not np.isfinite(r):
+            continue
+        s_pos = max(0.0, s_pos + r)
+        s_neg = min(0.0, s_neg + r)
+        if s_pos > h:
+            events += 1
+            s_pos = 0.0
+        elif s_neg < -h:
+            events += 1
+            s_neg = 0.0
+    details = {"events": events, "h": h, "n_returns": int(len(log_r))}
+    if events >= 300:
+        return FSResult("FS9", "PASS", f"{events} CUSUM events", details)
+    if events >= 100:
+        return FSResult("FS9", "WARN", f"{events} CUSUM events (100–299)", details)
+    return FSResult("FS9", "FAIL", f"{events} CUSUM events (<100)", details)
+
+
 def check_fs8_stale_prices(df: pd.DataFrame, price_col: str | None) -> FSResult:
     """FS8 — share of zero returns (<5% PASS, 5–20% WARN, >20% FAIL)."""
     if price_col and price_col in df.columns:
@@ -411,10 +479,11 @@ def run_suitability(
         check_fs4_ohlcv(df),
         check_fs5_frequency(df, time_col),
         check_fs6_length(df),
-        FSResult("FS7", "DEFERRED", "requires TradingLab get_daily_vol"),
+        check_fs7_daily_vol(df, price),
         check_fs8_stale_prices(df, price),
+        check_fs9_event_count(df, price),
     ]
-    for code in ("FS9", "FS10", "FS11", "FS12", "FS13"):
+    for code in ("FS10", "FS11", "FS12", "FS13"):
         checks.append(
             FSResult(
                 code,
