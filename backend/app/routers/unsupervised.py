@@ -7,6 +7,7 @@ from typing import Any, Literal
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException
 from labcore.unsupervised import fit_anomaly, fit_clustering, fit_dr
+from labcore.unsupervised.cluster_plots import kmeans_k_sweep
 from pydantic import BaseModel, Field
 
 from backend.app.security import AuthUser, require_write_role
@@ -21,6 +22,8 @@ class UnsupBody(BaseModel):
     n_components: int = 2
     contamination: float = 0.05
     seed: int = 42
+    k_min: int = 2
+    k_max: int = 8
 
 
 def _frame(rows: list[dict[str, Any]]) -> pd.DataFrame:
@@ -69,5 +72,24 @@ def unsupervised_anomaly(
     algo: Literal["isolation_forest", "lof", "pyod_copod"] = body.algorithm  # type: ignore[assignment]
     try:
         return fit_anomaly(X, algorithm=algo, contamination=body.contamination, seed=body.seed)
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/api/v1/unsupervised/clustering/k-sweep")
+def unsupervised_k_sweep(
+    body: UnsupBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """CLU.P.K_SWEEP — inertia + silhouette vs k (seed 42)."""
+    _ = user
+    X = _frame(body.rows)
+    try:
+        return kmeans_k_sweep(
+            X.to_numpy(dtype=float),
+            k_min=body.k_min,
+            k_max=body.k_max,
+            seed=body.seed,
+        )
     except Exception as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
