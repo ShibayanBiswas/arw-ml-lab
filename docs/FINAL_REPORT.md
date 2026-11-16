@@ -1,7 +1,8 @@
 # ARW ML Lab — One-shot finish report (interim)
 
 **Date:** 16 Nov 2026 (IST)  
-**Tip commit at write:** `dbcb069` (CI green) + pending FS14/20 follow-up  
+**Tip commit at write:** `f2972ac` — CI https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43808768000  
+**Prior green:** `f63eb59` / `566c6ef` / `dbcb069` / `43806362529`  
 **Live frontend:** https://arw-ml-lab.vercel.app → `/login` **200**  
 **Repo:** https://github.com/ShibayanBiswas/arw-ml-lab
 
