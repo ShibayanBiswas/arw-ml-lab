@@ -33,6 +33,7 @@ IMPORT_TO_PACKAGE = {
     "umap": "umap-learn",
     "dice_ml": "dice-ml",
     "PyALE": "pyale",
+    "interpret": "interpret",
 }
 
 
