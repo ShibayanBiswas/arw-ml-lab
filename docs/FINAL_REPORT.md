@@ -1,7 +1,7 @@
 # ARW ML Lab — One-shot finish report (interim)
 
 **Date:** 16 Nov 2026 (IST)  
-**Tip:** oneshot-c22 notebook API (c21 green `f2958cf`)  
+**Tip:** `cd1a2e3` oneshot-c22/c23 (notebook API + ZAP config; CI green)  
 **Live frontend:** https://arw-ml-lab.vercel.app/login → **200**  
 **Repo:** https://github.com/ShibayanBiswas/arw-ml-lab
 
@@ -48,13 +48,14 @@ Honest interim closeout. Chunk A + deep B/C slices shipped with repeated **CI gr
 | 58edbbc | C.18 EBM via interpret |
 | 2e6c918 | C.19 ModulePlaceholder → workbench routing |
 | bcc5718 | C.20 MI-11 drop test + FINAL tip |
-| (c21) | C.21 nbformat reproduction notebook |
+| f2958cf | C.21 nbformat reproduction notebook |
+| (c22) | C.22 POST /reports/notebook |
 
 ## CI / Deploy / Vercel
 
 | System | Status | Notes |
 |---|---|---|
-| CI | green through c20 (`bcc5718`) | (see Actions for tip runs) |
+| CI | green through c21 (`f2958cf`) | https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43822804491 |
 | Deploy migrate | **fails** | missing `SUPABASE_ACCESS_TOKEN` / `SUPABASE_DB_PASSWORD` |
 | Deploy render/smoke | skipped honestly | until `RENDER_ENABLED=true` + migrate secrets |
 | Vercel | READY / **200** | https://arw-ml-lab.vercel.app |
