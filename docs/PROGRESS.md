@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Current phase | One-shot Chunk C — continue §36/§39 / 8.2 |
-| Last completed step | oneshot-c42 CrostonOptimized/IMAPA/SES |
-| Last green commit | d9c8ab3 |
+| Last completed step | oneshot-c43 MSTL + DynamicOptimizedTheta |
+| Last green commit | da07cbc |
 | Open failures | Deploy migrate (Supabase secrets); Render unpaid |
 | Next action | Shibayan: secrets + Render. Agent: remaining FS/F*/§39 AC |
 

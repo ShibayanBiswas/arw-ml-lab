@@ -1,7 +1,7 @@
 # ARW ML Lab — One-shot finish report (interim)
 
 **Date:** 16 Nov 2026 (IST)  
-**Tip:** `d9c8ab3` (c42 CrostonOptimized/IMAPA/SES; CI green)  
+**Tip:** `da07cbc` (c43 MSTL + DynamicOptimizedTheta; CI https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43850850223)  
 **Live frontend:** https://arw-ml-lab.vercel.app/login → **200**  
 **Repo:** https://github.com/ShibayanBiswas/arw-ml-lab
 
