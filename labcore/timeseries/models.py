@@ -32,6 +32,9 @@ ModelKey = Literal[
     "ses_optimized",
     "dynamic_optimized_theta",
     "mstl",
+    "adida",
+    "tsb",
+    "croston_sba",
 ]
 
 
@@ -296,6 +299,27 @@ def forecast_dynamic_optimized_theta(y_train: np.ndarray, h: int, *, m: int = 12
     return _sf_point_forecast(y_train, h, DynamicOptimizedTheta(season_length=season_length))
 
 
+def forecast_adida(y_train: np.ndarray, h: int) -> np.ndarray:
+    """F25 — ADIDA via statsforecast."""
+    from statsforecast.models import ADIDA
+
+    return _sf_point_forecast(y_train, h, ADIDA())
+
+
+def forecast_tsb(y_train: np.ndarray, h: int, *, alpha_d: float = 0.2, alpha_p: float = 0.2) -> np.ndarray:
+    """F25 — TSB intermittent demand."""
+    from statsforecast.models import TSB
+
+    return _sf_point_forecast(y_train, h, TSB(alpha_d=alpha_d, alpha_p=alpha_p))
+
+
+def forecast_croston_sba(y_train: np.ndarray, h: int) -> np.ndarray:
+    """F25 — CrostonSBA."""
+    from statsforecast.models import CrostonSBA
+
+    return _sf_point_forecast(y_train, h, CrostonSBA())
+
+
 def forecast_mstl(y_train: np.ndarray, h: int, *, m: int = 12) -> np.ndarray:
     """F17 — MSTL with AutoETS trend forecaster."""
     from statsforecast.models import MSTL, AutoETS
@@ -421,6 +445,12 @@ def forecast(
         }
     if key == "mstl":
         return {"key": key, "y_pred": forecast_mstl(y_train, h, m=m), "resid": None}
+    if key == "adida":
+        return {"key": key, "y_pred": forecast_adida(y_train, h), "resid": None}
+    if key == "tsb":
+        return {"key": key, "y_pred": forecast_tsb(y_train, h), "resid": None}
+    if key == "croston_sba":
+        return {"key": key, "y_pred": forecast_croston_sba(y_train, h), "resid": None}
     raise ValueError(f"unknown model key: {key}")
 
 
@@ -447,4 +477,7 @@ TS_MODEL_CATALOGUE: list[dict[str, str]] = [
     {"id": "ses_optimized", "library": "statsforecast", "name": "SESOptimized"},
     {"id": "dynamic_optimized_theta", "library": "statsforecast", "name": "DynamicOptimizedTheta"},
     {"id": "mstl", "library": "statsforecast", "name": "MSTL"},
+    {"id": "adida", "library": "statsforecast", "name": "ADIDA"},
+    {"id": "tsb", "library": "statsforecast", "name": "TSB"},
+    {"id": "croston_sba", "library": "statsforecast", "name": "CrostonSBA"},
 ]

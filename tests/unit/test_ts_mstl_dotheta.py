@@ -33,3 +33,13 @@ def test_dynamic_optimized_theta_and_mstl():
     out_m = forecast("mstl", train, h, m=12)
     assert len(out_m["y_pred"]) == h
     assert np.isfinite(out_m["y_pred"]).all()
+
+
+def test_intermittent_f25_family():
+    y = _airline_y()
+    h = 12
+    train = y[:-h]
+    for key in ("adida", "tsb", "croston_sba"):
+        out = forecast(key, train, h)  # type: ignore[arg-type]
+        assert len(out["y_pred"]) == h
+        assert np.isfinite(out["y_pred"]).all(), key
