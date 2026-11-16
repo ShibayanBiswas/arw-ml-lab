@@ -8,6 +8,7 @@ from typing import Any, Literal
 import pandas as pd
 from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Query, UploadFile
 from fastapi.responses import Response
+from labcore.explain.ale import ale_1d
 from labcore.explain.dice_cf import dice_counterfactuals
 from labcore.explain.lime_tabular import lime_explain_row
 from labcore.explain.permutation import permutation_explain
@@ -43,9 +44,10 @@ class PredictBatchBody(BaseModel):
 
 class ExplainBody(BaseModel):
     rows: list[dict[str, Any]] = Field(min_length=1, max_length=200)
-    method: Literal["shap", "permutation", "lime", "dice"] = "shap"
+    method: Literal["shap", "permutation", "lime", "dice", "ale"] = "shap"
     target_values: list[Any] | None = None
     total_cfs: int = Field(default=3, ge=1, le=10)
+    ale_feature: str | None = None
 
 
 class StudioBatchBody(BaseModel):
@@ -370,6 +372,14 @@ def explain_model(
                 total_cfs=body.total_cfs,
                 seed=42,
             )
+        except Exception as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+    if body.method == "ale":
+        feat = body.ale_feature or (feats[0] if feats else None)
+        if not feat:
+            raise HTTPException(status_code=422, detail="ale_feature required")
+        try:
+            return ale_1d(model, X[feats], feat, grid_size=15, seed=42)
         except Exception as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
     if hasattr(model, "named_steps") and "model" in model.named_steps:

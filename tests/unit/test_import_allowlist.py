@@ -32,6 +32,7 @@ IMPORT_TO_PACKAGE = {
     "MLstatkit": "MLstatkit",
     "umap": "umap-learn",
     "dice_ml": "dice-ml",
+    "PyALE": "pyale",
 }
 
 

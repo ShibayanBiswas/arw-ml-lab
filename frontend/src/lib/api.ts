@@ -327,8 +327,9 @@ export async function predictBatchUpload(modelId: string, file: File) {
 export async function explainRows(
   modelId: string,
   rows: Record<string, unknown>[],
-  method: "shap" | "permutation" | "lime" | "dice" = "shap",
-  targetValues?: unknown[]
+  method: "shap" | "permutation" | "lime" | "dice" | "ale" = "shap",
+  targetValues?: unknown[],
+  aleFeature?: string
 ) {
   const res = await fetch(`${labApiBase()}/api/v1/explain/${modelId}`, {
     method: "POST",
@@ -337,6 +338,7 @@ export async function explainRows(
       rows,
       method,
       ...(targetValues !== undefined ? { target_values: targetValues } : {}),
+      ...(aleFeature !== undefined ? { ale_feature: aleFeature } : {}),
     }),
   });
   if (!res.ok) throw new Error(`explain: ${res.status}`);

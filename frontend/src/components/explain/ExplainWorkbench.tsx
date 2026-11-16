@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { explainRows, getModelSampleRow, listModels } from "@/lib/api";
 
 type Mode = "home" | "global" | "local" | "interactions" | "financial" | "compare";
-type Method = "shap" | "permutation" | "lime" | "dice";
+type Method = "shap" | "permutation" | "lime" | "dice" | "ale";
 
 export function ExplainWorkbench({ mode }: { mode: Mode }) {
   const [models, setModels] = useState<
@@ -56,7 +56,7 @@ export function ExplainWorkbench({ mode }: { mode: Mode }) {
       <header>
         <h1 className="font-display text-2xl text-[var(--ink)]">Explain · {mode}</h1>
         <p className="mt-1 text-sm text-[var(--muted)]">
-          TreeSHAP, LIME, DiCE counterfactuals, and sklearn permutation (seed 42).
+          TreeSHAP, LIME, DiCE, ALE (PyALE), and sklearn permutation (seed 42).
         </p>
       </header>
 
@@ -86,6 +86,7 @@ export function ExplainWorkbench({ mode }: { mode: Mode }) {
             <option value="shap">TreeSHAP</option>
             <option value="lime">LIME</option>
             <option value="dice">DiCE</option>
+            <option value="ale">ALE</option>
             <option value="permutation">Permutation</option>
           </select>
         </label>

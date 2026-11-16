@@ -1,7 +1,7 @@
 # ARW ML Lab — One-shot finish report (interim)
 
 **Date:** 16 Nov 2026 (IST)  
-**Tip:** oneshot-c12 (LIME + DiCE; prior green `6fd12fa` c11)  
+**Tip:** oneshot-c13 (ALE + TS expand; c12 green `a4d7e55`)  
 **Live frontend:** https://arw-ml-lab.vercel.app/login → **200**  
 **Repo:** https://github.com/ShibayanBiswas/arw-ml-lab
 
@@ -14,7 +14,7 @@ Honest interim closeout. Chunk A + deep B/C slices shipped with repeated **CI gr
 | 0–2B, 8.1 thin | done | `docs/PHASE_*_REPORT.md` |
 | 2 deepen | partial | expanded registry (~84), Halving + NSGA-II/Hyperband |
 | 2A deepen | partial | train-window-only scaler; DeepWorkbench |
-| 3 deepen | partial | ExplainWorkbench, TreeSHAP, permutation, LIME, DiCE |
+| 3 deepen | partial | ExplainWorkbench, TreeSHAP, permutation, LIME, DiCE, ALE |
 | 3A deepen | partial | PV02/03/10/14/15, Celery batch ≤1M, cancel |
 | 4 deepen | partial | Theta/AutoETS/HistoricAverage; §35.7 metrics expand |
 | 4A | partial | metrics/models only — not full F*/TS.P.* |
