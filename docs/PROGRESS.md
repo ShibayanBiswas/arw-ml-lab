@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Current phase | One-shot Chunk C — continue 4A/5/5A/6B/7/8.2 ACs |
-| Last completed step | oneshot-c26 MLflow nested runs |
-| Last green commit | 807203e (c25 CI green) |
+| Last completed step | oneshot-c26 MLflow nested + isolation fix |
+| Last green commit | 47665c6 |
 | Open failures | Deploy migrate (Supabase secrets); Render unpaid |
 | Next action | Shibayan: secrets + Render. Agent: full catalogues / WFO retune / Playwright |
 
