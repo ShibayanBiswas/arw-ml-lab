@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Current phase | One-shot Chunk C — continue §36/§39 / 8.2 |
-| Last completed step | tip CI green at b184167 (c29–c33) |
-| Last green commit | b184167 |
+| Last completed step | oneshot-c34 DR Shepard + Prophet (CI green) |
+| Last green commit | 25ca1da |
 | Open failures | Deploy migrate (Supabase secrets); Render unpaid |
-| Next action | Shibayan: secrets + Render. Agent: remaining FS/F*/Playwright browsers |
+| Next action | Shibayan: secrets + Render. Agent: remaining FS/F*/§39 AC |
 
 ## Blocked — needs Shibayan
 

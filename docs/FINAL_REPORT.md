@@ -1,7 +1,7 @@
 # ARW ML Lab — One-shot finish report (interim)
 
 **Date:** 16 Nov 2026 (IST)  
-**Tip:** `b184167` (CI green — ONNX mypy fix; c29–c33 catalogues)  
+**Tip:** `25ca1da` (c34 DR Shepard + Prophet; CI green)  
 **Live frontend:** https://arw-ml-lab.vercel.app/login → **200**  
 **Repo:** https://github.com/ShibayanBiswas/arw-ml-lab
 
@@ -21,9 +21,9 @@ Honest interim closeout. Chunk A + deep B/C slices shipped with repeated **CI gr
 | 5B | partial | FS1–FS9, FS14–15, FS19–20; FS10–13/16–18 deferred |
 | 5 | partial | purged/CPCV + PBO in-lab |
 | 5A | partial | WFO planner + Ridge OOS retune loop |
-| 6 | partial | unsupervised API/UI + mock AI insights |
+| 6 | partial | unsupervised API/UI + mock AI insights + k-sweep/Shepard |
 | 6A | partial | deterministic VLM guards |
-| 6B | not started | |
+| 6B | partial | CLU.P.K_SWEEP, DR trustworthiness + Shepard |
 | 7 | partial | reports/drift/UI + httpx e2e + Locust + ZAP + Playwright/axe opt-in |
 | 8.2 | partial | maintenance reaper/retention |
 
@@ -43,7 +43,7 @@ See earlier rows in git log for C.1–C.26.
 
 | System | Status | Notes |
 |---|---|---|
-| CI | green at `b184167` | https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43836655024 |
+| CI | green at `25ca1da` | https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43838161543 |
 | Deploy migrate | **fails** until secrets | missing `SUPABASE_ACCESS_TOKEN` / `SUPABASE_DB_PASSWORD` (`SUPABASE_PROJECT_ID` is set) |
 | Deploy render/smoke | skipped honestly | until `RENDER_ENABLED=true` + migrate secrets |
 | Vercel | READY / **200** | https://arw-ml-lab.vercel.app |
