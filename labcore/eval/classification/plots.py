@@ -856,3 +856,58 @@ def plot_cm_folds(
         "plotly": fig.to_plotly_json(),
         "numbers": {"fold_cms_row_norm": matrices},
     }
+
+
+def plot_cm_cv(
+    fold_cms: list[np.ndarray],
+    *,
+    labels: list[Any] | None = None,
+) -> dict[str, Any]:
+    """CLE.P.CM_CV — cell = mean ± std of row-normalised rate across folds."""
+    import plotly.graph_objects as go
+
+    if not fold_cms:
+        raise ValueError("fold_cms must be non-empty")
+    norms = []
+    pooled = np.zeros_like(fold_cms[0], dtype=float)
+    for cm in fold_cms:
+        cm = np.asarray(cm, dtype=float)
+        pooled += cm
+        row_sums = cm.sum(axis=1, keepdims=True)
+        row_sums = np.where(row_sums == 0, 1.0, row_sums)
+        norms.append(cm / row_sums)
+    stack = np.stack(norms, axis=0)
+    mean = np.nanmean(stack, axis=0)
+    std = np.nanstd(stack, axis=0, ddof=1) if len(norms) > 1 else np.zeros_like(mean)
+    label_strs = [str(l) for l in (labels or list(range(mean.shape[0])))]
+    text = np.array(
+        [
+            [f"{mean[i, j]:.2f}±{std[i, j]:.2f}" for j in range(mean.shape[1])]
+            for i in range(mean.shape[0])
+        ]
+    )
+    fig = go.Figure(
+        data=go.Heatmap(
+            z=mean,
+            x=label_strs,
+            y=label_strs,
+            colorscale="Blues",
+            zmin=0,
+            zmax=1,
+            text=text,
+            texttemplate="%{text}",
+            customdata=pooled,
+            hovertemplate="true=%{y} pred=%{x}<br>mean=%{z:.3f}<br>pooled=%{customdata}<extra></extra>",
+        )
+    )
+    fig.update_layout(title="CV-aggregated CM (mean±std row-norm)", height=400)
+    return {
+        "id": "CLE.P.CM_CV",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "mean": mean.tolist(),
+            "std": std.tolist(),
+            "pooled_counts": pooled.tolist(),
+        },
+    }
