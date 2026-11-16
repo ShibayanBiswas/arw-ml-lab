@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Current phase | One-shot Chunk C — continue 4A/5/5A/6B/7/8.2 ACs |
-| Last completed step | oneshot-c15 e2e smoke + Locust + c14 format fix |
-| Last green commit | 27cf517 (c13); c14 red on format — fixed in c15 |
+| Last completed step | oneshot-c16 WFO regression retune loop |
+| Last green commit | 6aef99b (c15 CI green) |
 | Open failures | Deploy migrate (Supabase secrets); Render unpaid |
 | Next action | Shibayan: secrets + Render. Agent: full catalogues / WFO retune / Playwright |
 

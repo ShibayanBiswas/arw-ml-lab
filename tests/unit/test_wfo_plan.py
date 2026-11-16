@@ -1,8 +1,9 @@
-"""WFO planner property tests (Phase 5A thin)."""
+"""WFO planner + retune loop tests (Phase 5A)."""
 
 from __future__ import annotations
 
-from labcore.finance.wfo import plan_wfo_windows
+import numpy as np
+from labcore.finance.wfo import plan_wfo_windows, run_wfo_regression
 
 
 def test_expanding_windows_monotonic():
@@ -21,3 +22,21 @@ def test_rolling_bounded_is():
     plan = plan_wfo_windows(150, n_windows=4, l_is=40, l_oos=15, step=15, mode="rolling")
     for w in plan["windows"]:
         assert w["is_end"] - w["is_start"] <= 40 + 1
+
+
+def test_wfo_regression_reports_real_oos_metrics():
+    rng = np.random.default_rng(42)
+    n = 240
+    X = rng.normal(size=(n, 3))
+    y = X @ np.array([0.5, -0.2, 0.8]) + rng.normal(0, 0.1, size=n)
+    out = run_wfo_regression(
+        X, y, n_windows=4, l_is=80, l_oos=20, step=20, gap=2, mode="expanding", seed=42
+    )
+    assert out["id"] == "WFO.T.REGRESSION"
+    assert len(out["windows"]) >= 3
+    assert np.isfinite(out["oos_r2_mean"])
+    assert np.isfinite(out["oos_mae_mean"])
+    # Signal is linear — mean OOS R² should be clearly positive
+    assert out["oos_r2_mean"] > 0.5, out["oos_r2_mean"]
+    for w in out["windows"]:
+        assert "oos_r2" in w and "oos_mae" in w

@@ -1,7 +1,7 @@
 # ARW ML Lab — One-shot finish report (interim)
 
 **Date:** 16 Nov 2026 (IST)  
-**Tip:** oneshot-c15 (e2e/Locust + c14 format fix; c13 green `27cf517`)  
+**Tip:** oneshot-c16 (WFO retune; c15 green `6aef99b`)  
 **Live frontend:** https://arw-ml-lab.vercel.app/login → **200**  
 **Repo:** https://github.com/ShibayanBiswas/arw-ml-lab
 
@@ -24,7 +24,7 @@ Honest interim closeout. Chunk A + deep B/C slices shipped with repeated **CI gr
 | 6 | partial | unsupervised API/UI + mock AI insights |
 | 6A | partial | deterministic VLM guards |
 | 6B | not started | |
-| 7 | partial | reports builder, KS drift, Experiments/Admin UI |
+| 7 | partial | reports/drift/UI + httpx e2e smoke + Locust skeleton |
 | 8.2 | partial | maintenance reaper/retention |
 
 ## One-shot commits
@@ -41,7 +41,8 @@ Honest interim closeout. Chunk A + deep B/C slices shipped with repeated **CI gr
 | 6fd12fa | C.11 Friedman–Nemenyi CD diagram |
 | a4d7e55 | C.12 LIME + DiCE explain |
 | 27cf517 | C.13 ALE + AutoARIMA/Naive/SWA |
-| (c14) | C.14 FS6/8/15/19 suitability |
+| 62da077 | C.14 FS6/8/15/19 (CI format fail → fixed c15) |
+| (c15) | C.15 e2e httpx + Locust skeleton |
 
 ## CI / Deploy / Vercel
 
