@@ -47,6 +47,7 @@ ModelKey = Literal[
     "vecm",
     "varmax",
     "sarimax",
+    "auto_mfles",
 ]
 
 
@@ -426,6 +427,21 @@ def forecast_mfles(y_train: np.ndarray, h: int, *, m: int = 12) -> np.ndarray:
     )
 
 
+def forecast_auto_mfles(y_train: np.ndarray, h: int, *, m: int = 12) -> np.ndarray:
+    """F18 — AutoMFLES via statsforecast (small n_windows for CI)."""
+    from statsforecast.models import AutoMFLES
+
+    ok, reason = seasonal_allowed(len(y_train), float(m), h)
+    season_length = m if ok else None
+    _ = reason
+    test_size = max(h, m if season_length else h)
+    return _sf_point_forecast(
+        y_train,
+        h,
+        AutoMFLES(test_size=test_size, season_length=season_length, n_windows=2),
+    )
+
+
 def forecast_tbats(y_train: np.ndarray, h: int, *, m: int = 12) -> np.ndarray:
     """F16 — TBATS via statsforecast (constrained flags for CI speed)."""
     from statsforecast.models import TBATS
@@ -762,6 +778,8 @@ def forecast(
     if key == "sarimax":
         yhat, resid = forecast_sarimax(y_train, h, m=m)
         return {"key": key, "y_pred": yhat, "resid": resid}
+    if key == "auto_mfles":
+        return {"key": key, "y_pred": forecast_auto_mfles(y_train, h, m=m), "resid": None}
     raise ValueError(f"unknown model key: {key}")
 
 
@@ -815,4 +833,5 @@ TS_MODEL_CATALOGUE: list[dict[str, str]] = [
     {"id": "vecm", "library": "statsmodels", "name": "VECM"},
     {"id": "varmax", "library": "statsmodels", "name": "VARMAX"},
     {"id": "sarimax", "library": "statsmodels", "name": "SARIMAX"},
+    {"id": "auto_mfles", "library": "statsforecast", "name": "AutoMFLES"},
 ]
