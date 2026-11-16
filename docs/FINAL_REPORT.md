@@ -1,7 +1,7 @@
 # ARW ML Lab — One-shot finish report (interim)
 
 **Date:** 16 Nov 2026 (IST)  
-**Tip:** `bd57e0d` (CI green — c38 FS11 + mypy export override)  
+**Tip:** `8966ee8` (c39 FS12 uniqueness; CI green)  
 **Live frontend:** https://arw-ml-lab.vercel.app/login → **200**  
 **Repo:** https://github.com/ShibayanBiswas/arw-ml-lab
 
@@ -18,7 +18,7 @@ Honest interim closeout. Chunk A + deep B/C slices shipped with repeated **CI gr
 | 3A deepen | partial | PV02/03/10/14/15, Celery batch ≤1M, cancel |
 | 4 deepen | partial | AutoARIMA/Naive/SWA/GARCH + F3/F6/F7/F14/F15/F20/F25 |
 | 4A | partial | metrics/models expand — not full F*/TS.P.* |
-| 5B | partial | FS1–FS11, FS14–15, FS19–20; FS12–13/16–18 deferred |
+| 5B | partial | FS1–FS12, FS14–15, FS19–20; FS13/16–18 deferred |
 | 5 | partial | purged/CPCV + PBO in-lab |
 | 5A | partial | WFO planner + Ridge OOS retune loop |
 | 6 | partial | unsupervised API/UI + mock AI + k-sweep/Shepard/ANO hist |
@@ -46,7 +46,7 @@ Honest interim closeout. Chunk A + deep B/C slices shipped with repeated **CI gr
 
 | System | Status | Notes |
 |---|---|---|
-| CI | green at `2529aed` (tip `aface40` under watch) | https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43839812689 |
+| CI | green at `8966ee8` | https://github.com/ShibayanBiswas/arw-ml-lab/actions |
 | Deploy migrate | **fails** until secrets | missing `SUPABASE_ACCESS_TOKEN` / `SUPABASE_DB_PASSWORD` (`SUPABASE_PROJECT_ID` set) |
 | Deploy render/smoke | skipped honestly | until `RENDER_ENABLED=true` + migrate secrets |
 | Vercel | READY / **200** | https://arw-ml-lab.vercel.app |
