@@ -35,6 +35,7 @@ ModelKey = Literal[
     "adida",
     "tsb",
     "croston_sba",
+    "ucm_local_level",
 ]
 
 
@@ -340,6 +341,18 @@ def forecast_mstl(y_train: np.ndarray, h: int, *, m: int = 12) -> np.ndarray:
     )
 
 
+def forecast_ucm_local_level(y_train: np.ndarray, h: int) -> tuple[np.ndarray, np.ndarray]:
+    """F19 — UnobservedComponents local level (statsmodels)."""
+    from statsmodels.tsa.statespace.structural import UnobservedComponents
+
+    y = np.asarray(y_train, dtype=float)
+    model = UnobservedComponents(y, level="local level")
+    fitted = model.fit(disp=False)
+    pred = np.asarray(fitted.forecast(h), dtype=float)
+    resid = np.asarray(fitted.resid, dtype=float)
+    return pred, resid
+
+
 def forecast_prophet(y_train: np.ndarray, h: int, *, freq: str = "D") -> np.ndarray:
     """F20 — Prophet (requires daily-like synthetic calendar index)."""
     from prophet import Prophet
@@ -457,6 +470,9 @@ def forecast(
         return {"key": key, "y_pred": forecast_tsb(y_train, h), "resid": None}
     if key == "croston_sba":
         return {"key": key, "y_pred": forecast_croston_sba(y_train, h), "resid": None}
+    if key == "ucm_local_level":
+        yhat, resid = forecast_ucm_local_level(y_train, h)
+        return {"key": key, "y_pred": yhat, "resid": resid}
     raise ValueError(f"unknown model key: {key}")
 
 
@@ -486,4 +502,5 @@ TS_MODEL_CATALOGUE: list[dict[str, str]] = [
     {"id": "adida", "library": "statsforecast", "name": "ADIDA"},
     {"id": "tsb", "library": "statsforecast", "name": "TSB"},
     {"id": "croston_sba", "library": "statsforecast", "name": "CrostonSBA"},
+    {"id": "ucm_local_level", "library": "statsmodels", "name": "UCM local level"},
 ]
