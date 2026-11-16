@@ -50,11 +50,19 @@ def fit_dr(
     else:
         raise ValueError(f"unknown DR algorithm: {algorithm}")
 
+    trust: float | None = None
+    if emb.shape[0] >= 10 and emb.shape[1] >= 2:
+        from sklearn.manifold import trustworthiness
+
+        n_neighbors = min(10, max(2, emb.shape[0] // 5))
+        trust = float(trustworthiness(Xs, emb, n_neighbors=n_neighbors))
+
     return {
         "id": f"UNSUP.DR.{algorithm}",
         "algorithm": algorithm,
         "embedding": np.asarray(emb, dtype=float).tolist(),
         "n_components": int(emb.shape[1]),
         "explained_variance_ratio": explained,
+        "trustworthiness": trust,
         "seed": seed,
     }

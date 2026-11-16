@@ -26,6 +26,7 @@ ModelKey = Literal[
     "croston_classic",
     "window_average",
     "auto_theta",
+    "prophet",
 ]
 
 
@@ -259,6 +260,24 @@ def forecast_auto_theta(y_train: np.ndarray, h: int, *, m: int = 12) -> np.ndarr
     return _sf_point_forecast(y_train, h, AutoTheta(season_length=season_length))
 
 
+def forecast_prophet(y_train: np.ndarray, h: int, *, freq: str = "D") -> np.ndarray:
+    """F20 — Prophet (requires daily-like synthetic calendar index)."""
+    from prophet import Prophet
+
+    y = np.asarray(y_train, dtype=float)
+    ds = pd.date_range("2000-01-01", periods=len(y), freq=freq)
+    df = pd.DataFrame({"ds": ds, "y": y})
+    m = Prophet(
+        yearly_seasonality=False,
+        weekly_seasonality=False,
+        daily_seasonality=False,
+    )
+    m.fit(df)
+    future = m.make_future_dataframe(periods=h, freq=freq)
+    fc = m.predict(future)
+    return np.asarray(fc["yhat"].iloc[-h:], dtype=float)
+
+
 def forecast_garch11(y_train: np.ndarray, h: int) -> dict[str, Any]:
     """GARCH(1,1) variance forecast via ``arch`` (returns + conditional σ)."""
     from arch import arch_model
@@ -336,6 +355,8 @@ def forecast(
         return {"key": key, "y_pred": forecast_window_average(y_train, h), "resid": None}
     if key == "auto_theta":
         return {"key": key, "y_pred": forecast_auto_theta(y_train, h, m=m), "resid": None}
+    if key == "prophet":
+        return {"key": key, "y_pred": forecast_prophet(y_train, h), "resid": None}
     raise ValueError(f"unknown model key: {key}")
 
 
@@ -356,4 +377,5 @@ TS_MODEL_CATALOGUE: list[dict[str, str]] = [
     {"id": "croston_classic", "library": "statsforecast", "name": "CrostonClassic"},
     {"id": "window_average", "library": "statsforecast", "name": "WindowAverage"},
     {"id": "auto_theta", "library": "statsforecast", "name": "AutoTheta"},
+    {"id": "prophet", "library": "prophet", "name": "Prophet"},
 ]

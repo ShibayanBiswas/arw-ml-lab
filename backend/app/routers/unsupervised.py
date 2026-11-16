@@ -8,6 +8,7 @@ import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException
 from labcore.unsupervised import fit_anomaly, fit_clustering, fit_dr
 from labcore.unsupervised.cluster_plots import kmeans_k_sweep
+from labcore.unsupervised.dr_plots import shepard_diagram
 from pydantic import BaseModel, Field
 
 from backend.app.security import AuthUser, require_write_role
@@ -91,5 +92,31 @@ def unsupervised_k_sweep(
             k_max=body.k_max,
             seed=body.seed,
         )
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/api/v1/unsupervised/dr/shepard")
+def unsupervised_shepard(
+    body: UnsupBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """DR.P.SHEPARD after PCA (default) or requested DR algorithm."""
+    _ = user
+    X = _frame(body.rows)
+    algo: Literal["pca", "svd", "tsne", "umap"] = body.algorithm  # type: ignore[assignment]
+    if algo not in {"pca", "svd", "tsne", "umap"}:
+        algo = "pca"
+    try:
+        dr = fit_dr(X, algorithm=algo, n_components=body.n_components, seed=body.seed)
+        return {
+            **shepard_diagram(
+                X.to_numpy(dtype=float),
+                dr["embedding"],
+                seed=body.seed,
+            ),
+            "trustworthiness": dr.get("trustworthiness"),
+            "dr": {"algorithm": dr["algorithm"], "n_components": dr["n_components"]},
+        }
     except Exception as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
