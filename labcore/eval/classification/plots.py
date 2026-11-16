@@ -766,3 +766,47 @@ def plot_discrimination(
         "plotly": fig.to_plotly_json(),
         "numbers": {"thresholds": thresholds.tolist(), "f1_mean": f1_m},
     }
+
+
+def plot_threshold_stability(
+    fold_thresholds: list[float],
+    *,
+    method: str = "youden",
+) -> dict[str, Any]:
+    """CLE.P.THRESHOLD_STABILITY — per-fold optimal t* strip + mean ± std."""
+    import plotly.graph_objects as go
+
+    vals = [float(t) for t in fold_thresholds if np.isfinite(t)]
+    mean = float(np.mean(vals)) if vals else float("nan")
+    std = float(np.std(vals, ddof=1)) if len(vals) > 1 else 0.0
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=[method] * len(vals),
+            y=vals,
+            mode="markers",
+            name="fold t*",
+            marker={"size": 10},
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=[method],
+            y=[mean],
+            mode="markers",
+            name="mean",
+            error_y={"type": "data", "array": [std], "visible": True},
+            marker={"symbol": "diamond", "size": 12},
+        )
+    )
+    fig.update_layout(
+        title=f"Threshold stability ({method})",
+        yaxis_title="t*",
+        height=360,
+    )
+    return {
+        "id": "CLE.P.THRESHOLD_STABILITY",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {"mean": mean, "std": std, "fold_thresholds": vals, "method": method},
+    }

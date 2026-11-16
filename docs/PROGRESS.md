@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Current phase | One-shot Chunk C — continue §36/§39 / 8.2 |
-| Last completed step | oneshot-c57 UCM local linear trend |
-| Last green commit | f41afdd |
+| Last completed step | oneshot-c58 CLE.P.THRESHOLD_STABILITY |
+| Last green commit | fe3b697 |
 | Open failures | Deploy migrate (Supabase secrets); Render unpaid |
 | Next action | Shibayan: secrets + Render. Agent: CLE/REE remainder / §39 / neural F* |
 
