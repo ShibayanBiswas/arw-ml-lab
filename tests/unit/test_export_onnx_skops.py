@@ -27,7 +27,7 @@ def test_onnx_parity_logistic(tmp_path: Path) -> None:
     X_train, X_test, y_train, _y_test = train_test_split(
         X, y, test_size=0.25, random_state=42, stratify=y
     )
-    clf = LogisticRegression(max_iter=800, random_state=42).fit(X_train, y_train)
+    clf = LogisticRegression(max_iter=5000, random_state=42).fit(X_train, y_train)
     meta = export_sklearn_onnx(clf, X_train.astype(np.float32), tmp_path / "m.onnx")
     assert Path(str(meta["path"])).exists()
     assert int(meta["size_bytes"]) > 100

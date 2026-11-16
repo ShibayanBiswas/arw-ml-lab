@@ -194,6 +194,7 @@ module = [
   "labcore.finance.*",
   "labcore.decisions.*",
   "labcore.reports.*",
+  "labcore.export.*",
   "labcore.monitoring.*",
 ]
 # Thin library wrappers over untyped scientific APIs — keep runtime tests as the contract
