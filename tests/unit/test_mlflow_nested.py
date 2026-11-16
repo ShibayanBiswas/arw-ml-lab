@@ -8,9 +8,10 @@ import mlflow
 from labcore.train.mlflow_runs import log_fold_metrics, nested_run
 
 
-def test_nested_runs_log_real_metrics(tmp_path: Path):
+def test_nested_runs_log_real_metrics(tmp_path: Path, monkeypatch):
     db = tmp_path / "mlflow.db"
     uri = f"sqlite:///{db.as_posix()}"
+    monkeypatch.delenv("MLFLOW_TRACKING_URI", raising=False)
     with nested_run(
         experiment="lab-test",
         run_name="parent",
@@ -33,3 +34,5 @@ def test_nested_runs_log_real_metrics(tmp_path: Path):
         assert len(child_runs) >= 1
         assert "metrics.fold_0_roc_auc" in child_runs.columns
         assert float(child_runs["metrics.fold_0_roc_auc"].iloc[0]) == 0.91
+    # Isolation: must not leak tracking URI into Optuna tune tests
+    assert "MLFLOW_TRACKING_URI" not in __import__("os").environ

@@ -30,9 +30,10 @@ class RecipeSpec(BaseModel):
     # TargetEncoder cv folds (MI-02); used only when categorical_encoder=target
     target_encoder_cv: int = 5
     knn_n_neighbors: int = 5
-    # Collapse rare categories before encoding (feature_engine RareLabelEncoder)
+    # Collapse rare categories before encoding (feature_engine RareLabelEncoder).
+    # Off by default — set rare_label_tol and/or rare_label_n_categories to enable.
     rare_label_tol: float | None = None
-    rare_label_n_categories: int | None = 10
+    rare_label_n_categories: int | None = None
 
 
 def _split_columns(X: pd.DataFrame) -> tuple[list[str], list[str]]:
