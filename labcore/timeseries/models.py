@@ -360,9 +360,7 @@ def forecast_seasonal_ses_optimized(y_train: np.ndarray, h: int, *, m: int = 12)
     ok, reason = seasonal_allowed(len(y_train), float(m), h)
     if not ok:
         raise ValueError(f"seasonal_ses_optimized gate: {reason}")
-    return _sf_point_forecast(
-        y_train, h, SeasonalExponentialSmoothingOptimized(season_length=m)
-    )
+    return _sf_point_forecast(y_train, h, SeasonalExponentialSmoothingOptimized(season_length=m))
 
 
 def forecast_ucm_local_level(y_train: np.ndarray, h: int) -> tuple[np.ndarray, np.ndarray]:
