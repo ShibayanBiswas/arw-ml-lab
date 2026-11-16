@@ -12,12 +12,15 @@ from labcore.eval.regression.plots import (
     plot_abs_resid_vs_fitted,
     plot_bland_altman,
     plot_cooks_distance,
+    plot_cum_error,
     plot_error_hist,
     plot_pred_vs_actual,
     plot_qq,
+    plot_rec,
     plot_residual_acf,
     plot_residual_hist,
     plot_residual_scatter,
+    plot_scale_location,
     plot_studentised_residuals,
 )
 
@@ -71,6 +74,9 @@ def run_regression_eval(
         plot_residual_acf(resid),
         plot_abs_resid_vs_fitted(y_pred_oof, resid),
         plot_error_hist(y_oof, y_pred_oof),
+        plot_rec(y_oof, y_pred_oof),
+        plot_cum_error(y_oof, y_pred_oof),
+        plot_scale_location(y_pred_oof, resid),
     ]
     return {
         "suite": "regression",

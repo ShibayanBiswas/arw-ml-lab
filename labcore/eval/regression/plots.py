@@ -146,3 +146,64 @@ def plot_error_hist(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, Any]:
     fig = go.Figure(go.Histogram(x=err, nbinsx=30))
     fig.update_layout(title="Prediction error", xaxis_title="pred − actual", height=400)
     return {"id": "REE.P.ERROR_HIST", "kind": "plot", "plotly": fig.to_plotly_json()}
+
+
+def plot_rec(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, Any]:
+    """REE.P.REC — regression error characteristic (share with |e|≤ε vs ε)."""
+    import plotly.graph_objects as go
+
+    err = np.abs(np.asarray(y_pred, dtype=float) - np.asarray(y_true, dtype=float))
+    eps = np.linspace(0, float(np.nanmax(err)) if len(err) else 1.0, 50)
+    share = np.array([(err <= e).mean() for e in eps], dtype=float)
+    area = float(np.trapezoid(share, eps)) if len(eps) > 1 else 0.0
+    fig = go.Figure(go.Scatter(x=eps, y=share, mode="lines", name="REC"))
+    fig.update_layout(
+        title=f"REC (area={area:.3g})",
+        xaxis_title="ε",
+        yaxis_title="Share |e|≤ε",
+        height=400,
+    )
+    return {
+        "id": "REE.P.REC",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {"area": area},
+    }
+
+
+def plot_cum_error(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, Any]:
+    """REE.P.CUM_ERROR — cumulative share of |e| vs share of rows."""
+    import plotly.graph_objects as go
+
+    err = np.abs(np.asarray(y_pred, dtype=float) - np.asarray(y_true, dtype=float))
+    order = np.argsort(-err)
+    cum = np.cumsum(err[order])
+    total = max(float(cum[-1]) if len(cum) else 1.0, 1e-12)
+    x = np.arange(1, len(cum) + 1) / max(len(cum), 1)
+    y = cum / total
+    fig = go.Figure(go.Scatter(x=x, y=y, mode="lines", name="cum |e|"))
+    fig.update_layout(
+        title="Cumulative absolute error",
+        xaxis_title="Share of rows (worst first)",
+        yaxis_title="Share of total |e|",
+        height=400,
+    )
+    return {"id": "REE.P.CUM_ERROR", "kind": "plot", "plotly": fig.to_plotly_json()}
+
+
+def plot_scale_location(y_pred: np.ndarray, resid: np.ndarray) -> dict[str, Any]:
+    """REE.P.SCALE_LOCATION — √|standardised residual| vs fitted."""
+    import plotly.graph_objects as go
+
+    resid = np.asarray(resid, dtype=float)
+    sd = float(np.nanstd(resid, ddof=1)) or 1.0
+    stud = resid / sd
+    y = np.sqrt(np.abs(stud))
+    fig = go.Figure(go.Scatter(x=y_pred, y=y, mode="markers", opacity=0.55))
+    fig.update_layout(
+        title="Scale-location",
+        xaxis_title="Fitted",
+        yaxis_title="√|standardised residual|",
+        height=400,
+    )
+    return {"id": "REE.P.SCALE_LOCATION", "kind": "plot", "plotly": fig.to_plotly_json()}

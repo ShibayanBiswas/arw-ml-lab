@@ -250,5 +250,8 @@ def test_expanded_ree_plots_ds12_fixture():
         "REE.P.RESID_ACF",
         "REE.P.ABS_RESID",
         "REE.P.ERROR_HIST",
+        "REE.P.REC",
+        "REE.P.CUM_ERROR",
+        "REE.P.SCALE_LOCATION",
     ):
         assert need in ids
