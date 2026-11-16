@@ -30,6 +30,8 @@ ModelKey = Literal[
     "croston_optimized",
     "imapa",
     "ses_optimized",
+    "dynamic_optimized_theta",
+    "mstl",
 ]
 
 
@@ -284,6 +286,30 @@ def forecast_ses_optimized(y_train: np.ndarray, h: int) -> np.ndarray:
     return _sf_point_forecast(y_train, h, SimpleExponentialSmoothingOptimized())
 
 
+def forecast_dynamic_optimized_theta(y_train: np.ndarray, h: int, *, m: int = 12) -> np.ndarray:
+    """F14 — DynamicOptimizedTheta via statsforecast."""
+    from statsforecast.models import DynamicOptimizedTheta
+
+    ok, reason = seasonal_allowed(len(y_train), float(m), h)
+    season_length = m if ok else 1
+    _ = reason
+    return _sf_point_forecast(y_train, h, DynamicOptimizedTheta(season_length=season_length))
+
+
+def forecast_mstl(y_train: np.ndarray, h: int, *, m: int = 12) -> np.ndarray:
+    """F17 — MSTL with AutoETS trend forecaster."""
+    from statsforecast.models import MSTL, AutoETS
+
+    ok, reason = seasonal_allowed(len(y_train), float(m), h)
+    if not ok:
+        raise ValueError(f"mstl seasonal gate: {reason}")
+    return _sf_point_forecast(
+        y_train,
+        h,
+        MSTL(season_length=[m], trend_forecaster=AutoETS(model="ZZN")),
+    )
+
+
 def forecast_prophet(y_train: np.ndarray, h: int, *, freq: str = "D") -> np.ndarray:
     """F20 — Prophet (requires daily-like synthetic calendar index)."""
     from prophet import Prophet
@@ -387,6 +413,14 @@ def forecast(
         return {"key": key, "y_pred": forecast_imapa(y_train, h), "resid": None}
     if key == "ses_optimized":
         return {"key": key, "y_pred": forecast_ses_optimized(y_train, h), "resid": None}
+    if key == "dynamic_optimized_theta":
+        return {
+            "key": key,
+            "y_pred": forecast_dynamic_optimized_theta(y_train, h, m=m),
+            "resid": None,
+        }
+    if key == "mstl":
+        return {"key": key, "y_pred": forecast_mstl(y_train, h, m=m), "resid": None}
     raise ValueError(f"unknown model key: {key}")
 
 
@@ -411,4 +445,6 @@ TS_MODEL_CATALOGUE: list[dict[str, str]] = [
     {"id": "croston_optimized", "library": "statsforecast", "name": "CrostonOptimized"},
     {"id": "imapa", "library": "statsforecast", "name": "IMAPA"},
     {"id": "ses_optimized", "library": "statsforecast", "name": "SESOptimized"},
+    {"id": "dynamic_optimized_theta", "library": "statsforecast", "name": "DynamicOptimizedTheta"},
+    {"id": "mstl", "library": "statsforecast", "name": "MSTL"},
 ]
