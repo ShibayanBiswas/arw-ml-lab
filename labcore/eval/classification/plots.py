@@ -684,3 +684,85 @@ def plot_compare_bars(
         "plotly": fig.to_plotly_json(),
         "numbers": {"scores": model_scores, "cis": cis},
     }
+
+
+def plot_discrimination(
+    y_true: np.ndarray,
+    scores: np.ndarray,
+    *,
+    n_splits: int = 20,
+    seed: int = 42,
+) -> dict[str, Any]:
+    """CLE.P.DISCRIMINATION — precision/recall/F1/queue vs threshold (Yellowbrick-style)."""
+    import plotly.graph_objects as go
+    from sklearn.metrics import f1_score, precision_score, recall_score
+    from sklearn.model_selection import StratifiedShuffleSplit
+
+    y = np.asarray(y_true).astype(int)
+    s = np.asarray(scores, dtype=float)
+    thresholds = np.linspace(0.05, 0.95, 19)
+    prec_m: list[float] = []
+    rec_m: list[float] = []
+    f1_m: list[float] = []
+    queue_m: list[float] = []
+    bands: dict[str, tuple[list[float], list[float]]] = {
+        "precision": ([], []),
+        "recall": ([], []),
+        "f1": ([], []),
+        "queue_rate": ([], []),
+    }
+    sss = StratifiedShuffleSplit(n_splits=n_splits, test_size=0.5, random_state=seed)
+    for t in thresholds:
+        ps: list[float] = []
+        rs: list[float] = []
+        fs: list[float] = []
+        qs: list[float] = []
+        for _, idx in sss.split(s, y):
+            yt, st = y[idx], s[idx]
+            yp = (st >= t).astype(int)
+            ps.append(float(precision_score(yt, yp, zero_division=np.nan)))
+            rs.append(float(recall_score(yt, yp, zero_division=np.nan)))
+            fs.append(float(f1_score(yt, yp, zero_division=np.nan)))
+            qs.append(float(np.mean(yp)))
+        for name, bucket, mean_l in (
+            ("precision", ps, prec_m),
+            ("recall", rs, rec_m),
+            ("f1", fs, f1_m),
+            ("queue_rate", qs, queue_m),
+        ):
+            arr = np.asarray(bucket, dtype=float)
+            mean_l.append(float(np.nanmean(arr)))
+            bands[name][0].append(float(np.nanpercentile(arr, 5)))
+            bands[name][1].append(float(np.nanpercentile(arr, 95)))
+    fig = go.Figure()
+    for name, mean in (
+        ("precision", prec_m),
+        ("recall", rec_m),
+        ("f1", f1_m),
+        ("queue_rate", queue_m),
+    ):
+        lo, hi = bands[name]
+        fig.add_trace(go.Scatter(x=thresholds, y=mean, mode="lines", name=name))
+        fig.add_trace(
+            go.Scatter(
+                x=np.r_[thresholds, thresholds[::-1]],
+                y=np.r_[hi, lo[::-1]],
+                fill="toself",
+                name=f"{name} band",
+                line={"width": 0},
+                showlegend=False,
+                opacity=0.15,
+            )
+        )
+    fig.update_layout(
+        title="Discrimination threshold",
+        xaxis_title="threshold",
+        yaxis_title="metric",
+        height=400,
+    )
+    return {
+        "id": "CLE.P.DISCRIMINATION",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {"thresholds": thresholds.tolist(), "f1_mean": f1_m},
+    }
