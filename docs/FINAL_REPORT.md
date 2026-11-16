@@ -1,7 +1,7 @@
 # ARW ML Lab — One-shot finish report (interim)
 
 **Date:** 16 Nov 2026 (IST)  
-**Tip:** oneshot-c18 (EBM; c17 green `901f24e`)  
+**Tip:** `2e6c918` oneshot-c19 (nav wiring; CI green)  
 **Live frontend:** https://arw-ml-lab.vercel.app/login → **200**  
 **Repo:** https://github.com/ShibayanBiswas/arw-ml-lab
 
@@ -45,13 +45,14 @@ Honest interim closeout. Chunk A + deep B/C slices shipped with repeated **CI gr
 | 6aef99b | C.15 e2e httpx + Locust skeleton |
 | abe28cc | C.16 WFO Ridge retune loop |
 | 901f24e | C.17 GARCH(1,1) via arch |
-| (c18) | C.18 EBM via interpret |
+| 58edbbc | C.18 EBM via interpret |
+| 2e6c918 | C.19 ModulePlaceholder → workbench routing |
 
 ## CI / Deploy / Vercel
 
 | System | Status | Notes |
 |---|---|---|
-| CI | green through c17 (`901f24e`) | https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43819541946 |
+| CI | green through c19 (`2e6c918`) | https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43821169532 |
 | Deploy migrate | **fails** | missing `SUPABASE_ACCESS_TOKEN` / `SUPABASE_DB_PASSWORD` |
 | Deploy render/smoke | skipped honestly | until `RENDER_ENABLED=true` + migrate secrets |
 | Vercel | READY / **200** | https://arw-ml-lab.vercel.app |
@@ -67,7 +68,7 @@ Honest interim closeout. Chunk A + deep B/C slices shipped with repeated **CI gr
 
 ## STRESS_TEST
 
-Most items still open. Closed/partial: deploy honesty, PV deepen, DL leakage scaler, import allowlist (`umap`→`umap-learn`), maintenance reaper, KS drift.
+Closed/partial this one-shot: deploy honesty, PV deepen, DL leakage scaler, import allowlist, maintenance reaper, KS drift, LIME/DiCE/ALE/EBM, FS6/8/15/19, WFO retune, GARCH, e2e httpx + Locust, ModulePlaceholder routing. Still open: TradingLab FS7/9–13/16–18, ONNX, Anchors, full CLE.P/REE.P/F*/TS.P.*, Playwright/axe/ZAP, Render hosted smoke.
 
 ## Next
 
