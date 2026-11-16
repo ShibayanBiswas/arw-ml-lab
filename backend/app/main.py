@@ -24,6 +24,7 @@ from backend.app.routers import (
     intake,
     jobs,
     predict,
+    reports,
     suitability,
     timeseries,
     unsupervised,
@@ -90,6 +91,7 @@ def create_app() -> FastAPI:
     app.include_router(deep.router)
     app.include_router(insights.router)
     app.include_router(wfo.router)
+    app.include_router(reports.router)
     return app
 
 

@@ -9,6 +9,7 @@ import { SuitabilityWorkbench } from "@/components/finance/SuitabilityWorkbench"
 import { LogicAtlas } from "@/components/learn/LogicAtlas";
 import { ModulePlaceholder } from "@/components/panels/ModulePlaceholder";
 import { PredictWorkbench } from "@/components/predict/PredictWorkbench";
+import { ReportsWorkbench } from "@/components/reports/ReportsWorkbench";
 import { TrainWorkbench } from "@/components/train/TrainWorkbench";
 import { TsWorkbench } from "@/components/timeseries/TsWorkbench";
 import { UnsupervisedWorkbench } from "@/components/unsupervised/UnsupervisedWorkbench";
@@ -109,6 +110,12 @@ export default async function ModuleSubPage({ params }: Props) {
   }
   if (slug === "supervised" && page === "ensembles") {
     return <DeepWorkbench mode="lab" />;
+  }
+  if (
+    slug === "reports" &&
+    (page === "home" || page === "builder" || page === "templates" || page === "history")
+  ) {
+    return <ReportsWorkbench mode={page} />;
   }
 
   return (
