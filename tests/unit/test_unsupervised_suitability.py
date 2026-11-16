@@ -58,3 +58,18 @@ def test_fs_airline_not_ohlcv():
     assert by["FS1"]["status"] in {"PASS", "WARN"}
     # passengers is not a price path named close — FS2 may FAIL
     assert by["FS4"]["status"] in {"FAIL", "WARN"}
+
+
+def test_fs6_fs8_fs15_fs19_nifty():
+    path = ROOT / "data" / "samples" / "nifty50_daily_5y.csv"
+    df = pd.read_csv(path)
+    report = run_suitability(df, time_col="date", asset="NIFTY")
+    by = {c["code"]: c for c in report["checks"]}
+    assert by["FS6"]["status"] in {"PASS", "WARN"}
+    assert by["FS8"]["status"] in {"PASS", "WARN"}
+    assert by["FS15"]["status"] in {"PASS", "WARN", "INFO"}
+    assert by["FS19"]["status"] in {"PASS", "WARN", "FAIL"}
+    assert by["FS7"]["status"] == "DEFERRED"
+    assert "adf_returns_pvalue" in by["FS15"].get("details", {}) or by["FS15"][
+        "status"
+    ] == "INFO"

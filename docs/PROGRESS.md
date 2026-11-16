@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Current phase | One-shot Chunk C — continue 4A/5/5A/6B/7/8.2 ACs |
-| Last completed step | oneshot-c13 ALE + TS AutoARIMA/Naive/SWA |
-| Last green commit | a4d7e55 (c12 CI green) |
+| Last completed step | oneshot-c14 FS6/8/15/19 suitability |
+| Last green commit | 27cf517 (c13 CI green) |
 | Open failures | Deploy migrate (Supabase secrets); Render unpaid |
 | Next action | Shibayan: secrets + Render. Agent: full catalogues / WFO retune / Playwright |
 

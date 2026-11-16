@@ -1,7 +1,7 @@
-"""FS1–FS5 (and stubs FS6–FS20) financial labelling suitability (ARCHITECTURE §37).
+"""FS financial labelling suitability (ARCHITECTURE §37).
 
-Thin Phase 5B slice: real FS1–FS5 via pandas; remaining codes deferred until
-TradingLab label adapters land in Phase 5.
+Implemented without TradingLab: FS1–FS6, FS8, FS14–FS15, FS19–FS20.
+FS7/9–13/16–18 stay DEFERRED until vendor/tradinglab is available.
 """
 
 from __future__ import annotations
@@ -9,6 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
+import numpy as np
 import pandas as pd
 
 Status = Literal["PASS", "WARN", "FAIL", "INFO", "DEFERRED"]
@@ -223,6 +224,126 @@ def check_fs5_frequency(df: pd.DataFrame, time_col: str | None) -> FSResult:
     )
 
 
+def check_fs6_length(df: pd.DataFrame) -> FSResult:
+    """FS6 — number of bars n (≥1000 PASS, 500–999 WARN, <500 FAIL)."""
+    n = int(len(df))
+    if n >= 1000:
+        return FSResult("FS6", "PASS", f"n={n} bars", {"n": n})
+    if n >= 500:
+        return FSResult("FS6", "WARN", f"n={n} bars (500–999)", {"n": n})
+    return FSResult("FS6", "FAIL", f"n={n} bars (<500)", {"n": n})
+
+
+def check_fs8_stale_prices(df: pd.DataFrame, price_col: str | None) -> FSResult:
+    """FS8 — share of zero returns (<5% PASS, 5–20% WARN, >20% FAIL)."""
+    if price_col and price_col in df.columns:
+        px = pd.to_numeric(df[price_col], errors="coerce")
+        r = px.pct_change(fill_method=None).dropna()
+    else:
+        rets_col = _detect_returns_col(df)
+        if not rets_col:
+            return FSResult("FS8", "FAIL", "no price/returns for stale check")
+        r = pd.to_numeric(df[rets_col], errors="coerce").dropna()
+    if len(r) == 0:
+        return FSResult("FS8", "FAIL", "empty returns")
+    zero_share = float((r == 0).mean())
+    if zero_share > 0.20:
+        return FSResult(
+            "FS8",
+            "FAIL",
+            f"{zero_share:.1%} zero returns (stale)",
+            {"zero_share": zero_share},
+        )
+    if zero_share >= 0.05:
+        return FSResult(
+            "FS8",
+            "WARN",
+            f"{zero_share:.1%} zero returns",
+            {"zero_share": zero_share},
+        )
+    return FSResult(
+        "FS8",
+        "PASS",
+        f"{zero_share:.1%} zero returns",
+        {"zero_share": zero_share},
+    )
+
+
+def check_fs15_stationarity(df: pd.DataFrame, price_col: str | None) -> FSResult:
+    """FS15 — ADF on log-price (expect unit root) and on returns (expect stationary)."""
+    from statsmodels.tsa.stattools import adfuller
+
+    if price_col is None or price_col not in df.columns:
+        return FSResult("FS15", "INFO", "no price series for ADF / FFD gate")
+    px = pd.to_numeric(df[price_col], errors="coerce").dropna()
+    if len(px) < 50:
+        return FSResult("FS15", "WARN", "too few prices for ADF", {"n": len(px)})
+    log_px = np.log(px.clip(lower=1e-12))
+    rets = log_px.diff().dropna()
+    adf_price = adfuller(log_px, maxlag=10, autolag="AIC", result_object=True)
+    adf_ret = adfuller(rets, maxlag=10, autolag="AIC", result_object=True)
+    p_price = float(adf_price.pvalue)
+    p_ret = float(adf_ret.pvalue)
+    # Spec: d* via TradingLab FFD deferred; report ADF evidence only
+    details = {
+        "adf_log_price_pvalue": p_price,
+        "adf_returns_pvalue": p_ret,
+        "ffd_d_star": "deferred (TradingLab)",
+    }
+    if p_ret >= 0.05:
+        return FSResult(
+            "FS15",
+            "WARN",
+            f"returns may be non-stationary (ADF p={p_ret:.4g})",
+            details,
+        )
+    return FSResult(
+        "FS15",
+        "PASS",
+        f"log-price ADF p={p_price:.4g}; returns ADF p={p_ret:.4g}",
+        details,
+    )
+
+
+def check_fs19_fixed_horizon(
+    df: pd.DataFrame,
+    price_col: str | None,
+    *,
+    horizon: int = 5,
+) -> FSResult:
+    """FS19 — fixed-horizon feasibility (pandas; no TradingLab).
+
+    h ≤ n/10 and threshold τ = 0.5σ gives minority class ≥ 15% → PASS.
+    """
+    if price_col is None or price_col not in df.columns:
+        return FSResult("FS19", "FAIL", "no price series for fixed-horizon trial")
+    px = pd.to_numeric(df[price_col], errors="coerce").dropna()
+    n = len(px)
+    if horizon > n / 10:
+        return FSResult(
+            "FS19",
+            "FAIL",
+            f"horizon h={horizon} > n/10 ({n / 10:.1f})",
+            {"n": n, "horizon": horizon},
+        )
+    rets = px.pct_change(horizon, fill_method=None).dropna()
+    if len(rets) < 30:
+        return FSResult("FS19", "FAIL", "too few forward returns", {"n_fwd": len(rets)})
+    sigma = float(rets.std())
+    tau = 0.5 * sigma if sigma > 0 else 0.0
+    labeled = np.where(np.abs(rets.to_numpy()) >= tau, np.sign(rets.to_numpy()), 0)
+    vals, counts = np.unique(labeled, return_counts=True)
+    shares = {int(v): float(c) / len(labeled) for v, c in zip(vals, counts, strict=True)}
+    side_shares = [shares[k] for k in (-1, 1) if k in shares]
+    minority = float(min(side_shares)) if side_shares else 0.0
+    details = {"horizon": horizon, "tau": tau, "shares": shares, "minority": minority}
+    if minority >= 0.15:
+        return FSResult("FS19", "PASS", f"minority={minority:.1%} at h={horizon}", details)
+    if minority >= 0.05:
+        return FSResult("FS19", "WARN", f"minority={minority:.1%} at h={horizon}", details)
+    return FSResult("FS19", "FAIL", f"minority={minority:.1%} at h={horizon}", details)
+
+
 def check_fs14_return_acf(df: pd.DataFrame, price_col: str | None) -> FSResult:
     """FS14 — Ljung-Box on returns (informational, never FAIL)."""
     from statsmodels.stats.diagnostic import acorr_ljungbox
@@ -281,7 +402,7 @@ def run_suitability(
     time_col: str | None = None,
     asset: str | None = None,
 ) -> dict[str, Any]:
-    """Run FS1–FS5 + FS14/FS20; remaining deferred until TradingLab labels."""
+    """Run implemented FS checks; TradingLab-only codes stay DEFERRED."""
     price = _detect_price_col(df)
     checks = [
         check_fs1_time_index(df, time_col),
@@ -289,8 +410,11 @@ def run_suitability(
         check_fs3_positivity(df, price),
         check_fs4_ohlcv(df),
         check_fs5_frequency(df, time_col),
+        check_fs6_length(df),
+        FSResult("FS7", "DEFERRED", "requires TradingLab get_daily_vol"),
+        check_fs8_stale_prices(df, price),
     ]
-    for code in ("FS6", "FS7", "FS8", "FS9", "FS10", "FS11", "FS12", "FS13"):
+    for code in ("FS9", "FS10", "FS11", "FS12", "FS13"):
         checks.append(
             FSResult(
                 code,
@@ -299,17 +423,19 @@ def run_suitability(
             )
         )
     checks.append(check_fs14_return_acf(df, price))
-    for code in ("FS15", "FS16", "FS17", "FS18", "FS19"):
+    checks.append(check_fs15_stationarity(df, price))
+    for code in ("FS16", "FS17", "FS18"):
         checks.append(
             FSResult(
                 code,
                 "DEFERRED",
-                "requires TradingLab label adapters (Phase 5)",
+                "requires TradingLab structural/trend/meta adapters",
             )
         )
+    checks.append(check_fs19_fixed_horizon(df, price))
     checks.append(check_fs20_leakage(df))
 
-    required_for_tb = {"FS1", "FS2", "FS3"}
+    required_for_tb = {"FS1", "FS2", "FS3", "FS6"}
     failed = [c.code for c in checks if c.status == "FAIL" and c.code in required_for_tb]
     warned = [c.code for c in checks if c.status == "WARN"]
     if failed:
@@ -319,6 +445,11 @@ def run_suitability(
     else:
         overall = "SUITABLE"
 
+    fh_fail = [
+        c.code
+        for c in checks
+        if c.status == "FAIL" and c.code in {"FS1", "FS2", "FS6", "FS19", "FS20"}
+    ]
     methods = {
         "triple_barrier": {
             "status": overall if not failed else "NOT_SUITABLE",
@@ -327,9 +458,9 @@ def run_suitability(
         },
         "fixed_horizon": {
             "status": "NOT_SUITABLE"
-            if "FS1" in failed or "FS2" in failed
+            if fh_fail
             else ("SUITABLE_WITH_CAUTIONS" if warned else "SUITABLE"),
-            "failed": [c for c in failed if c in ("FS1", "FS2")],
+            "failed": fh_fail,
             "warned": warned,
         },
         "trend_scanning": {
@@ -346,8 +477,12 @@ def run_suitability(
     recommendations: list[str] = []
     if "FS4" in warned:
         recommendations.append("Close-only: use close-to-close EWM volatility.")
-    if "FS5" in warned or "FS5" in failed:
+    if "FS5" in warned or "FS5" in [c.code for c in checks if c.status == "FAIL"]:
         recommendations.append("Forward-fill ≤1 bar or resample to a coarser frequency.")
+    if "FS6" in failed:
+        recommendations.append("Need ≥500–1000 bars for purged CV with financial labels.")
+    if "FS8" in warned or "FS8" in [c.code for c in checks if c.status == "FAIL"]:
+        recommendations.append("Stale prices: check liquidity before barrier labelling.")
     if overall == "NOT_SUITABLE":
         recommendations.append("Fall back to a standard supervised target.")
 
