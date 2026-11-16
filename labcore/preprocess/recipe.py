@@ -7,11 +7,11 @@ from typing import Any, Literal
 import pandas as pd
 from pydantic import BaseModel, ConfigDict
 from sklearn.compose import ColumnTransformer
-from sklearn.impute import SimpleImputer
+from sklearn.impute import KNNImputer, SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, RobustScaler, StandardScaler
 
-ImputerKind = Literal["mean", "median", "most_frequent", "constant"]
+ImputerKind = Literal["mean", "median", "most_frequent", "constant", "knn"]
 ScalerKind = Literal["none", "standard", "robust", "minmax"]
 EncoderKind = Literal["one_hot", "ordinal", "target"]
 ResampleKind = Literal["none", "smote"]
@@ -29,6 +29,7 @@ class RecipeSpec(BaseModel):
     seed: int = 42
     # TargetEncoder cv folds (MI-02); used only when categorical_encoder=target
     target_encoder_cv: int = 5
+    knn_n_neighbors: int = 5
 
 
 def _split_columns(X: pd.DataFrame) -> tuple[list[str], list[str]]:
@@ -67,8 +68,12 @@ def compile_recipe(
 
     transformers: list[tuple[str, Any, list[str]]] = []
     if num_cols:
+        if recipe.numeric_imputer == "knn":
+            num_imputer: Any = KNNImputer(n_neighbors=int(recipe.knn_n_neighbors))
+        else:
+            num_imputer = SimpleImputer(strategy=recipe.numeric_imputer)
         num_steps: list[tuple[str, Any]] = [
-            ("imputer", SimpleImputer(strategy=recipe.numeric_imputer)),
+            ("imputer", num_imputer),
         ]
         if recipe.scaler == "standard":
             num_steps.append(("scaler", StandardScaler()))

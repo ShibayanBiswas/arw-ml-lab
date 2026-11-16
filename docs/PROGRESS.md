@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Current phase | One-shot Chunk C — continue 4A/5/5A/6B/7/8.2 ACs |
-| Last completed step | oneshot-c23 ZAP baseline config |
-| Last green commit | cd1a2e3 (c22 CI green) |
+| Last completed step | oneshot-c24 KNNImputer recipe |
+| Last green commit | 8b5fc2f (c23 CI green) |
 | Open failures | Deploy migrate (Supabase secrets); Render unpaid |
 | Next action | Shibayan: secrets + Render. Agent: full catalogues / WFO retune / Playwright |
 
