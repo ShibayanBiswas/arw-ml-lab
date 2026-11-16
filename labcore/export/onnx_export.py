@@ -20,7 +20,7 @@ def export_sklearn_onnx(
 
     Uses ``skl2onnx.to_onnx`` with zipmap disabled for stable probability outputs.
     """
-    from skl2onnx import to_onnx  # type: ignore[import-untyped]
+    from skl2onnx import to_onnx
 
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
