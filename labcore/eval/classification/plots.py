@@ -337,6 +337,121 @@ def plot_confidence_errors(
     return {"id": "CLE.P.CONFIDENCE_ERRORS", "kind": "plot", "plotly": fig.to_plotly_json()}
 
 
+def plot_learning_curve(
+    estimator: Any,
+    X: np.ndarray,
+    y: np.ndarray,
+    *,
+    cv: int = 3,
+    seed: int = 42,
+) -> dict[str, Any]:
+    """CLE.P.LEARNING — sklearn ``learning_curve`` → Plotly."""
+    import plotly.graph_objects as go
+    from sklearn.model_selection import learning_curve
+
+    train_sizes, train_scores, val_scores = learning_curve(
+        estimator,
+        X,
+        y,
+        cv=cv,
+        random_state=seed,
+        shuffle=True,
+        n_jobs=1,
+        train_sizes=np.linspace(0.3, 1.0, 5),
+    )
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=train_sizes,
+            y=np.mean(train_scores, axis=1),
+            error_y={"array": np.std(train_scores, axis=1, ddof=1)},
+            mode="lines+markers",
+            name="train",
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=train_sizes,
+            y=np.mean(val_scores, axis=1),
+            error_y={"array": np.std(val_scores, axis=1, ddof=1)},
+            mode="lines+markers",
+            name="cv",
+        )
+    )
+    fig.update_layout(
+        title="Learning curve",
+        xaxis_title="Train size",
+        yaxis_title="Score",
+        height=400,
+    )
+    return {
+        "id": "CLE.P.LEARNING",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "train_sizes": train_sizes.tolist(),
+            "train_mean": np.mean(train_scores, axis=1).tolist(),
+            "val_mean": np.mean(val_scores, axis=1).tolist(),
+        },
+    }
+
+
+def plot_validation_curve(
+    estimator: Any,
+    X: np.ndarray,
+    y: np.ndarray,
+    *,
+    param_name: str,
+    param_range: list[Any],
+    cv: int = 3,
+) -> dict[str, Any]:
+    """CLE.P.VALIDATION — sklearn ``validation_curve`` → Plotly."""
+    import plotly.graph_objects as go
+    from sklearn.model_selection import validation_curve
+
+    train_scores, val_scores = validation_curve(
+        estimator,
+        X,
+        y,
+        param_name=param_name,
+        param_range=param_range,
+        cv=cv,
+        n_jobs=1,
+    )
+    x = [str(p) for p in param_range]
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=x,
+            y=np.mean(train_scores, axis=1),
+            error_y={"array": np.std(train_scores, axis=1, ddof=1)},
+            mode="lines+markers",
+            name="train",
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=x,
+            y=np.mean(val_scores, axis=1),
+            error_y={"array": np.std(val_scores, axis=1, ddof=1)},
+            mode="lines+markers",
+            name="cv",
+        )
+    )
+    fig.update_layout(
+        title=f"Validation curve ({param_name})",
+        xaxis_title=param_name,
+        yaxis_title="Score",
+        height=400,
+    )
+    return {
+        "id": "CLE.P.VALIDATION",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {"param_name": param_name, "param_range": x},
+    }
+
+
 def plot_report_heatmap(
     y_true: np.ndarray, y_pred: np.ndarray, labels: list[Any] | None = None
 ) -> dict[str, Any]:
