@@ -48,12 +48,18 @@ def fit_anomaly(
         raise ValueError(f"unknown anomaly algorithm: {algorithm}")
 
     is_outlier = (np.asarray(flags) == -1).astype(int)
+    scores_arr = np.asarray(scores, dtype=float)
+    thr = float(np.quantile(scores_arr, 1.0 - contamination)) if len(scores_arr) else None
+    from labcore.unsupervised.anomaly_plots import anomaly_score_hist
+
     return {
         "id": f"UNSUP.ANOMALY.{algorithm}",
         "algorithm": algorithm,
-        "scores": np.asarray(scores, dtype=float).tolist(),
+        "scores": scores_arr.tolist(),
         "is_outlier": is_outlier.tolist(),
         "n_outliers": int(is_outlier.sum()),
         "contamination": float(contamination),
+        "threshold": thr,
+        "plots": [anomaly_score_hist(scores_arr, threshold=thr)],
         "seed": seed,
     }
