@@ -570,3 +570,117 @@ def plot_metric_folds(fold_metrics: dict[str, list[float]]) -> dict[str, Any]:
         "plotly": fig.to_plotly_json(),
         "numbers": {"means": means},
     }
+
+
+def plot_cm_cost(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    cost_matrix: np.ndarray,
+    *,
+    labels: list[Any] | None = None,
+) -> dict[str, Any]:
+    """CLE.P.CM_COST — cell = C_ij · N_ij from sklearn confusion_matrix."""
+    import plotly.graph_objects as go
+    from sklearn.metrics import confusion_matrix
+
+    labels = labels if labels is not None else sorted(np.unique(np.r_[y_true, y_pred]).tolist())
+    cm = confusion_matrix(y_true, y_pred, labels=labels)
+    C = np.asarray(cost_matrix, dtype=float)
+    if C.shape != cm.shape:
+        raise ValueError(f"cost_matrix shape {C.shape} != cm {cm.shape}")
+    weighted = C * cm
+    total = float(np.nansum(weighted))
+    fig = go.Figure(
+        data=go.Heatmap(
+            z=weighted,
+            x=[str(l) for l in labels],
+            y=[str(l) for l in labels],
+            colorscale="Reds",
+            text=np.round(weighted, 2),
+            texttemplate="%{text}",
+        )
+    )
+    fig.update_layout(
+        title=f"Cost-weighted CM (total={total:.2f})",
+        xaxis_title="predicted",
+        yaxis_title="true",
+        height=400,
+    )
+    return {
+        "id": "CLE.P.CM_COST",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {"total_cost": total, "matrix": weighted.tolist()},
+    }
+
+
+def plot_cm_delta(
+    y_true: np.ndarray,
+    y_pred_a: np.ndarray,
+    y_pred_b: np.ndarray,
+    *,
+    labels: list[Any] | None = None,
+) -> dict[str, Any]:
+    """CLE.P.CM_DELTA — confusion A − B (diverging)."""
+    import plotly.graph_objects as go
+    from sklearn.metrics import confusion_matrix
+
+    labels = labels if labels is not None else sorted(np.unique(y_true).tolist())
+    a = confusion_matrix(y_true, y_pred_a, labels=labels)
+    b = confusion_matrix(y_true, y_pred_b, labels=labels)
+    delta = a.astype(float) - b.astype(float)
+    fig = go.Figure(
+        data=go.Heatmap(
+            z=delta,
+            x=[str(l) for l in labels],
+            y=[str(l) for l in labels],
+            colorscale="RdBu",
+            zmid=0,
+            text=np.round(delta, 1),
+            texttemplate="%{text}",
+        )
+    )
+    fig.update_layout(title="CM delta (A − B)", height=400)
+    return {
+        "id": "CLE.P.CM_DELTA",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {"delta": delta.tolist()},
+    }
+
+
+def plot_compare_bars(
+    model_scores: dict[str, float],
+    *,
+    cis: dict[str, tuple[float, float]] | None = None,
+    metric: str = "score",
+) -> dict[str, Any]:
+    """CLE.P.COMPARE_BARS — model comparison bars with optional 95% CI."""
+    import plotly.graph_objects as go
+
+    names = list(model_scores.keys())
+    vals = [float(model_scores[n]) for n in names]
+    err = None
+    if cis:
+        err = [
+            [float(model_scores[n] - cis[n][0]) if n in cis else 0.0 for n in names],
+            [float(cis[n][1] - model_scores[n]) if n in cis else 0.0 for n in names],
+        ]
+    fig = go.Figure(
+        go.Bar(
+            x=names,
+            y=vals,
+            error_y=(
+                {"type": "data", "symmetric": False, "array": err[1], "arrayminus": err[0]}
+                if err
+                else None
+            ),
+        )
+    )
+    fig.update_layout(title=f"Model comparison ({metric})", yaxis_title=metric, height=360)
+    return {
+        "id": "CLE.P.COMPARE_BARS",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {"scores": model_scores, "cis": cis},
+    }
