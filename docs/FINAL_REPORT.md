@@ -1,7 +1,7 @@
 # ARW ML Lab — One-shot finish report (interim)
 
 **Date:** 16 Nov 2026 (IST)  
-**Tip:** `8ab5d2d` (c33 CLU.P.K_SWEEP; prior c29–c32 ONNX/FS7–9/CLE learning)  
+**Tip:** `b184167` (CI green — ONNX mypy fix; c29–c33 catalogues)  
 **Live frontend:** https://arw-ml-lab.vercel.app/login → **200**  
 **Repo:** https://github.com/ShibayanBiswas/arw-ml-lab
 
@@ -43,7 +43,7 @@ See earlier rows in git log for C.1–C.26.
 
 | System | Status | Notes |
 |---|---|---|
-| CI | green through `22147fa`; tip `4ddcf5f` under watch | https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43834244663 |
+| CI | green at `b184167` | https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43836655024 |
 | Deploy migrate | **fails** until secrets | missing `SUPABASE_ACCESS_TOKEN` / `SUPABASE_DB_PASSWORD` (`SUPABASE_PROJECT_ID` is set) |
 | Deploy render/smoke | skipped honestly | until `RENDER_ENABLED=true` + migrate secrets |
 | Vercel | READY / **200** | https://arw-ml-lab.vercel.app |
