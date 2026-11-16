@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Current phase | One-shot Chunk C — continue §36/§39 / 8.2 |
-| Last completed step | oneshot-c48 CLE.P.COST_CURVE + CLASS_BALANCE |
-| Last green commit | 1fd84d8 |
+| Last completed step | oneshot-c49 F9 ARIMA + CLE/REE metric folds |
+| Last green commit | 2a1612c |
 | Open failures | Deploy migrate (Supabase secrets); Render unpaid |
-| Next action | Shibayan: secrets + Render. Agent: CLE.P/REE.P remainder / F9+ / §39 |
+| Next action | Shibayan: secrets + Render. Agent: CLE.P/REE.P remainder / F21+ / §39 |
 
 ## Blocked — needs Shibayan
 

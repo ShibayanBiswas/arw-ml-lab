@@ -40,6 +40,7 @@ ModelKey = Literal[
     "seasonal_ses_optimized",
     "mfles",
     "tbats",
+    "arima",
 ]
 
 
@@ -397,6 +398,18 @@ def forecast_tbats(y_train: np.ndarray, h: int, *, m: int = 12) -> np.ndarray:
     )
 
 
+def forecast_arima(
+    y_train: np.ndarray,
+    h: int,
+    *,
+    order: tuple[int, int, int] = (1, 1, 1),
+) -> np.ndarray:
+    """F9 — non-seasonal ARIMA via statsforecast."""
+    from statsforecast.models import ARIMA
+
+    return _sf_point_forecast(y_train, h, ARIMA(order=order))
+
+
 def forecast_ucm_local_level(y_train: np.ndarray, h: int) -> tuple[np.ndarray, np.ndarray]:
     """F19 — UnobservedComponents local level (statsmodels)."""
     from statsmodels.tsa.statespace.structural import UnobservedComponents
@@ -545,6 +558,8 @@ def forecast(
         return {"key": key, "y_pred": forecast_mfles(y_train, h, m=m), "resid": None}
     if key == "tbats":
         return {"key": key, "y_pred": forecast_tbats(y_train, h, m=m), "resid": None}
+    if key == "arima":
+        return {"key": key, "y_pred": forecast_arima(y_train, h), "resid": None}
     raise ValueError(f"unknown model key: {key}")
 
 
@@ -583,4 +598,5 @@ TS_MODEL_CATALOGUE: list[dict[str, str]] = [
     },
     {"id": "mfles", "library": "statsforecast", "name": "MFLES"},
     {"id": "tbats", "library": "statsforecast", "name": "TBATS"},
+    {"id": "arima", "library": "statsforecast", "name": "ARIMA"},
 ]

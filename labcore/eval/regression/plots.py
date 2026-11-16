@@ -207,3 +207,59 @@ def plot_scale_location(y_pred: np.ndarray, resid: np.ndarray) -> dict[str, Any]
         height=400,
     )
     return {"id": "REE.P.SCALE_LOCATION", "kind": "plot", "plotly": fig.to_plotly_json()}
+
+
+def plot_target_pred_density(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, Any]:
+    """REE.P.TARGET_PRED_DENSITY — KDE of y vs ŷ (scipy gaussian_kde)."""
+    import plotly.graph_objects as go
+    from scipy.stats import gaussian_kde
+
+    yt = np.asarray(y_true, dtype=float)
+    yp = np.asarray(y_pred, dtype=float)
+    lo = float(np.nanmin([yt.min(), yp.min()]))
+    hi = float(np.nanmax([yt.max(), yp.max()]))
+    xs = np.linspace(lo, hi, 200)
+    fig = go.Figure()
+    for name, arr in (("y", yt), ("ŷ", yp)):
+        try:
+            kde = gaussian_kde(arr)
+            fig.add_trace(go.Scatter(x=xs, y=kde(xs), mode="lines", name=name))
+        except Exception:
+            fig.add_trace(
+                go.Histogram(x=arr, name=name, histnorm="probability density", opacity=0.5)
+            )
+    fig.update_layout(title="Target vs prediction density", height=360)
+    return {"id": "REE.P.TARGET_PRED_DENSITY", "kind": "plot", "plotly": fig.to_plotly_json()}
+
+
+def plot_pct_err_dist(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, Any]:
+    """REE.P.PCT_ERR_DIST — percentage error clipped at ±100%."""
+    import plotly.graph_objects as go
+
+    yt = np.asarray(y_true, dtype=float)
+    yp = np.asarray(y_pred, dtype=float)
+    mask = np.isfinite(yt) & (np.abs(yt) > 1e-12)
+    pct = np.clip(100.0 * (yp[mask] - yt[mask]) / yt[mask], -100.0, 100.0)
+    fig = go.Figure(go.Histogram(x=pct, nbinsx=30))
+    fig.update_layout(title="Percentage error (±100% clip)", xaxis_title="% error", height=360)
+    return {
+        "id": "REE.P.PCT_ERR_DIST",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "n": int(mask.sum()),
+            "mean_pct": float(np.nanmean(pct)) if len(pct) else None,
+        },
+    }
+
+
+def plot_metric_folds_ree(fold_metrics: dict[str, list[float]]) -> dict[str, Any]:
+    """REE.P.METRIC_FOLDS — box/strip of each metric across folds."""
+    import plotly.graph_objects as go
+
+    fig = go.Figure()
+    for name, vals in fold_metrics.items():
+        v = [float(x) for x in vals if np.isfinite(x)]
+        fig.add_trace(go.Box(y=v, name=name, boxpoints="all", jitter=0.3))
+    fig.update_layout(title="Regression metric by fold", yaxis_title="score", height=400)
+    return {"id": "REE.P.METRIC_FOLDS", "kind": "plot", "plotly": fig.to_plotly_json()}

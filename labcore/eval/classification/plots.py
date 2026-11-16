@@ -552,3 +552,21 @@ def plot_class_balance(
         "plotly": fig.to_plotly_json(),
         "numbers": {"before": counts_before, "after": counts_after},
     }
+
+
+def plot_metric_folds(fold_metrics: dict[str, list[float]]) -> dict[str, Any]:
+    """CLE.P.METRIC_FOLDS — box/strip of each metric across folds."""
+    import plotly.graph_objects as go
+
+    fig = go.Figure()
+    for name, vals in fold_metrics.items():
+        v = [float(x) for x in vals if np.isfinite(x)]
+        fig.add_trace(go.Box(y=v, name=name, boxpoints="all", jitter=0.3))
+    fig.update_layout(title="Metric by fold", yaxis_title="score", height=400)
+    means = {k: float(np.nanmean(v)) if len(v) else float("nan") for k, v in fold_metrics.items()}
+    return {
+        "id": "CLE.P.METRIC_FOLDS",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {"means": means},
+    }
