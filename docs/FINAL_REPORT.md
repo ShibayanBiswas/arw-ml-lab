@@ -1,7 +1,7 @@
 # ARW ML Lab — One-shot finish report (interim)
 
 **Date:** 16 Nov 2026 (IST)  
-**Tip:** oneshot-c14 (FS6/8/15/19; c13 green `27cf517`)  
+**Tip:** oneshot-c15 (e2e/Locust + c14 format fix; c13 green `27cf517`)  
 **Live frontend:** https://arw-ml-lab.vercel.app/login → **200**  
 **Repo:** https://github.com/ShibayanBiswas/arw-ml-lab
 
@@ -18,7 +18,7 @@ Honest interim closeout. Chunk A + deep B/C slices shipped with repeated **CI gr
 | 3A deepen | partial | PV02/03/10/14/15, Celery batch ≤1M, cancel |
 | 4 deepen | partial | + AutoARIMA/Naive/SeasonalWindowAverage |
 | 4A | partial | metrics/models expand — not full F*/TS.P.* |
-| 5B | partial | FS1–FS5, FS14, FS20; rest deferred (no TradingLab) |
+| 5B | partial | FS1–FS6, FS8, FS14–15, FS19–20; FS7/9–13/16–18 deferred |
 | 5 | partial | purged/CPCV + PBO in-lab |
 | 5A | partial | WFO planner only (no retune loop) |
 | 6 | partial | unsupervised API/UI + mock AI insights |
@@ -40,13 +40,14 @@ Honest interim closeout. Chunk A + deep B/C slices shipped with repeated **CI gr
 | 17e4ccc…c2390a5 | C.9–C.10 Halving + NSGA-II/Hyperband |
 | 6fd12fa | C.11 Friedman–Nemenyi CD diagram |
 | a4d7e55 | C.12 LIME + DiCE explain |
-| (c13) | C.13 ALE + AutoARIMA/Naive/SWA |
+| 27cf517 | C.13 ALE + AutoARIMA/Naive/SWA |
+| (c14) | C.14 FS6/8/15/19 suitability |
 
 ## CI / Deploy / Vercel
 
 | System | Status | Notes |
 |---|---|---|
-| CI | green through c12 (`a4d7e55`) | https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43815868004 |
+| CI | green through c13 (`27cf517`) | https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43816672348 |
 | Deploy migrate | **fails** | missing `SUPABASE_ACCESS_TOKEN` / `SUPABASE_DB_PASSWORD` |
 | Deploy render/smoke | skipped honestly | until `RENDER_ENABLED=true` + migrate secrets |
 | Vercel | READY / **200** | https://arw-ml-lab.vercel.app |

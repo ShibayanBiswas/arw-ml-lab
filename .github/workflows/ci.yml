@@ -60,6 +60,13 @@ jobs:
         run: python -c "import yaml; yaml.safe_load(open('render.yaml')); print('render.yaml ok')"
       - name: maintenance CLI smoke
         run: PYTHONPATH=. python -m backend.worker.maintenance --all
+      - name: Hosted frontend e2e smoke (httpx)
+        env:
+          E2E_STRICT: "1"
+          E2E_BASE_URL: https://arw-ml-lab.vercel.app
+        run: |
+          pip install httpx==0.28.1
+          PYTHONPATH=. pytest tests/e2e -q -m e2e --tb=short
 
   supabase:
     runs-on: ubuntu-latest

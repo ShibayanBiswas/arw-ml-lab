@@ -201,7 +201,9 @@ addopts = "-q"
 filterwarnings = ["ignore::DeprecationWarning"]
 markers = [
   "benchmark: wall-time / throughput checks (may soft-skip on low-CPU hosts)",
+  "e2e: hosted HTTP smokes (set E2E_STRICT=1 to fail on network errors)",
 ]
+norecursedirs = [".git", ".venv", "node_modules", "tests/load"]
 
 [build-system]
 requires = ["hatchling"]
