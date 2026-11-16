@@ -810,3 +810,49 @@ def plot_threshold_stability(
         "plotly": fig.to_plotly_json(),
         "numbers": {"mean": mean, "std": std, "fold_thresholds": vals, "method": method},
     }
+
+
+def plot_cm_folds(
+    fold_cms: list[np.ndarray],
+    *,
+    labels: list[Any] | None = None,
+) -> dict[str, Any]:
+    """CLE.P.CM_FOLDS — per-fold confusion matrices (row-normalised small multiples)."""
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+
+    if not fold_cms:
+        raise ValueError("fold_cms must be non-empty")
+    n = len(fold_cms)
+    cols = min(3, n)
+    rows = int(np.ceil(n / cols))
+    fig = make_subplots(rows=rows, cols=cols, subplot_titles=[f"fold {i}" for i in range(n)])
+    label_strs = [str(l) for l in (labels or list(range(fold_cms[0].shape[0])))]
+    matrices = []
+    for i, cm in enumerate(fold_cms):
+        cm = np.asarray(cm, dtype=float)
+        row_sums = cm.sum(axis=1, keepdims=True)
+        row_sums = np.where(row_sums == 0, 1.0, row_sums)
+        norm = cm / row_sums
+        matrices.append(norm.tolist())
+        r, c = divmod(i, cols)
+        fig.add_trace(
+            go.Heatmap(
+                z=norm,
+                x=label_strs,
+                y=label_strs,
+                colorscale="Blues",
+                zmin=0,
+                zmax=1,
+                showscale=(i == 0),
+            ),
+            row=r + 1,
+            col=c + 1,
+        )
+    fig.update_layout(title="Per-fold confusion (row-norm)", height=280 * rows)
+    return {
+        "id": "CLE.P.CM_FOLDS",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {"fold_cms_row_norm": matrices},
+    }
