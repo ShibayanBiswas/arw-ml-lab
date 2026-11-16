@@ -6,7 +6,7 @@ import hashlib
 from pathlib import Path
 from typing import Any
 
-from skops.io import dump, load
+from skops.io import dump, load  # type: ignore[import-untyped]
 
 
 def save_skops(estimator: Any, path: str | Path) -> dict[str, str | int]:

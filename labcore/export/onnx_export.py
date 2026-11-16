@@ -20,7 +20,7 @@ def export_sklearn_onnx(
 
     Uses ``skl2onnx.to_onnx`` with zipmap disabled for stable probability outputs.
     """
-    from skl2onnx import to_onnx
+    from skl2onnx import to_onnx  # type: ignore[import-untyped]
 
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -45,7 +45,7 @@ def onnx_parity(
     atol: float = 1e-4,
 ) -> dict[str, Any]:
     """Compare sklearn ``predict`` / ``predict_proba`` to ONNX Runtime outputs."""
-    from onnxruntime import InferenceSession
+    from onnxruntime import InferenceSession  # type: ignore[import-untyped]
 
     X = np.asarray(X, dtype=np.float32)
     sk_pred = np.asarray(estimator.predict(X))
