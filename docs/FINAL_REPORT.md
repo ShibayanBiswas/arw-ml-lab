@@ -1,7 +1,7 @@
 # ARW ML Lab — One-shot finish report (interim)
 
 **Date:** 16 Nov 2026 (IST)  
-**Tip:** `aface40` (c38 FS11; prior c37 CI https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43839812689)  
+**Tip:** `bd57e0d` (CI green — c38 FS11 + mypy export override)  
 **Live frontend:** https://arw-ml-lab.vercel.app/login → **200**  
 **Repo:** https://github.com/ShibayanBiswas/arw-ml-lab
 
