@@ -46,6 +46,7 @@ ModelKey = Literal[
     "var",
     "vecm",
     "varmax",
+    "sarimax",
 ]
 
 
@@ -119,6 +120,48 @@ def forecast_sarima_airline(
     )
     fitted = model.fit(disp=False)
     pred = np.asarray(fitted.forecast(h), dtype=float)
+    resid = np.asarray(fitted.resid, dtype=float)
+    return pred, resid
+
+
+def forecast_sarimax(
+    y_train: np.ndarray,
+    h: int,
+    *,
+    m: int = 12,
+    exog: np.ndarray | None = None,
+    exog_future: np.ndarray | None = None,
+) -> tuple[np.ndarray, np.ndarray]:
+    """F11 — SARIMAX with future-known exog (default: linear time index)."""
+    from statsmodels.tsa.statespace.sarimax import SARIMAX
+
+    ok, reason = seasonal_allowed(len(y_train), float(m), h)
+    if not ok:
+        raise ValueError(f"sarimax seasonal gate: {reason}")
+    y = np.asarray(y_train, dtype=float)
+    n = len(y)
+    if exog is None:
+        exog = np.arange(n, dtype=float).reshape(-1, 1)
+    else:
+        exog = np.asarray(exog, dtype=float)
+        if exog.ndim == 1:
+            exog = exog.reshape(-1, 1)
+    if exog_future is None:
+        exog_future = np.arange(n, n + h, dtype=float).reshape(-1, 1)
+    else:
+        exog_future = np.asarray(exog_future, dtype=float)
+        if exog_future.ndim == 1:
+            exog_future = exog_future.reshape(-1, 1)
+    model = SARIMAX(
+        y,
+        exog=exog,
+        order=(0, 1, 1),
+        seasonal_order=(0, 1, 1, m),
+        enforce_stationarity=False,
+        enforce_invertibility=False,
+    )
+    fitted = model.fit(disp=False)
+    pred = np.asarray(fitted.forecast(h, exog=exog_future), dtype=float)
     resid = np.asarray(fitted.resid, dtype=float)
     return pred, resid
 
@@ -716,6 +759,9 @@ def forecast(
             "resid": out["resid"],
             "extra": {"order": out["order"], "aic": out["aic"]},
         }
+    if key == "sarimax":
+        yhat, resid = forecast_sarimax(y_train, h, m=m)
+        return {"key": key, "y_pred": yhat, "resid": resid}
     raise ValueError(f"unknown model key: {key}")
 
 
@@ -768,4 +814,5 @@ TS_MODEL_CATALOGUE: list[dict[str, str]] = [
     {"id": "var", "library": "statsmodels", "name": "VAR"},
     {"id": "vecm", "library": "statsmodels", "name": "VECM"},
     {"id": "varmax", "library": "statsmodels", "name": "VARMAX"},
+    {"id": "sarimax", "library": "statsmodels", "name": "SARIMAX"},
 ]
