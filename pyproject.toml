@@ -184,6 +184,7 @@ module = [
   "labcore.timeseries.*",
   "labcore.ai.*",
   "labcore.finance.*",
+  "labcore.decisions.*",
 ]
 # Thin library wrappers over untyped scientific APIs — keep runtime tests as the contract
 disallow_untyped_calls = false

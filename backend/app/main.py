@@ -20,6 +20,7 @@ from backend.app.routers import (
     deep,
     eda,
     experiments,
+    insights,
     intake,
     jobs,
     predict,
@@ -86,6 +87,7 @@ def create_app() -> FastAPI:
     app.include_router(unsupervised.router)
     app.include_router(suitability.router)
     app.include_router(deep.router)
+    app.include_router(insights.router)
     return app
 
 
