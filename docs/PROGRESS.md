@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Current phase | One-shot Chunk C — continue §36/§39 / 8.2 |
-| Last completed step | oneshot-c37 REE.P REC/cum/scale (CI green) |
-| Last green commit | 2529aed |
+| Last completed step | oneshot-c38 FS11 vertical-barrier share |
+| Last green commit | 2529aed (aface40 pending CI) |
 | Open failures | Deploy migrate (Supabase secrets); Render unpaid |
 | Next action | Shibayan: secrets + Render. Agent: remaining FS/F*/§39 AC |
 
