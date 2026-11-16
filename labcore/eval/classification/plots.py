@@ -212,3 +212,152 @@ def plot_per_class_prf(
     fig.add_trace(go.Bar(x=x, y=f1, name="F1"))
     fig.update_layout(title="Per-class P/R/F1", barmode="group", height=400)
     return {"id": "CLE.P.PER_CLASS_PRF", "kind": "plot", "plotly": fig.to_plotly_json()}
+
+
+def plot_top_confusions(
+    cm_counts: list[list[float]], labels: list[str], *, top_n: int = 10
+) -> dict[str, Any]:
+    """CLE.P.TOP_CONFUSIONS — largest off-diagonal pairs from sklearn confusion_matrix."""
+    import plotly.graph_objects as go
+
+    z = np.asarray(cm_counts, dtype=float)
+    pairs: list[tuple[str, float]] = []
+    for i in range(z.shape[0]):
+        for j in range(z.shape[1]):
+            if i == j:
+                continue
+            pairs.append((f"{labels[i]}→{labels[j]}", float(z[i, j])))
+    pairs.sort(key=lambda t: t[1], reverse=True)
+    pairs = pairs[:top_n]
+    fig = go.Figure(go.Bar(x=[p[0] for p in pairs], y=[p[1] for p in pairs]))
+    fig.update_layout(
+        title="Top confused pairs", xaxis_title="True→Pred", yaxis_title="Count", height=400
+    )
+    return {
+        "id": "CLE.P.TOP_CONFUSIONS",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {"pairs": [{"pair": a, "count": b} for a, b in pairs]},
+    }
+
+
+def plot_class_pred_error(
+    y_true: np.ndarray, y_pred: np.ndarray, labels: list[Any] | None = None
+) -> dict[str, Any]:
+    """CLE.P.CLASS_PRED_ERROR — stacked bar per true class (Yellowbrick design)."""
+    import plotly.graph_objects as go
+    from sklearn.metrics import confusion_matrix
+
+    labels = labels if labels is not None else sorted(np.unique(y_true).tolist())
+    cm = confusion_matrix(y_true, y_pred, labels=labels)
+    x = [str(l) for l in labels]
+    fig = go.Figure()
+    for j, pred_lab in enumerate(labels):
+        fig.add_trace(go.Bar(x=x, y=cm[:, j], name=f"pred={pred_lab}"))
+    fig.update_layout(
+        title="Class prediction error",
+        barmode="stack",
+        xaxis_title="True class",
+        yaxis_title="Count",
+        height=400,
+    )
+    return {"id": "CLE.P.CLASS_PRED_ERROR", "kind": "plot", "plotly": fig.to_plotly_json()}
+
+
+def plot_support_bars(y_true: np.ndarray, labels: list[Any] | None = None) -> dict[str, Any]:
+    """CLE.P.SUPPORT_BARS — class counts in the evaluated split."""
+    import plotly.graph_objects as go
+
+    y = np.asarray(y_true)
+    labels = labels if labels is not None else sorted(np.unique(y).tolist())
+    counts = [int(np.sum(y == lab)) for lab in labels]
+    fig = go.Figure(go.Bar(x=[str(l) for l in labels], y=counts))
+    fig.update_layout(title="Class support", xaxis_title="Class", yaxis_title="Count", height=360)
+    return {
+        "id": "CLE.P.SUPPORT_BARS",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {"counts": dict(zip([str(l) for l in labels], counts, strict=True))},
+    }
+
+
+def plot_precision_at_k(y_true: np.ndarray, scores: np.ndarray) -> dict[str, Any]:
+    """CLE.P.PRECISION_AT_K — precision and capture vs population %."""
+    import plotly.graph_objects as go
+
+    y = np.asarray(y_true).astype(int)
+    s = np.asarray(scores, dtype=float)
+    order = np.argsort(-s)
+    y_sorted = y[order]
+    n = len(y_sorted)
+    total_pos = max(int(y_sorted.sum()), 1)
+    ks = np.linspace(0.05, 1.0, 20)
+    prec_at, capture = [], []
+    for k in ks:
+        m = max(1, int(np.ceil(k * n)))
+        top = y_sorted[:m]
+        prec_at.append(float(top.mean()))
+        capture.append(float(top.sum() / total_pos))
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=ks, y=prec_at, mode="lines", name="precision@k%"))
+    fig.add_trace(go.Scatter(x=ks, y=capture, mode="lines", name="capture@k%"))
+    fig.update_layout(
+        title="Precision / capture @ k%",
+        xaxis_title="% population",
+        yaxis_title="Rate",
+        height=400,
+    )
+    return {"id": "CLE.P.PRECISION_AT_K", "kind": "plot", "plotly": fig.to_plotly_json()}
+
+
+def plot_confidence_errors(
+    y_true: np.ndarray, y_pred: np.ndarray, scores: np.ndarray
+) -> dict[str, Any]:
+    """CLE.P.CONFIDENCE_ERRORS — p(pred) for correct vs wrong."""
+    import plotly.graph_objects as go
+
+    y = np.asarray(y_true)
+    pred = np.asarray(y_pred)
+    s = np.asarray(scores, dtype=float)
+    if s.ndim == 2:
+        conf = s[np.arange(len(pred)), pred.astype(int)] if s.shape[1] > 1 else s[:, 0]
+    else:
+        conf = np.where(pred.astype(int) == 1, s, 1.0 - s)
+    correct = conf[y == pred]
+    wrong = conf[y != pred]
+    fig = go.Figure()
+    fig.add_trace(go.Histogram(x=correct, name="correct", opacity=0.55, nbinsx=25))
+    fig.add_trace(go.Histogram(x=wrong, name="wrong", opacity=0.55, nbinsx=25))
+    fig.update_layout(
+        title="Confidence: correct vs wrong",
+        barmode="overlay",
+        xaxis_title="p(predicted)",
+        height=400,
+    )
+    return {"id": "CLE.P.CONFIDENCE_ERRORS", "kind": "plot", "plotly": fig.to_plotly_json()}
+
+
+def plot_report_heatmap(
+    y_true: np.ndarray, y_pred: np.ndarray, labels: list[Any] | None = None
+) -> dict[str, Any]:
+    """CLE.P.REPORT_HEATMAP — class × {precision, recall, F1, support}."""
+    import plotly.graph_objects as go
+    from sklearn.metrics import precision_recall_fscore_support
+
+    labels = labels if labels is not None else sorted(np.unique(y_true).tolist())
+    p, r, f1, s = precision_recall_fscore_support(
+        y_true, y_pred, labels=labels, zero_division=np.nan
+    )
+    z = np.vstack([p, r, f1, s / max(float(np.sum(s)), 1.0)])
+    fig = go.Figure(
+        data=go.Heatmap(
+            z=z,
+            x=[str(l) for l in labels],
+            y=["precision", "recall", "f1", "support_share"],
+            colorscale="Blues",
+            text=np.round(z, 3),
+            texttemplate="%{text}",
+        )
+    )
+    fig.update_layout(title="Classification report heatmap", height=360)
+    return {"id": "CLE.P.REPORT_HEATMAP", "kind": "plot", "plotly": fig.to_plotly_json()}

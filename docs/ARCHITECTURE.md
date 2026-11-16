@@ -4329,7 +4329,10 @@ Licence policy: permissive licences (MIT, BSD, Apache-2.0, NCSA, MPL-2.0 for tes
 | shap | 0.54.1 | MIT | SHAP values, interaction values, plots data | `xai-uq` | https://pypi.org/project/shap/ |
 | shapiq | 1.8.0 | MIT | Shapley interaction indices (optional) | `xai-uq` | https://pypi.org/project/shapiq/ |
 | skforecast | 0.27.0 | BSD-3-Clause | recursive/direct forecasters, backtesting folds | `ts` | https://pypi.org/project/skforecast/ |
+| skl2onnx | 1.20.0 | Apache-2.0 | sklearn → ONNX export (§25) | `ml-core` | https://pypi.org/project/skl2onnx/ |
 | skops | 0.16.0 | MIT | safe persistence of sklearn pipelines with a type allow-list (§45.8) | `ml-core` | https://pypi.org/project/skops/ |
+| onnx | 1.23.2 | Apache-2.0 | ONNX IR used by skl2onnx | `ml-core` | https://pypi.org/project/onnx/ |
+| onnxruntime | 1.23.0 | MIT | ONNX Runtime CPU parity checks for exported models | `ml-core` | https://pypi.org/project/onnxruntime/ |
 | skrub | 0.11.0 | BSD-3-Clause | MinHash/Gap/Datetime encoders, TableVectorizer (E25–E27, E32) | `ml-core` | https://pypi.org/project/skrub/ |
 | sktime | 1.3.0 | BSD-3-Clause | splitters (walk-forward), forecasting metrics, reduction, ensembles, Fourier features | `ts` | https://pypi.org/project/sktime/ |
 | slowapi | 0.1.10 | MIT | per-user/IP rate limiting on lab-api (§46.3) | `api` | https://pypi.org/project/slowapi/ |

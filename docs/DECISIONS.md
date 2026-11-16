@@ -1,5 +1,12 @@
 # Architecture decision records
 
+## ADR-0016 — ONNX export via skl2onnx + onnxruntime (2026-11-16)
+
+- Added `skl2onnx==1.20.0`, `onnx==1.23.2`, `onnxruntime==1.23.0` to `ml-core` and ARCHITECTURE §44 for §25 portable models.
+- Parity is mandatory: `onnx_parity` compares sklearn `predict`/`predict_proba` to ONNX Runtime (`atol=1e-4` default; tests use `1e-3`).
+- Anchors remain off (`alibi` BSL in `optional-licence-review.txt`) until commercial licence review.
+- Demo route `POST /api/v1/models/export-demo` ships until durable model registry URIs land; production export will read from the lab artefact store + sha256 (SEC-06).
+
 ## ADR-0015 — One-shot B.1 deepen: in-lab purged/CPCV + PV matrix (2026-11-16)
 
 - **Purged K-fold / CPCV** implemented in `labcore/cv/purged.py` citing AFML ch. 7/12 because `vendor/tradinglab` is not present. When the submodule is added, swap adapters to TradingLab primitives and keep the same public API (`PurgedKFold`, `CombinatorialPurgedKFold`, `ml_get_train_times`).

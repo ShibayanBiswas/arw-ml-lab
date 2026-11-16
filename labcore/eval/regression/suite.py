@@ -9,8 +9,10 @@ import numpy as np
 from labcore.eval.regression.diagnostics import influence_table, residual_table, residual_tests
 from labcore.eval.regression.metrics import compute_ree_metrics
 from labcore.eval.regression.plots import (
+    plot_abs_resid_vs_fitted,
     plot_bland_altman,
     plot_cooks_distance,
+    plot_error_hist,
     plot_pred_vs_actual,
     plot_qq,
     plot_residual_acf,
@@ -67,6 +69,8 @@ def run_regression_eval(
         plot_studentised_residuals(stud),
         plot_bland_altman(y_oof, y_pred_oof),
         plot_residual_acf(resid),
+        plot_abs_resid_vs_fitted(y_pred_oof, resid),
+        plot_error_hist(y_oof, y_pred_oof),
     ]
     return {
         "suite": "regression",

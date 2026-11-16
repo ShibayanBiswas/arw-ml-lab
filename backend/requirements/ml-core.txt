@@ -40,6 +40,9 @@ openpyxl==3.1.5        # XLSX upload parsing and XLSX download of prediction res
 python-calamine==0.9.1 # fast, read-only XLSX/XLS parsing (pandas engine="calamine")
 defusedxml==0.7.1      # hardens openpyxl against XML bombs / XXE in uploaded .xlsx
 skops==0.16.0          # safe (non-pickle) persistence of sklearn pipelines with a type allow-list
+skl2onnx==1.20.0       # sklearn → ONNX export (§25)
+onnx==1.23.2           # ONNX IR (skl2onnx dependency, pinned explicitly)
+onnxruntime==1.23.0    # ONNX Runtime parity checks (CPU; MIT)
 # Round 4 (§45/§46): ingestion encoding detection, report and notebook exports
 charset-normalizer==3.5.2
 pyyaml==6.0.3

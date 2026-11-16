@@ -60,7 +60,7 @@ Honest interim closeout. Chunk A + deep B/C slices shipped with repeated **CI gr
 
 | System | Status | Notes |
 |---|---|---|
-| CI | green through `47665c6` | https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43828634374 |
+| CI | green through `22147fa` | https://github.com/ShibayanBiswas/arw-ml-lab/actions/runs/43830697629 |
 | Deploy migrate | **fails** | missing `SUPABASE_ACCESS_TOKEN` / `SUPABASE_DB_PASSWORD` |
 | Deploy render/smoke | skipped honestly | until `RENDER_ENABLED=true` + migrate secrets |
 | Vercel | READY / **200** | https://arw-ml-lab.vercel.app |

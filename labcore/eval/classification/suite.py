@@ -10,16 +10,22 @@ from labcore.eval.classification.cm import confusion_suite
 from labcore.eval.classification.compare import delong_test, mcnemar_test
 from labcore.eval.classification.metrics import aggregate_cv_metrics, compute_cle_metrics
 from labcore.eval.classification.plots import (
+    plot_class_pred_error,
+    plot_confidence_errors,
     plot_confusion,
     plot_det,
     plot_gains_lift,
     plot_ks,
     plot_per_class_prf,
     plot_pr,
+    plot_precision_at_k,
     plot_prob_density_by_class,
     plot_reliability,
+    plot_report_heatmap,
     plot_roc,
+    plot_support_bars,
     plot_threshold_vs_metric,
+    plot_top_confusions,
 )
 from labcore.eval.classification.report import classification_report_table
 from labcore.eval.classification.threshold import tune_threshold_oof
@@ -83,13 +89,29 @@ def run_classification_eval(
     plots: list[dict[str, Any]] = [
         plot_confusion(cm["counts"], cm["labels"], title="Confusion (counts)", plot_id="CLE.P.CM"),
         plot_confusion(
+            cm["counts"],
+            cm["labels"],
+            title="Confusion (counts)",
+            plot_id="CLE.P.CM_COUNTS",
+        ),
+        plot_confusion(
             cm["norm_true"],
             cm["labels"],
             title="Confusion (row/true)",
             plot_id="CLE.P.CM_NORM_TRUE",
         ),
+        plot_confusion(
+            cm["norm_true"],
+            cm["labels"],
+            title="Confusion (row/true)",
+            plot_id="CLE.P.CM_NORM",
+        ),
     ]
     plots.append(plot_per_class_prf(y_oof, y_pred_oof, labels=labels))
+    plots.append(plot_top_confusions(cm["counts"], [str(l) for l in cm["labels"]]))
+    plots.append(plot_class_pred_error(y_oof, y_pred_oof, labels=labels))
+    plots.append(plot_support_bars(y_oof, labels=labels))
+    plots.append(plot_report_heatmap(y_oof, y_pred_oof, labels=labels))
     if task == "binary" and y_proba_oof is not None:
         scores = y_proba_oof[:, 1] if y_proba_oof.ndim == 2 else y_proba_oof
         plots.extend(
@@ -101,6 +123,8 @@ def run_classification_eval(
                 plot_threshold_vs_metric(y_oof, scores),
                 plot_det(y_oof, scores),
                 plot_prob_density_by_class(y_oof, scores),
+                plot_precision_at_k(y_oof, scores),
+                plot_confidence_errors(y_oof, y_pred_oof, scores),
             ]
         )
         plots.extend(plot_gains_lift(y_oof, scores))

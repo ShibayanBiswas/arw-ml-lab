@@ -120,3 +120,29 @@ def plot_residual_acf(resid: np.ndarray, nlags: int = 20) -> dict[str, Any]:
     fig = go.Figure(go.Bar(x=list(range(len(vals))), y=vals, name="ACF"))
     fig.update_layout(title="Residual ACF", xaxis_title="Lag", yaxis_title="ACF", height=400)
     return {"id": "REE.P.RESID_ACF", "kind": "plot", "plotly": fig.to_plotly_json()}
+
+
+def plot_abs_resid_vs_fitted(y_pred: np.ndarray, resid: np.ndarray) -> dict[str, Any]:
+    """REE.P.ABS_RESID — |residual| vs fitted (heteroscedasticity visual)."""
+    import plotly.graph_objects as go
+
+    fig = go.Figure(
+        go.Scatter(x=y_pred, y=np.abs(np.asarray(resid, dtype=float)), mode="markers", opacity=0.55)
+    )
+    fig.update_layout(
+        title="|Residual| vs fitted",
+        xaxis_title="Fitted",
+        yaxis_title="|Residual|",
+        height=400,
+    )
+    return {"id": "REE.P.ABS_RESID", "kind": "plot", "plotly": fig.to_plotly_json()}
+
+
+def plot_error_hist(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, Any]:
+    """REE.P.ERROR_HIST — prediction error histogram."""
+    import plotly.graph_objects as go
+
+    err = np.asarray(y_pred, dtype=float) - np.asarray(y_true, dtype=float)
+    fig = go.Figure(go.Histogram(x=err, nbinsx=30))
+    fig.update_layout(title="Prediction error", xaxis_title="pred − actual", height=400)
+    return {"id": "REE.P.ERROR_HIST", "kind": "plot", "plotly": fig.to_plotly_json()}

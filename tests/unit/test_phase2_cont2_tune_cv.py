@@ -210,6 +210,13 @@ def test_expanded_cle_plots_ds4():
         "CLE.P.DET",
         "CLE.P.PROB_DENS",
         "CLE.P.PER_CLASS_PRF",
+        "CLE.P.TOP_CONFUSIONS",
+        "CLE.P.CLASS_PRED_ERROR",
+        "CLE.P.SUPPORT_BARS",
+        "CLE.P.PRECISION_AT_K",
+        "CLE.P.CONFIDENCE_ERRORS",
+        "CLE.P.REPORT_HEATMAP",
+        "CLE.P.CM_COUNTS",
     ):
         assert need in ids
 
@@ -241,5 +248,7 @@ def test_expanded_ree_plots_ds12_fixture():
         "REE.P.STUD_RESID",
         "REE.P.BLAND_ALTMAN",
         "REE.P.RESID_ACF",
+        "REE.P.ABS_RESID",
+        "REE.P.ERROR_HIST",
     ):
         assert need in ids
