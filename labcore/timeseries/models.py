@@ -306,7 +306,13 @@ def forecast_adida(y_train: np.ndarray, h: int) -> np.ndarray:
     return _sf_point_forecast(y_train, h, ADIDA())
 
 
-def forecast_tsb(y_train: np.ndarray, h: int, *, alpha_d: float = 0.2, alpha_p: float = 0.2) -> np.ndarray:
+def forecast_tsb(
+    y_train: np.ndarray,
+    h: int,
+    *,
+    alpha_d: float = 0.2,
+    alpha_p: float = 0.2,
+) -> np.ndarray:
     """F25 — TSB intermittent demand."""
     from statsforecast.models import TSB
 
