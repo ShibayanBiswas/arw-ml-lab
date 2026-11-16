@@ -9,7 +9,13 @@ import pandas as pd
 
 from labcore.timeseries.horizon_guard import seasonal_allowed
 
-ModelKey = Literal["seasonal_naive", "sarima_airline"]
+ModelKey = Literal[
+    "seasonal_naive",
+    "sarima_airline",
+    "historic_average",
+    "theta",
+    "auto_ets",
+]
 
 
 def to_nixtla_df(
@@ -76,6 +82,45 @@ def forecast_sarima_airline(
     return pred, resid
 
 
+def forecast_historic_average(y_train: np.ndarray, h: int) -> np.ndarray:
+    """Global mean forecaster via statsforecast HistoricAverage."""
+    from statsforecast import StatsForecast
+    from statsforecast.models import HistoricAverage
+
+    df = to_nixtla_df(y_train)
+    sf = StatsForecast(models=[HistoricAverage()], freq=1, n_jobs=1)
+    fc = sf.forecast(df=df, h=h)
+    col = [c for c in fc.columns if c not in ("unique_id", "ds")][0]
+    return np.asarray(fc[col], dtype=float)
+
+
+def forecast_theta(y_train: np.ndarray, h: int, *, m: int = 12) -> np.ndarray:
+    """Theta method via statsforecast (season_length=m)."""
+    from statsforecast import StatsForecast
+    from statsforecast.models import Theta
+
+    df = to_nixtla_df(y_train)
+    sf = StatsForecast(models=[Theta(season_length=m)], freq=1, n_jobs=1)
+    fc = sf.forecast(df=df, h=h)
+    col = [c for c in fc.columns if c not in ("unique_id", "ds")][0]
+    return np.asarray(fc[col], dtype=float)
+
+
+def forecast_auto_ets(y_train: np.ndarray, h: int, *, m: int = 12) -> np.ndarray:
+    """AutoETS via statsforecast."""
+    from statsforecast import StatsForecast
+    from statsforecast.models import AutoETS
+
+    ok, reason = seasonal_allowed(len(y_train), float(m), h)
+    season_length = m if ok else 1
+    _ = reason
+    df = to_nixtla_df(y_train)
+    sf = StatsForecast(models=[AutoETS(season_length=season_length)], freq=1, n_jobs=1)
+    fc = sf.forecast(df=df, h=h)
+    col = [c for c in fc.columns if c not in ("unique_id", "ds")][0]
+    return np.asarray(fc[col], dtype=float)
+
+
 def forecast(
     key: ModelKey,
     y_train: np.ndarray,
@@ -89,4 +134,22 @@ def forecast(
     if key == "sarima_airline":
         yhat, resid = forecast_sarima_airline(y_train, h, m=m)
         return {"key": key, "y_pred": yhat, "resid": resid}
+    if key == "historic_average":
+        yhat = forecast_historic_average(y_train, h)
+        return {"key": key, "y_pred": yhat, "resid": None}
+    if key == "theta":
+        yhat = forecast_theta(y_train, h, m=m)
+        return {"key": key, "y_pred": yhat, "resid": None}
+    if key == "auto_ets":
+        yhat = forecast_auto_ets(y_train, h, m=m)
+        return {"key": key, "y_pred": yhat, "resid": None}
     raise ValueError(f"unknown model key: {key}")
+
+
+TS_MODEL_CATALOGUE: list[dict[str, str]] = [
+    {"id": "seasonal_naive", "library": "statsforecast", "name": "Seasonal Naive"},
+    {"id": "sarima_airline", "library": "statsmodels", "name": "SARIMA airline"},
+    {"id": "historic_average", "library": "statsforecast", "name": "Historic Average"},
+    {"id": "theta", "library": "statsforecast", "name": "Theta"},
+    {"id": "auto_ets", "library": "statsforecast", "name": "AutoETS"},
+]

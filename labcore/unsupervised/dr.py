@@ -43,7 +43,7 @@ def fit_dr(
         )
         emb = model.fit_transform(Xs)
     elif algorithm == "umap":
-        import umap
+        import umap  # type: ignore[import-not-found]
 
         model = umap.UMAP(n_components=n_components, random_state=seed)
         emb = model.fit_transform(Xs)

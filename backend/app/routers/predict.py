@@ -6,7 +6,7 @@ import io
 from typing import Any, Literal
 
 import pandas as pd
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Query, UploadFile
 from fastapi.responses import Response
 from labcore.explain.permutation import permutation_explain
 from labcore.explain.shap_trees import tree_shap_explain
@@ -20,13 +20,15 @@ from labcore.predict.template import (
 from labcore.predict.validate import validate_predict_frame
 from pydantic import BaseModel, Field
 
+from backend.app.jobs_store import JOB_STORE
 from backend.app.model_store import MODEL_STORE
 from backend.app.security import AuthUser, require_write_role
 
 router = APIRouter(tags=["predict"])
 
-# Thin sync batch cap (Celery chunking deferred to 3A-cont)
+# Sync path ≤5k; larger batches go to q.predict.batch (≤1M)
 _BATCH_ROW_CAP = 5_000
+_BATCH_ASYNC_CAP = 1_000_000
 
 
 class PredictSingleBody(BaseModel):
@@ -193,15 +195,32 @@ def _score_validated(
 def predict_batch_studio(
     body: StudioBatchBody,
     user: AuthUser = Depends(require_write_role),
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
 ) -> dict[str, Any]:
-    """Validate + score JSON rows (sync thin path ≤5k rows)."""
+    """Validate + score JSON rows.
+
+    ≤5k rows: sync. >5k and ≤1M: enqueue ``lab.predict.batch`` (returns job_id).
+    """
     _ = user
     m = _get_model(body.model_id)
-    if len(body.rows) > _BATCH_ROW_CAP:
+    n = len(body.rows)
+    if n > _BATCH_ASYNC_CAP:
         raise HTTPException(
             status_code=422,
-            detail=f"PV02: row cap {_BATCH_ROW_CAP} exceeded (thin sync path)",
+            detail=f"PV02: row cap {_BATCH_ASYNC_CAP} exceeded",
         )
+    if n > _BATCH_ROW_CAP:
+        rec = JOB_STORE.create(idempotency_key=idempotency_key)
+        from backend.worker.tasks.predict import run_predict_batch_task
+
+        run_predict_batch_task.delay(rec.job_id, body.model_id, body.rows)
+        return {
+            "async": True,
+            "job_id": rec.job_id,
+            "n_rows": n,
+            "chunk_size": 10_000,
+            "message": "scoring on q.predict.batch — poll GET /api/v1/jobs/{job_id}",
+        }
     df = pd.DataFrame(body.rows)
     report = validate_predict_frame(
         df,
@@ -213,6 +232,20 @@ def predict_batch_studio(
         return _score_validated(m, report)
     except Exception as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/api/v1/predict/batch/{job_id}/cancel")
+def predict_batch_cancel(
+    job_id: str,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """Cooperative cancel for Celery batch predict jobs."""
+    _ = user
+    job = JOB_STORE.get(job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="job not found")
+    JOB_STORE.update(job_id, status="cancelled", error="cancelled by user")
+    return {"job_id": job_id, "status": "cancelled"}
 
 
 @router.post("/api/v1/predict/batch/upload")

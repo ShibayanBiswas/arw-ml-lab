@@ -9,7 +9,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
-import numpy as np
 import pandas as pd
 
 Status = Literal["PASS", "WARN", "FAIL", "INFO", "DEFERRED"]
@@ -30,9 +29,7 @@ def _detect_price_col(df: pd.DataFrame) -> str | None:
     # numeric column with name hint
     for c in df.columns:
         cl = str(c).lower()
-        if any(k in cl for k in ("close", "price", "px")) and pd.api.types.is_numeric_dtype(
-            df[c]
-        ):
+        if any(k in cl for k in ("close", "price", "px")) and pd.api.types.is_numeric_dtype(df[c]):
             return str(c)
     return None
 
@@ -136,8 +133,8 @@ def check_fs3_positivity(df: pd.DataFrame, price_col: str | None) -> FSResult:
             f"{n_nonpos} non-positive prices",
             {"n_nonpos": n_nonpos},
         )
-    rets = px.pct_change(fill_method=None).dropna()
-    extreme = int((rets.abs() > 0.5).sum())
+    ret_series = px.pct_change(fill_method=None).dropna()
+    extreme = int((ret_series.abs() > 0.5).sum())
     if extreme > 3:
         return FSResult(
             "FS3",

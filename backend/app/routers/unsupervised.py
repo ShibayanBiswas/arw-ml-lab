@@ -6,10 +6,10 @@ from typing import Any, Literal
 
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException
+from labcore.unsupervised import fit_anomaly, fit_clustering, fit_dr
 from pydantic import BaseModel, Field
 
 from backend.app.security import AuthUser, require_write_role
-from labcore.unsupervised import fit_anomaly, fit_clustering, fit_dr
 
 router = APIRouter(tags=["unsupervised"])
 
@@ -40,9 +40,7 @@ def unsupervised_clustering(
     X = _frame(body.rows)
     algo: Literal["kmeans", "agglomerative", "hdbscan"] = body.algorithm  # type: ignore[assignment]
     try:
-        return fit_clustering(
-            X, algorithm=algo, n_clusters=body.n_clusters, seed=body.seed
-        )
+        return fit_clustering(X, algorithm=algo, n_clusters=body.n_clusters, seed=body.seed)
     except Exception as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
@@ -70,8 +68,6 @@ def unsupervised_anomaly(
     X = _frame(body.rows)
     algo: Literal["isolation_forest", "lof", "pyod_copod"] = body.algorithm  # type: ignore[assignment]
     try:
-        return fit_anomaly(
-            X, algorithm=algo, contamination=body.contamination, seed=body.seed
-        )
+        return fit_anomaly(X, algorithm=algo, contamination=body.contamination, seed=body.seed)
     except Exception as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc

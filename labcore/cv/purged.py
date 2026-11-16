@@ -197,8 +197,6 @@ class CombinatorialPurgedKFold:
         path_slots: dict[tuple[int, ...], int] = {}
         slot = 0
         for combo in test_combos:
-            # key = sorted groups NOT in this combo's first test group context
-            key = tuple(sorted(combo))
             # Assign combo to path index via round-robin on first test group
             g0 = combo[0]
             path_id = path_slots.get(combo)

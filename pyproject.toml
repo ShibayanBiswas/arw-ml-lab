@@ -151,6 +151,14 @@ module = [
   "category_encoders",
   "feature_engine",
   "feature_engine.*",
+  "hdbscan",
+  "hdbscan.*",
+  "umap",
+  "umap.*",
+  "pyod",
+  "pyod.*",
+  "statsforecast",
+  "statsforecast.*",
 ]
 ignore_missing_imports = true
 
@@ -171,6 +179,9 @@ module = [
   "labcore.explain.*",
   "labcore.uncertainty.*",
   "labcore.predict.*",
+  "labcore.unsupervised.*",
+  "labcore.suitability.*",
+  "labcore.timeseries.*",
 ]
 # Thin library wrappers over untyped scientific APIs — keep runtime tests as the contract
 disallow_untyped_calls = false

@@ -40,7 +40,7 @@ def fit_clustering(
         labels = model.fit_predict(Xs)
         extra = {"n_clusters": int(n_clusters)}
     elif algorithm == "hdbscan":
-        import hdbscan
+        import hdbscan  # type: ignore[import-not-found]
 
         model = hdbscan.HDBSCAN(min_cluster_size=max(5, n_clusters))
         labels = model.fit_predict(Xs)
@@ -60,9 +60,7 @@ def fit_clustering(
         mask = labels >= 0 if -1 in unique else np.ones(len(labels), dtype=bool)
         if mask.sum() > 1 and len(set(labels[mask].tolist())) >= 2:
             metrics["silhouette"] = float(silhouette_score(Xs[mask], labels[mask]))
-            metrics["calinski_harabasz"] = float(
-                calinski_harabasz_score(Xs[mask], labels[mask])
-            )
+            metrics["calinski_harabasz"] = float(calinski_harabasz_score(Xs[mask], labels[mask]))
             metrics["davies_bouldin"] = float(davies_bouldin_score(Xs[mask], labels[mask]))
 
     return {

@@ -6,10 +6,10 @@ from typing import Any
 
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException
+from labcore.suitability import run_suitability
 from pydantic import BaseModel, Field
 
 from backend.app.security import AuthUser, require_write_role
-from labcore.suitability import run_suitability
 
 router = APIRouter(tags=["suitability"])
 
@@ -39,9 +39,7 @@ def suitability_run(
         entry = mapping.get(body.sample_id)
         if entry is None or not entry[0].exists():
             if not body.rows:
-                raise HTTPException(
-                    status_code=404, detail=f"sample '{body.sample_id}' not found"
-                )
+                raise HTTPException(status_code=404, detail=f"sample '{body.sample_id}' not found")
             df = pd.DataFrame(body.rows)
             time_col = body.time_col
         else:

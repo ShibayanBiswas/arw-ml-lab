@@ -38,7 +38,7 @@ def fit_anomaly(
         flags = model.fit_predict(Xs)
         scores = -model.negative_outlier_factor_
     elif algorithm == "pyod_copod":
-        from pyod.models.copod import COPOD
+        from pyod.models.copod import COPOD  # type: ignore[import-not-found]
 
         model = COPOD(contamination=contamination)
         model.fit(Xs)
