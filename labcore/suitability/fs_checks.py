@@ -1,8 +1,8 @@
 """FS financial labelling suitability (ARCHITECTURE §37).
 
-Implemented without TradingLab: FS1–FS9, FS14–FS15, FS19–FS20.
-FS10–FS13 / FS16–FS18 stay DEFERRED until vendor/tradinglab label adapters.
-FS7/FS9 use AFML-equivalent thin formulas (EWMA vol, CUSUM) until the submodule lands.
+Implemented without TradingLab: FS1–FS10, FS14–FS15, FS19–FS20.
+FS11–FS13 / FS16–FS18 stay DEFERRED until vendor/tradinglab uniqueness/meta adapters.
+FS7/FS9/FS10 use AFML-equivalent thin formulas until the submodule lands.
 """
 
 from __future__ import annotations
@@ -302,6 +302,56 @@ def check_fs9_event_count(df: pd.DataFrame, price_col: str | None) -> FSResult:
     return FSResult("FS9", "FAIL", f"{events} CUSUM events (<100)", details)
 
 
+def check_fs10_class_balance(df: pd.DataFrame, price_col: str | None) -> FSResult:
+    """FS10 — class balance after trial fixed-horizon ±1σ labels (AFML thin).
+
+    For each bar i, look ahead min(5, n-i-1) bars; label +1 if cum log-return
+    ≥ +σ_i, −1 if ≤ −σ_i, else 0 (vertical barrier). Minority share among
+    {−1,+1} (ignoring 0): ≥15% PASS, 5–15% WARN, else FAIL.
+    """
+    if price_col is None or price_col not in df.columns:
+        return FSResult("FS10", "FAIL", "no price column for trial labels")
+    px = pd.to_numeric(df[price_col], errors="coerce").dropna()
+    if len(px) < 60:
+        return FSResult("FS10", "FAIL", "too few bars for trial labels", {"n": len(px)})
+    log_p = np.log(px.to_numpy(dtype=float))
+    rets = np.diff(log_p)
+    vol = pd.Series(rets).ewm(span=100, min_periods=30).std().to_numpy()
+    labels: list[int] = []
+    horizon = 5
+    for i in range(len(rets) - 1):
+        sigma = vol[i]
+        if not np.isfinite(sigma) or sigma <= 0:
+            continue
+        end = min(i + 1 + horizon, len(log_p))
+        path = log_p[i + 1 : end] - log_p[i]
+        if len(path) == 0:
+            continue
+        if np.any(path >= sigma):
+            labels.append(1)
+        elif np.any(path <= -sigma):
+            labels.append(-1)
+        else:
+            labels.append(0)
+    signed = [x for x in labels if x != 0]
+    details: dict[str, Any] = {
+        "n_labels": len(labels),
+        "n_signed": len(signed),
+        "pos": int(sum(1 for x in signed if x > 0)),
+        "neg": int(sum(1 for x in signed if x < 0)),
+        "zero_share": float(labels.count(0) / max(len(labels), 1)),
+    }
+    if len(signed) < 20:
+        return FSResult("FS10", "FAIL", "too few signed trial labels", details)
+    minority = min(details["pos"], details["neg"]) / len(signed)
+    details["minority_share"] = float(minority)
+    if minority >= 0.15:
+        return FSResult("FS10", "PASS", f"minority={minority:.1%} after ±1σ trial", details)
+    if minority >= 0.05:
+        return FSResult("FS10", "WARN", f"minority={minority:.1%} (5–15%)", details)
+    return FSResult("FS10", "FAIL", f"minority={minority:.1%} (<5%)", details)
+
+
 def check_fs8_stale_prices(df: pd.DataFrame, price_col: str | None) -> FSResult:
     """FS8 — share of zero returns (<5% PASS, 5–20% WARN, >20% FAIL)."""
     if price_col and price_col in df.columns:
@@ -482,13 +532,14 @@ def run_suitability(
         check_fs7_daily_vol(df, price),
         check_fs8_stale_prices(df, price),
         check_fs9_event_count(df, price),
+        check_fs10_class_balance(df, price),
     ]
-    for code in ("FS10", "FS11", "FS12", "FS13"):
+    for code in ("FS11", "FS12", "FS13"):
         checks.append(
             FSResult(
                 code,
                 "DEFERRED",
-                "requires TradingLab label adapters (Phase 5)",
+                "requires TradingLab uniqueness / sample-weight adapters (Phase 5)",
             )
         )
     checks.append(check_fs14_return_acf(df, price))
