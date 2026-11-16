@@ -476,3 +476,79 @@ def plot_report_heatmap(
     )
     fig.update_layout(title="Classification report heatmap", height=360)
     return {"id": "CLE.P.REPORT_HEATMAP", "kind": "plot", "plotly": fig.to_plotly_json()}
+
+
+def plot_cost_curve(
+    y_true: np.ndarray,
+    scores: np.ndarray,
+    *,
+    c_fp: float = 1.0,
+    c_fn: float = 1.0,
+) -> dict[str, Any]:
+    """CLE.P.COST_CURVE — expected cost vs threshold (thin on sklearn roc_curve)."""
+    import plotly.graph_objects as go
+    from sklearn.metrics import roc_curve
+
+    y = np.asarray(y_true).astype(int)
+    s = np.asarray(scores, dtype=float)
+    fpr, tpr, thr = roc_curve(y, s)
+    # Align thr length; sklearn may return thr shorter by one — pad with last
+    if len(thr) < len(fpr):
+        thr = np.r_[thr, thr[-1] if len(thr) else 0.5]
+    n = len(y)
+    pos = float(np.sum(y == 1))
+    neg = float(n - pos)
+    # Expected cost at each operating point: C_FP·FP + C_FN·FN
+    fp = fpr * neg
+    fn = (1.0 - tpr) * pos
+    cost = c_fp * fp + c_fn * fn
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=thr, y=cost, mode="lines", name="expected cost"))
+    best_i = int(np.nanargmin(cost)) if len(cost) else 0
+    fig.add_vline(x=float(thr[best_i]), line_dash="dash", annotation_text="min cost")
+    fig.update_layout(
+        title="Expected cost vs threshold",
+        xaxis_title="threshold",
+        yaxis_title="expected cost",
+        height=360,
+    )
+    return {
+        "id": "CLE.P.COST_CURVE",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "c_fp": c_fp,
+            "c_fn": c_fn,
+            "best_threshold": float(thr[best_i]),
+            "best_cost": float(cost[best_i]),
+        },
+    }
+
+
+def plot_class_balance(
+    counts_before: dict[str, int],
+    counts_after: dict[str, int] | None = None,
+) -> dict[str, Any]:
+    """CLE.P.CLASS_BALANCE — class counts before/after resampling."""
+    import plotly.graph_objects as go
+
+    labels = sorted(set(counts_before) | set(counts_after or {}))
+    fig = go.Figure()
+    fig.add_trace(go.Bar(name="before", x=labels, y=[int(counts_before.get(l, 0)) for l in labels]))
+    if counts_after is not None:
+        fig.add_trace(
+            go.Bar(name="after", x=labels, y=[int(counts_after.get(l, 0)) for l in labels])
+        )
+    fig.update_layout(
+        barmode="group",
+        title="Class balance",
+        xaxis_title="class",
+        yaxis_title="count",
+        height=360,
+    )
+    return {
+        "id": "CLE.P.CLASS_BALANCE",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {"before": counts_before, "after": counts_after},
+    }
