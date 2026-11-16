@@ -27,6 +27,7 @@ from backend.app.routers import (
     suitability,
     timeseries,
     unsupervised,
+    wfo,
 )
 from backend.app.schemas import Healthz
 from backend.app.settings import get_settings
@@ -88,6 +89,7 @@ def create_app() -> FastAPI:
     app.include_router(suitability.router)
     app.include_router(deep.router)
     app.include_router(insights.router)
+    app.include_router(wfo.router)
     return app
 
 
