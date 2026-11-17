@@ -1,7 +1,7 @@
 # ARW ML Lab — One-shot finish report (interim)
 
 **Date:** 17 Nov 2026 (IST)
-**Tip:** see `docs/PROGRESS.md` (oneshot through ~c228; Contabo still blocked)
+**Tip:** see `docs/PROGRESS.md` (oneshot through ~c229; Contabo still blocked)
 **Frontend:** https://arw-ml-lab.vercel.app → READY
 **Backend target:** Contabo VPS — **not live** (`docs/DEPLOY_CONTABO.md`, ADR-0017)
 
@@ -19,4 +19,4 @@ Then agent resumes: SSH bootstrap → server `.env` → Deploy green → DS1 EDA
 
 ## Offline one-shot (continued)
 
-Catalogue, FE workbenches, Phase 7 reports/admin/load/ZAP, and STRESS/8.2 contracts through oneshot ~c218 (FS16–FS18 thin, Optuna/pooler, Celery recycle, REFIT/HUMILITY, hold-out reuse, restore/uptime/rate-limit/JWT/CORS/AUTH_BYPASS compose pin, Contabo DL + MAX_ROWS, atlas coverage, AI/VD numbers-only FE, SSE Caddy flush) while Contabo stayed blocked. Full hosted prove and TradingLab **parity** remain open.
+Catalogue, FE workbenches, Phase 7 reports/admin/load/ZAP, and STRESS/8.2 contracts through oneshot ~c229 (FS16–FS18 thin, Optuna/pooler, Celery recycle, REFIT/HUMILITY, hold-out reuse + audit_log persist, restore/uptime/rate-limit/JWT/CORS/AUTH_BYPASS, Contabo DL + MAX_ROWS, atlas, numbers-only FE, SSE Caddy, backup script + deploy scp, Actions Node bump, egress nft renderer) while Contabo stayed blocked. Full hosted prove and TradingLab **parity** remain open.
