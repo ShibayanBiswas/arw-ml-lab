@@ -19,4 +19,4 @@ Then agent resumes: SSH bootstrap → server `.env` → Deploy green → DS1 EDA
 
 ## Offline one-shot (continued)
 
-Catalogue, FE workbenches, Phase 7 reports/admin/load/ZAP, and STRESS/8.2 contracts through oneshot ~c210 (FS16–FS18 thin, Optuna/pooler, Celery recycle, REFIT/HUMILITY, hold-out reuse, restore/uptime/rate-limit, Contabo DL defaults, atlas coverage, AI/VD numbers-only FE) while Contabo stayed blocked. Full hosted prove and TradingLab **parity** remain open.
+Catalogue, FE workbenches, Phase 7 reports/admin/load/ZAP, and STRESS/8.2 contracts through oneshot ~c216 (FS16–FS18 thin, Optuna/pooler, Celery recycle, REFIT/HUMILITY, hold-out reuse, restore/uptime/rate-limit/JWT/CORS, Contabo DL + MAX_ROWS, atlas coverage, AI/VD numbers-only FE, SSE Caddy flush) while Contabo stayed blocked. Full hosted prove and TradingLab **parity** remain open.
