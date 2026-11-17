@@ -126,7 +126,9 @@ def start_train(body: TrainBody, user: AuthUser = Depends(require_write_role)) -
         kind="train",
         queue="q.train.cpu",
     )
-    run_train_task.apply_async(args=(job.id, exp.id, body.model_dump()), queue="q.train.cpu")
+    train_payload = body.model_dump()
+    train_payload["workspace_id"] = user.workspace_id or ds.workspace_id
+    run_train_task.apply_async(args=(job.id, exp.id, train_payload), queue="q.train.cpu")
     return {"job_id": job.id, "experiment_id": exp.id}
 
 
