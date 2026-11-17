@@ -12,6 +12,7 @@ from labcore.unsupervised.cluster_plots import kmeans_k_sweep, silhouette_knife
 from labcore.unsupervised.dr_plots import (
     pca_biplot,
     pca_cumulative_variance,
+    pca_loadings_heatmap,
     pca_scree,
     shepard_diagram,
 )
@@ -34,6 +35,7 @@ class UnsupBody(BaseModel):
     top_n: int = Field(default=20, ge=1, le=500)
     pc_x: int = Field(default=1, ge=1, le=32)
     pc_y: int = Field(default=2, ge=1, le=32)
+    max_pcs: int = Field(default=0, ge=0, le=32)
 
 
 def _frame(rows: list[dict[str, Any]]) -> pd.DataFrame:
@@ -175,6 +177,27 @@ def unsupervised_biplot(
             pc_x=body.pc_x,
             pc_y=body.pc_y,
             seed=body.seed,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/api/v1/unsupervised/dr/loadings")
+def unsupervised_loadings(
+    body: UnsupBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """DR.P.LOADINGS — PCA loadings heatmap (seed 42)."""
+    _ = user
+    df = _frame(body.rows)
+    cols = [str(c) for c in df.columns]
+    max_pcs = None if body.max_pcs == 0 else body.max_pcs
+    try:
+        return pca_loadings_heatmap(
+            df.to_numpy(dtype=float),
+            feature_names=cols,
+            seed=body.seed,
+            max_components=max_pcs,
         )
     except Exception as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc

@@ -209,6 +209,83 @@ def pca_biplot(
     }
 
 
+def pca_loadings_heatmap(
+    X: np.ndarray,
+    *,
+    feature_names: list[str] | None = None,
+    seed: int = 42,
+    loading_threshold: float = 0.4,
+    max_components: int | None = None,
+) -> dict[str, Any]:
+    """DR.P.LOADINGS — variable × PC loadings heatmap (|loading| > threshold highlighted)."""
+    import plotly.graph_objects as go
+
+    X = np.asarray(X, dtype=float)
+    n_features = X.shape[1]
+    names = feature_names or [f"f{j}" for j in range(n_features)]
+    if len(names) != n_features:
+        raise ValueError("feature_names length must match n_features")
+
+    Xs = StandardScaler().fit_transform(X)
+    n_comp = min(Xs.shape[1], max(1, Xs.shape[0] - 1))
+    model = PCA(n_components=n_comp, random_state=seed)
+    model.fit(Xs)
+    ev = np.asarray(model.explained_variance_, dtype=float)
+    loadings = (model.components_.T * np.sqrt(ev)).astype(float)
+    k_show = n_comp if max_components is None else min(n_comp, max(1, max_components))
+    loadings = loadings[:, :k_show]
+    pc_labels = [f"PC{i}" for i in range(1, k_show + 1)]
+    strong = np.abs(loadings) > loading_threshold
+    text = [
+        [f"{loadings[j, i]:.2f}" for i in range(k_show)] for j in range(n_features)
+    ]
+    zmax = float(np.max(np.abs(loadings))) if loadings.size else 1.0
+    zmax = max(zmax, loading_threshold, 0.01)
+
+    fig = go.Figure(
+        go.Heatmap(
+            z=loadings.tolist(),
+            x=pc_labels,
+            y=names,
+            zmid=0.0,
+            zmin=-zmax,
+            zmax=zmax,
+            colorscale="RdBu",
+            text=text,
+            texttemplate="%{text}",
+            hovertemplate="feature=%{y}<br>%{x}=%{z:.3f}<extra></extra>",
+        )
+    )
+    n_strong = int(np.sum(strong))
+    fig.update_layout(
+        title=f"PCA loadings (|λ|>{loading_threshold}: {n_strong} cells)",
+        xaxis_title="Component",
+        yaxis_title="Feature",
+        height=max(320, 28 * n_features + 120),
+    )
+    strong_cells = [
+        {"feature": names[j], "pc": pc_labels[i], "loading": float(loadings[j, i])}
+        for j in range(n_features)
+        for i in range(k_show)
+        if strong[j, i]
+    ]
+    return {
+        "id": "DR.P.LOADINGS",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "loadings": [[float(v) for v in row] for row in loadings.tolist()],
+            "feature": names,
+            "component": pc_labels,
+            "strong_cells": strong_cells,
+            "n_strong_cells": n_strong,
+            "loading_threshold": loading_threshold,
+            "n_components_shown": k_show,
+        },
+        "seed": seed,
+    }
+
+
 def shepard_diagram(
     X: np.ndarray,
     embedding: np.ndarray,
