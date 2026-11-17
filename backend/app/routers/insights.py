@@ -6,7 +6,7 @@ import json
 import os
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from labcore.ai import get_ai_client, validate_insights_payload
 from labcore.ai.numbers_only import NumbersOnlyPolicy, resolve_insight
 from pydantic import BaseModel, Field

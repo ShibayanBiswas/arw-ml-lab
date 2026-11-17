@@ -22,6 +22,7 @@ from backend.app.routers import (
     eda,
     experiments,
     export_models,
+    decisions,
     insights,
     intake,
     jobs,
@@ -124,6 +125,7 @@ def create_app() -> FastAPI:
     app.include_router(suitability.router)
     app.include_router(deep.router)
     app.include_router(insights.router)
+    app.include_router(decisions.router)
     app.include_router(wfo.router)
     app.include_router(reports.router)
     app.include_router(monitoring.router)
