@@ -1,4 +1,6 @@
-"""AI.NUMBERS.ONLY — oneshot-c200."""
+"""AI.NUMBERS.ONLY — oneshot-c200 / c233 latency."""
+
+import time
 
 from labcore.ai.numbers_only import (
     CircuitBreaker,
@@ -13,6 +15,16 @@ def test_numbers_only_contract() -> None:
     out = assert_numbers_only_contract(seed=42)
     assert out["id"] == "AI.NUMBERS.ONLY"
     assert out["seed"] == 42
+
+
+def test_numbers_only_fallback_under_10s() -> None:
+    """§39.13 AC: unreachable AI → numbers-only within 10 s."""
+    t0 = time.perf_counter()
+    pol = NumbersOnlyPolicy(key_present=False)
+    out = resolve_insight({"roc_auc_cv_mean": 0.81}, policy=pol, seed=42)
+    elapsed = time.perf_counter() - t0
+    assert out["mode"] == "numbers-only"
+    assert elapsed < 10.0, elapsed
 
 
 def test_insight_echoes_facts_keys_only() -> None:
