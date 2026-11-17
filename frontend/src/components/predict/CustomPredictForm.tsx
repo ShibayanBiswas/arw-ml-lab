@@ -210,14 +210,29 @@ export function CustomPredictForm({ modelId }: Props) {
         </div>
         <div className="space-y-3" data-testid="predict-result-pane">
       {result ? (
-        <div className="rounded border border-[var(--border)] p-3 text-sm">
+        <div className="rounded border border-[var(--border)] p-3 text-sm" data-artefact="PRED.HUMILITY">
           <p>
-            Prediction: <strong>{String(result.prediction)}</strong>
+            Prediction:{" "}
+            <strong>
+              {result.prediction == null ? "— (abstained)" : String(result.prediction)}
+            </strong>
             {result.refit === false ? " · no refit" : null}
           </p>
           {Array.isArray(result.probabilities) ? (
             <p className="text-[var(--muted)]">
               Probabilities: {(result.probabilities as number[]).map((p) => p.toFixed(4)).join(", ")}
+            </p>
+          ) : null}
+          {result.humility && typeof result.humility === "object" ? (
+            <p className="mt-2 text-xs text-[var(--muted)]">
+              Humility:{" "}
+              {String((result.humility as Record<string, unknown>).humility_action ?? "none")}
+              {(result.humility as Record<string, unknown>).abstain
+                ? " · prediction suppressed"
+                : ""}
+              {(result.humility as Record<string, unknown>).needs_human_review
+                ? " · needs review"
+                : ""}
             </p>
           ) : null}
         </div>
