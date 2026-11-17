@@ -371,7 +371,8 @@ CORS: `CORS_ALLOWED_ORIGINS=https://arw-ml-lab.vercel.app` on the server; previe
 
 | What | How | Retention |
 |---|---|---|
-| Postgres, Auth, Storage | Supabase (daily backups on Pro; PITR optional) | per Supabase plan |
+| Postgres, Auth | Supabase (daily backups on Pro; PITR optional) | per Supabase plan |
+| Supabase Storage `models/` and `datasets/` buckets | nightly `rclone sync` from the private `backups` bucket prefix (service-role S3 credentials in `.env`); objects are **not** in DB backups | 30 days off-site |
 | Redis volume (queue state, Optuna progress cache) | host cron `03:30 UTC`: `docker compose exec -T redis redis-cli -a $REDIS_PASSWORD BGSAVE`, then `tar czf /opt/arw-ml-lab/backups/redis-$(date +%F).tgz` of the `redis_data` volume | 7 days local |
 | MLflow volume / config (if enabled) | same cron, `mlflow-$(date +%F).tgz` | 7 days local |
 | `/opt/arw-ml-lab/.env`, Caddyfile, compose file | `tar` with `.env` encrypted (`age` or `gpg --symmetric`) | 7 days local |

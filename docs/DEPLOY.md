@@ -156,6 +156,10 @@ LAB_API_URL=https://… bash scripts/smoke_hosted.sh
 
 Local without Docker Supabase CLI: `uv run python tests/db_harness/run_db_tests.py`.
 
+## Storage backups (OPS-13 / ST-OPS-06)
+
+Supabase Pro daily backups and PITR cover Postgres only. Mirror the **`models`** and **`datasets`** Storage buckets nightly to an external destination (`rclone`); run a restore drill quarterly. Contabo path: `docs/DEPLOY_CONTABO.md` §10 Backups (offline contract `labcore/ops/storage_backup_contract.py`, artefact **OPS.STORAGE.BACKUP**).
+
 ## Rollback
 
 1. **App:** Render → previous successful deploy for `lab-api` / workers; Vercel → promote prior deployment.
