@@ -8,6 +8,7 @@
 ## Tests
 ```
 .\.venv\Scripts\python.exe -m pytest tests\unit\test_ops_lab_beat_contract.py tests\unit\test_import_allowlist.py -v --tb=short
+============================== 6 passed in 3.72s ==============================
 ```
 
 ## Notes
@@ -22,4 +23,4 @@
 - [x] Import allowlist green.
 - [x] Rule 70: stdlib `re` only in new module.
 
-**Ship commit:** (set after push)
+**Ship commit:** `06f2ecd`
