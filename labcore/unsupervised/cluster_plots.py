@@ -6,7 +6,12 @@ from typing import Any
 
 import numpy as np
 from sklearn.cluster import KMeans
-from sklearn.metrics import calinski_harabasz_score, silhouette_samples, silhouette_score
+from sklearn.metrics import (
+    calinski_harabasz_score,
+    davies_bouldin_score,
+    silhouette_samples,
+    silhouette_score,
+)
 from sklearn.preprocessing import StandardScaler
 
 
@@ -300,6 +305,84 @@ def kmeans_calinski_harabasz(
             "calinski_harabasz": ch_scores,
             "best_k_by_ch": best_k,
             "best_ch": best_ch,
+        },
+        "seed": seed,
+    }
+
+
+def kmeans_davies_bouldin(
+    X: np.ndarray,
+    *,
+    k_min: int = 2,
+    k_max: int = 10,
+    seed: int = 42,
+) -> dict[str, Any]:
+    """Davies-Bouldin index vs k (lower is better). Returns numbers + Plotly."""
+    import plotly.graph_objects as go
+
+    Xs = StandardScaler().fit_transform(np.asarray(X, dtype=float))
+    ks = list(range(k_min, k_max + 1))
+    db_scores: list[float | None] = []
+    for k in ks:
+        km = KMeans(n_clusters=k, random_state=seed, n_init=10).fit(Xs)
+        if k >= 2 and len(set(km.labels_)) >= 2:
+            db_scores.append(float(davies_bouldin_score(Xs, km.labels_)))
+        else:
+            db_scores.append(None)
+
+    best_k: int | None = None
+    best_db: float | None = None
+    finite = [(k, s) for k, s in zip(ks, db_scores, strict=True) if s is not None]
+    if finite:
+        best_k, best_db = min(finite, key=lambda t: t[1])
+
+    fig = go.Figure()
+    y_plot = [s if s is not None else None for s in db_scores]
+    fig.add_trace(
+        go.Scatter(
+            x=ks,
+            y=y_plot,
+            mode="lines+markers",
+            name="Davies-Bouldin",
+        )
+    )
+    if best_k is not None and best_db is not None:
+        fig.add_vline(
+            x=best_k,
+            line_dash="dash",
+            line_color="#c9a227",
+            annotation_text=f"min DB k={best_k}",
+            annotation_position="top",
+        )
+        fig.add_trace(
+            go.Scatter(
+                x=[best_k],
+                y=[best_db],
+                mode="markers",
+                name="best k",
+                marker={"size": 12, "color": "#c9a227", "symbol": "diamond"},
+            )
+        )
+    title = (
+        f"Davies-Bouldin vs k (best k={best_k})"
+        if best_k is not None
+        else "Davies-Bouldin vs k"
+    )
+    fig.update_layout(
+        title=title,
+        xaxis_title="k",
+        yaxis_title="Davies-Bouldin index",
+        height=400,
+    )
+    return {
+        "id": "CLU.P.DB",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "k": ks,
+            "davies_bouldin": db_scores,
+            "best_k_by_db": best_k,
+            "best_db": best_db,
         },
         "seed": seed,
     }

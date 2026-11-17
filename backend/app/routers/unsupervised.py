@@ -10,6 +10,7 @@ from labcore.unsupervised import fit_anomaly, fit_clustering, fit_dr
 from labcore.unsupervised.anomaly_plots import anomaly_ranked_bar
 from labcore.unsupervised.cluster_plots import (
     kmeans_calinski_harabasz,
+    kmeans_davies_bouldin,
     kmeans_elbow,
     kmeans_k_sweep,
     silhouette_knife,
@@ -163,6 +164,25 @@ def unsupervised_calinski_harabasz(
     X = _frame(body.rows)
     try:
         return kmeans_calinski_harabasz(
+            X.to_numpy(dtype=float),
+            k_min=body.k_min,
+            k_max=body.k_max,
+            seed=body.seed,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/api/v1/unsupervised/clustering/db")
+def unsupervised_davies_bouldin(
+    body: UnsupBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """CLU.P.DB — Davies-Bouldin vs k (seed 42)."""
+    _ = user
+    X = _frame(body.rows)
+    try:
+        return kmeans_davies_bouldin(
             X.to_numpy(dtype=float),
             k_min=body.k_min,
             k_max=body.k_max,
