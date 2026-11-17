@@ -131,7 +131,7 @@ services:
       - --prefetch-multiplier
       - "1"
       - --max-tasks-per-child
-      - "10"
+      - "20"
     depends_on:
       redis:
         condition: service_healthy

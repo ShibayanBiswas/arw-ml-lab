@@ -9,8 +9,10 @@ from labcore.ops.queue_time_limits import (
     celery_task_annotations,
     visibility_timeout_floor_s,
 )
+from labcore.ops.worker_recycle import celery_recycle_settings
 
 settings = get_settings()
+_RECYCLE = celery_recycle_settings(settings.service_role)
 
 QUEUES = (
     "q.ingest",
@@ -44,20 +46,25 @@ celery_app = Celery(
 
 _TASK_ANNOTATIONS = celery_task_annotations()
 
-celery_app.conf.update(
-    task_acks_late=True,
-    task_reject_on_worker_lost=True,
-    worker_prefetch_multiplier=1,
-    worker_max_tasks_per_child=20,
-    task_default_queue="q.demo",
-    task_create_missing_queues=True,
-    task_serializer="json",
-    accept_content=["json"],
-    result_serializer="json",
-    timezone="Asia/Kolkata",
-    enable_utc=True,
+_celery_update: dict = {
+    "task_acks_late": True,
+    "task_reject_on_worker_lost": True,
+    "worker_prefetch_multiplier": 1,
+    "worker_max_tasks_per_child": int(_RECYCLE["worker_max_tasks_per_child"]),
+    "task_default_queue": "q.demo",
+    "task_create_missing_queues": True,
+    "task_serializer": "json",
+    "accept_content": ["json"],
+    "result_serializer": "json",
+    "timezone": "Asia/Kolkata",
+    "enable_utc": True,
     # OPS-03 / §39.3: soft → SoftTimeLimitExceeded; hard → kill
-    task_annotations=_TASK_ANNOTATIONS,
+    "task_annotations": _TASK_ANNOTATIONS,
+}
+if _RECYCLE.get("worker_max_memory_per_child"):
+    _celery_update["worker_max_memory_per_child"] = int(_RECYCLE["worker_max_memory_per_child"])
+celery_app.conf.update(
+    **_celery_update,
     # Known queue names (ARCHITECTURE §8 + q.predict.heavy + q.demo)
     task_routes={
         "lab.demo.progress": {"queue": "q.demo"},
