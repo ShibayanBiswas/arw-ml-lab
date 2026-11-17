@@ -12,6 +12,7 @@ from labcore.unsupervised import fit_anomaly, fit_clustering, fit_dr
 from labcore.unsupervised.anomaly_plots import anomaly_embedding_scatter, anomaly_ranked_bar
 from labcore.unsupervised.cluster_plots import (
     correlation_clustermap,
+    dbscan_k_distance,
     hierarchical_dendrogram,
     kmeans_calinski_harabasz,
     kmeans_davies_bouldin,
@@ -317,6 +318,25 @@ def unsupervised_optics_reachability(
             max_eps=float(max_eps),
             cluster_method=body.cluster_method,
             xi=body.xi,
+            seed=body.seed,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/api/v1/unsupervised/clustering/k-distance")
+def unsupervised_dbscan_k_distance(
+    body: UnsupBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """CLU.P.K_DISTANCE — sorted k-NN distances with Kneedle eps knee (seed 42 metadata)."""
+    _ = user
+    X = _frame(body.rows)
+    ms = None if body.min_samples < 1 else body.min_samples
+    try:
+        return dbscan_k_distance(
+            X.to_numpy(dtype=float),
+            min_samples=ms,
             seed=body.seed,
         )
     except Exception as exc:

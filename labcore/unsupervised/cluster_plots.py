@@ -713,6 +713,103 @@ def optics_reachability(
     }
 
 
+def dbscan_k_distance(
+    X: np.ndarray,
+    *,
+    min_samples: int | None = None,
+    metric: str = "euclidean",
+    seed: int = 42,
+) -> dict[str, Any]:
+    """Sorted k-NN distance plot with Kneedle knee → suggested DBSCAN eps."""
+    import plotly.graph_objects as go
+    from kneed import KneeLocator
+    from sklearn.neighbors import NearestNeighbors
+
+    Xs = StandardScaler().fit_transform(np.asarray(X, dtype=float))
+    n_rows, n_features = Xs.shape
+    if n_rows < 2:
+        raise ValueError("need at least 2 rows for k-distance plot")
+    ms = int(min_samples) if min_samples is not None else max(5, 2 * n_features)
+    ms = max(2, ms)
+    if ms >= n_rows:
+        raise ValueError("min_samples must be < n_rows")
+
+    nn = NearestNeighbors(n_neighbors=ms, metric=metric, n_jobs=1)
+    nn.fit(Xs)
+    dists, _ = nn.kneighbors(Xs)
+    k_dist = np.asarray(dists[:, ms - 1], dtype=float)
+    sorted_dist = np.sort(k_dist)[::-1]
+
+    knee_idx: int | None = None
+    knee_eps: float | None = None
+    xs = list(range(n_rows))
+    if n_rows >= 3:
+        locator = KneeLocator(
+            xs, sorted_dist.tolist(), curve="convex", direction="decreasing", S=1.0
+        )
+        if locator.knee is not None:
+            knee_idx = int(locator.knee)
+            if locator.knee_y is not None:
+                knee_eps = float(locator.knee_y)
+            else:
+                knee_eps = float(sorted_dist[knee_idx])
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=xs,
+            y=sorted_dist.tolist(),
+            mode="lines",
+            name=f"{ms}-NN distance (sorted)",
+            line={"color": "#1f77b4", "width": 1.5},
+        )
+    )
+    if knee_eps is not None and knee_idx is not None:
+        fig.add_hline(
+            y=knee_eps,
+            line_dash="dash",
+            line_color="#c9a227",
+            annotation_text=f"suggested eps={knee_eps:.3f}",
+            annotation_position="right",
+        )
+        fig.add_trace(
+            go.Scatter(
+                x=[knee_idx],
+                y=[knee_eps],
+                mode="markers",
+                name="knee",
+                marker={"size": 12, "color": "#c9a227", "symbol": "diamond"},
+            )
+        )
+    title = (
+        f"k-distance (min_samples={ms}, knee eps={knee_eps:.3f})"
+        if knee_eps is not None
+        else f"k-distance (min_samples={ms})"
+    )
+    fig.update_layout(
+        title=title,
+        xaxis_title="Points (sorted by k-NN distance)",
+        yaxis_title=f"{ms}-th NN distance",
+        height=420,
+    )
+    return {
+        "id": "CLU.P.K_DISTANCE",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "n_rows": n_rows,
+            "min_samples": ms,
+            "metric": metric,
+            "k_distance_sorted": sorted_dist.tolist(),
+            "knee_index": knee_idx,
+            "suggested_eps": knee_eps,
+            "k_distance_max": float(sorted_dist[0]),
+            "k_distance_min": float(sorted_dist[-1]),
+        },
+        "seed": seed,
+    }
+
+
 def _dendro_icoord_to_ticks(icoord: list[float]) -> list[float]:
     """Map scipy dendrogram icoord (5·i spacing) to 0-based heatmap tick positions."""
     return [(float(x) - 5.0) / 5.0 for x in icoord]
