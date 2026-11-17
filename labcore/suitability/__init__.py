@@ -3,16 +3,18 @@
 from labcore.suitability.fs_checks import compute_suitability_parameter_grid, run_suitability
 from labcore.suitability.plots import (
     plot_daily_volatility,
+    plot_holding_period_distribution,
     plot_label_balance,
     plot_price_cusum,
-    plot_holding_period_distribution,
     plot_sample_barriers,
     plot_suitability_grid,
+    plot_uniqueness_concurrency,
 )
 
 __all__ = [
     "compute_suitability_parameter_grid",
     "plot_daily_volatility",
+    "plot_holding_period_distribution",
     "plot_label_balance",
     "plot_price_cusum",
     "plot_sample_barriers",

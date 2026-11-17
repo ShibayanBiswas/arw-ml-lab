@@ -18,6 +18,7 @@ from labcore.suitability.fs_checks import (
     compute_suitability_parameter_grid,
     compute_trial_holding_profile,
     compute_trial_tb_label_balance,
+    compute_trial_uniqueness_profile,
     sample_trial_tb_events,
 )
 
@@ -633,5 +634,96 @@ def plot_holding_period_distribution(
             "min_holding": int(prof["min_holding"]),
             "max_holding": int(prof["max_holding"]),
             "by_label_counts": {k: len(prof["by_label"][k]) for k in ("-1", "0", "1")},
+        },
+    }
+
+
+def plot_uniqueness_concurrency(
+    df: pd.DataFrame,
+    *,
+    price_col: str | None = None,
+    time_col: str | None = None,
+    horizon: int = 5,
+    vol_span: int = 100,
+    seed: int = 42,
+) -> dict[str, Any]:
+    """FS.P.UNIQUENESS — histogram of per-event ū and concurrency c_t over time."""
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+
+    col = price_col or _detect_price_col(df)
+    if col is None:
+        raise ValueError("no price column detected for uniqueness plot")
+    prof = compute_trial_uniqueness_profile(df, col, horizon=horizon, vol_span=vol_span)
+    if not prof.get("ok"):
+        raise ValueError(prof.get("reason", "uniqueness profile failed"))
+
+    px_df = df.loc[pd.to_numeric(df[col], errors="coerce").notna()]
+    times = _time_axis(px_df, time_col)
+    n_conc = len(prof["concurrency"])
+    x_conc = times[:n_conc] if len(times) >= n_conc else [str(i) for i in range(n_conc)]
+
+    fig = make_subplots(
+        rows=2,
+        cols=1,
+        shared_xaxes=False,
+        vertical_spacing=0.12,
+        subplot_titles=("Per-event uniqueness ū (mean 1/c_t)", "Label concurrency c_t over time"),
+        row_heights=[0.42, 0.58],
+    )
+    per_event = prof["per_event_uniqueness"]
+    fig.add_trace(
+        go.Histogram(
+            x=per_event,
+            nbinsx=min(40, max(10, len(per_event) // 25)),
+            name="ū",
+            hovertemplate="ū=%{x:.4f}<br>count=%{y}<extra></extra>",
+        ),
+        row=1,
+        col=1,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=x_conc,
+            y=prof["concurrency"],
+            mode="lines",
+            name="c_t",
+            line=dict(width=1),
+            hovertemplate="t=%{x}<br>c_t=%{y:.0f}<extra></extra>",
+        ),
+        row=2,
+        col=1,
+    )
+    fig.add_vline(
+        x=float(prof["mean_uniqueness"]),
+        line_dash="dash",
+        line_color="#c9a227",
+        row=1,
+        col=1,
+        annotation_text=f"mean ū={prof['mean_uniqueness']:.3f}",
+        annotation_position="top right",
+    )
+    fig.update_xaxes(title_text="ū", row=1, col=1)
+    fig.update_yaxes(title_text="events", row=1, col=1)
+    fig.update_xaxes(title_text="time", row=2, col=1)
+    fig.update_yaxes(title_text="concurrent labels", row=2, col=1)
+    fig.update_layout(
+        title=f"Trial label uniqueness and concurrency (±1σ, vertical={horizon} bars)",
+        height=520,
+        showlegend=False,
+    )
+    return {
+        "id": "FS.P.UNIQUENESS",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "price_col": col,
+            "horizon": horizon,
+            "vol_span": vol_span,
+            "seed": seed,
+            "n_spans": int(prof["n_spans"]),
+            "mean_uniqueness": float(prof["mean_uniqueness"]),
+            "max_concurrency": float(prof["max_concurrency"]),
+            "median_concurrency": float(prof["median_concurrency"]),
         },
     }

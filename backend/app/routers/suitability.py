@@ -8,9 +8,10 @@ import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException
 from labcore.suitability import (
     plot_daily_volatility,
-    plot_price_cusum,
     plot_holding_period_distribution,
+    plot_price_cusum,
     plot_sample_barriers,
+    plot_uniqueness_concurrency,
     run_suitability,
 )
 from pydantic import BaseModel, Field
@@ -151,6 +152,29 @@ def suitability_uniqueness_plot(
             time_col=time_col,
             horizon=body.horizon,
             vol_span=body.vol_span,
+            seed=42,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/api/v1/suitability/plots/holding")
+def suitability_holding_plot(
+    body: SuitabilityBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """FS.P.HOLDING — triple-barrier holding-period histogram (seed 42)."""
+    _ = user
+    df, _time_col = _load_suitability_frame(body)
+    try:
+        return plot_holding_period_distribution(
+            df,
+            price_col=body.price_col,
+            horizon=body.horizon,
+            vol_span=body.vol_span,
+            pt_mult=body.pt_mult,
+            sl_mult=body.sl_mult,
+            cusum_mult=None,
             seed=42,
         )
     except Exception as exc:
