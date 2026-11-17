@@ -25,4 +25,4 @@
 - [x] Import allowlist green.
 - [x] Rule 70: sklearn multioutput wrappers only.
 
-**Ship commit:** (filled after push)
+**Ship commit:** `718779c`
