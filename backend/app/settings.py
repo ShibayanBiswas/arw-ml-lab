@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     )
     sentry_dsn: str = Field(default="", alias="SENTRY_DSN")
     sentry_environment: str = Field(default="development", alias="SENTRY_ENVIRONMENT")
+    otel_enabled: bool = Field(default=False, alias="OTEL_ENABLED")
+    otel_exporter_otlp_endpoint: str = Field(default="", alias="OTEL_EXPORTER_OTLP_ENDPOINT")
+    otel_service_name: str = Field(default="lab-api", alias="OTEL_SERVICE_NAME")
 
 
 @lru_cache

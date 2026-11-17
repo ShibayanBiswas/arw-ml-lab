@@ -1,15 +1,33 @@
-"""Sentry wiring for lab-api (OPS-12 / ST-OPS-09)."""
+"""Observability wiring for lab-api (OPS-12 / ST-OPS-09)."""
 
 from __future__ import annotations
 
 from typing import Any
 
+from labcore.observability.otel_stub import init_opentelemetry, instrument_fastapi_app
 from labcore.observability.sentry_scrub import scrub_event
 
 
 def _before_send(event: dict[str, Any], hint: dict[str, Any]) -> dict[str, Any] | None:
     _ = hint
     return scrub_event(event)
+
+
+def init_otel(
+    *,
+    enabled: bool,
+    service_name: str,
+    otlp_endpoint: str,
+    app: Any | None = None,
+) -> bool:
+    active = init_opentelemetry(
+        enabled=enabled,
+        service_name=service_name,
+        otlp_endpoint=otlp_endpoint,
+    )
+    if active and app is not None:
+        instrument_fastapi_app(app)
+    return active
 
 
 def init_sentry(*, dsn: str, environment: str) -> None:

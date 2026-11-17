@@ -308,6 +308,17 @@ def run_supervised_cv(
             r.pop("_oof", None)
             r.pop("_pipeline", None)
 
+    from labcore.integrity.holdout_reuse import default_holdout_registry, log_holdout_test_use
+
+    holdout_reuse = log_holdout_test_use(
+        default_holdout_registry(),
+        workspace_id="offline",
+        run_id=f"run-{config.dataset_id}-{config.seed}",
+        dataset_id=config.dataset_id,
+        test_size=config.test_size,
+        seed=config.seed,
+    )
+
     return {
         "leaderboard": rows,
         "config": config.model_dump(),
@@ -323,4 +334,5 @@ def run_supervised_cv(
         "feature_contract": feature_contract,
         "feature_names": feature_names,
         "champion_pipeline": champion_pipeline,
+        "holdout_reuse": holdout_reuse,
     }

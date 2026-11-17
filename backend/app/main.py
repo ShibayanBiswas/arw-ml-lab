@@ -34,7 +34,7 @@ from backend.app.routers import (
     unsupervised,
     wfo,
 )
-from backend.app.observability import init_sentry
+from backend.app.observability import init_otel, init_sentry
 from backend.app.schemas import Healthz
 from backend.app.settings import get_settings
 from labcore.security.api_auth_policy import (
@@ -48,10 +48,15 @@ limiter = Limiter(key_func=get_remote_address, default_limits=["120/minute"])
 
 
 @asynccontextmanager
-async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
     init_sentry(dsn=settings.sentry_dsn, environment=settings.sentry_environment)
-    # OTel is optional locally; workers/instrumentation wire in Phase 8.2
+    init_otel(
+        enabled=settings.otel_enabled,
+        service_name=settings.otel_service_name,
+        otlp_endpoint=settings.otel_exporter_otlp_endpoint,
+        app=app,
+    )
     yield
 
 
