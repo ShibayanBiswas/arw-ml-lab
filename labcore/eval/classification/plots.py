@@ -337,6 +337,97 @@ def plot_pr_cv(
     }
 
 
+def plot_roc_cv(
+    fold_pairs: list[tuple[np.ndarray, np.ndarray]],
+    *,
+    n_grid: int = 101,
+) -> dict[str, Any]:
+    """CLE.P.ROC_CV — fold ROC curves + mean TPR ± 1 std on a common FPR grid."""
+    import plotly.graph_objects as go
+    from sklearn.metrics import roc_auc_score, roc_curve
+
+    if not fold_pairs:
+        raise ValueError("fold_pairs must be non-empty")
+    fpr_grid = np.linspace(0.0, 1.0, n_grid)
+    interp_stack: list[np.ndarray] = []
+    fold_auc: list[float] = []
+    fig = go.Figure()
+    for i, (y_true, scores) in enumerate(fold_pairs):
+        yt = np.asarray(y_true)
+        sc = np.asarray(scores, dtype=float).ravel()
+        if yt.shape[0] != sc.shape[0]:
+            raise ValueError(f"fold {i}: y_true and scores length mismatch")
+        fpr, tpr, _ = roc_curve(yt, sc)
+        fold_auc.append(float(roc_auc_score(yt, sc)))
+        tpr_on_grid = np.interp(fpr_grid, fpr, tpr, left=0.0, right=1.0)
+        interp_stack.append(tpr_on_grid)
+        fig.add_trace(
+            go.Scatter(
+                x=fpr_grid,
+                y=tpr_on_grid,
+                mode="lines",
+                name=f"fold {i}",
+                line={"width": 1},
+                opacity=0.45,
+                showlegend=i == 0,
+            )
+        )
+    stack = np.vstack(interp_stack)
+    mean_t = stack.mean(axis=0)
+    std_t = stack.std(axis=0, ddof=1) if stack.shape[0] > 1 else np.zeros_like(mean_t)
+    upper = np.clip(mean_t + std_t, 0.0, 1.0)
+    lower = np.clip(mean_t - std_t, 0.0, 1.0)
+    fig.add_trace(
+        go.Scatter(
+            x=fpr_grid,
+            y=upper,
+            mode="lines",
+            line={"width": 0},
+            showlegend=False,
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=fpr_grid,
+            y=lower,
+            mode="lines",
+            line={"width": 0},
+            fill="tonexty",
+            fillcolor="rgba(201, 162, 39, 0.18)",
+            name="mean ± 1 std",
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=fpr_grid,
+            y=mean_t,
+            mode="lines",
+            name="mean ROC",
+            line={"width": 2, "color": "#c9a227"},
+        )
+    )
+    fig.update_layout(
+        title="ROC by CV fold",
+        xaxis_title="FPR",
+        yaxis_title="TPR",
+        height=440,
+    )
+    return {
+        "id": "CLE.P.ROC_CV",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "n_folds": len(fold_pairs),
+            "fpr_grid": fpr_grid.tolist(),
+            "tpr_mean": mean_t.tolist(),
+            "tpr_std": std_t.tolist(),
+            "auc_per_fold": fold_auc,
+            "auc_mean": float(np.mean(fold_auc)),
+            "auc_std": float(np.std(fold_auc, ddof=1)) if len(fold_auc) > 1 else 0.0,
+        },
+    }
+
+
 def plot_reliability(y_true: np.ndarray, scores: np.ndarray) -> dict[str, Any]:
     import plotly.graph_objects as go
 
