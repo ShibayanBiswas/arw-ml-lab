@@ -92,6 +92,20 @@ def log_holdout_test_use(
     }
 
 
+def _is_uuid(value: object) -> bool:
+    text = str(value or "").strip()
+    if len(text) != 36:
+        return False
+    import re
+
+    return bool(
+        re.fullmatch(
+            r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
+            text,
+        )
+    )
+
+
 def persist_holdout_audit_row(
     audit_row: dict[str, Any],
     *,
@@ -101,16 +115,20 @@ def persist_holdout_audit_row(
 
     ``execute`` should accept ``(sql, params)`` like ``psycopg.Connection.execute``.
     Without ``execute``, returns ``{"persisted": False}`` (offline / unit path).
+    Skips when ``workspace_id`` is not a UUID (e.g. local ``offline``).
     """
     import json
 
     if execute is None:
         return {"persisted": False, "reason": "no_executor"}
+    workspace_id = audit_row.get("workspace_id")
+    if not _is_uuid(workspace_id):
+        return {"persisted": False, "reason": "workspace_id_not_uuid"}
     detail = audit_row.get("detail") or {}
     cur = execute(
         _AUDIT_INSERT_SQL,
         (
-            audit_row.get("workspace_id"),
+            workspace_id,
             audit_row.get("action"),
             audit_row.get("entity"),
             audit_row.get("entity_id"),

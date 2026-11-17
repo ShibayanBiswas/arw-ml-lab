@@ -61,6 +61,9 @@ def test_persist_holdout_audit_row_with_mock_executor() -> None:
         "detail": {"use_count": 2, "is_reuse": True, "seed": 42},
     }
     assert persist_holdout_audit_row(row)["persisted"] is False
+    assert persist_holdout_audit_row({**row, "workspace_id": "offline"}, execute=execute)[
+        "reason"
+    ] == "workspace_id_not_uuid"
     out = persist_holdout_audit_row(row, execute=execute)
     assert out["persisted"] is True
     assert out["audit_id"] == 99
