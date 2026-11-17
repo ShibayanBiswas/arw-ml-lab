@@ -40,6 +40,7 @@ class TrainConfig(BaseModel):
     cv_scheme: str | None = None  # None → task default; "nested" forces nested flag
     nested: bool | None = None  # None → MI-03 auto (n_train < 2000)
     dataset_id: str = "unknown"
+    workspace_id: str = "offline"  # MI-16 audit_log workspace (oneshot-c226)
     refit_full: bool = True  # ST-FEAT-02 / TRAIN.REFIT.FULL — default ON
 
 
@@ -315,7 +316,7 @@ def run_supervised_cv(
 
     holdout_reuse = log_holdout_test_use(
         default_holdout_registry(),
-        workspace_id="offline",
+        workspace_id=config.workspace_id or "offline",
         run_id=f"run-{config.dataset_id}-{config.seed}",
         dataset_id=config.dataset_id,
         test_size=config.test_size,

@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Current phase | Contabo v2.3 (blocked on host secrets) + One-shot CLE/REE → 8.2 |
-| Last completed step | oneshot-c225 MI.HOLDOUT.REUSE Postgres persist; c224 OPS.ACTIONS.NODE |
-| Last green commit | 53ee59c (c225 pending) |
+| Last completed step | oneshot-c226 holdout workspace_id; c225 audit_log persist; c224 ACTIONS.NODE |
+| Last green commit | 9ff83c0 (c226 pending) |
 | Open failures | Contabo host/SSH/.env; Supabase migrate secrets; NVIDIA_API_KEY; Deploy cannot smoke without LAB_API_URL; Actions billing; TradingLab parity (submodule) |
 | Next action | Shibayan: Contabo + Supabase + NVIDIA + Actions billing (Blocked). Agent: continue 8.2 offline gaps; TradingLab parity when submodule present |
 
