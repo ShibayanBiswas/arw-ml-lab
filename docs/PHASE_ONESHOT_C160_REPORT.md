@@ -12,6 +12,7 @@
 ```
 
 ## Notes
+- Distinct from oneshot-c159 **DEEP.GPU.GUARD** + **MI.NESTED.CV** (registry/API guard); c160 is ops/doc/compose **ST-OPS-11** + tune-route 422 test.
 - Distinct from oneshot-c158 (**OPS.OTEL.STUB** / **MI.HOLDOUT.REUSE** / **SEC.FEATURE_CONTRACT.IDENTIFIER**).
 - Distinct from oneshot-c157 **OPS.DEPLOY.ORDERING**, c156 **OPS.PREDICTION.RETENTION**, c155 **OPS.LAB_BEAT**.
 - Hosted GPU worker registration (second VPS / WireGuard) stays Phase 8.2; this slice is offline refusal only.
@@ -22,4 +23,4 @@
 - [x] Import allowlist green.
 - [x] Rule 70: contract module is stdlib + existing registry/guards only.
 
-**Ship commit:** _(filled after commit)_
+**Ship commit:** `8058bc6`
