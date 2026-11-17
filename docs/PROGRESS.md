@@ -4,9 +4,9 @@
 |---|---|
 | Current phase | Contabo v2.3 (blocked on host secrets) + One-shot CLE/REE → 8.2 |
 | Last completed step | oneshot-c127 FS.P.MIN_FFD |
-| Last green commit | (pending push) |
+| Last green commit | 4ab37cf |
 | Open failures | Contabo host/SSH/.env; Supabase migrate secrets; NVIDIA_API_KEY; Deploy cannot smoke without LAB_API_URL |
-| Next action | Shibayan: Contabo + Supabase + NVIDIA secrets (Blocked). Agent: §36 Pareto rank curve / ANO pairwise scatter, `FS.P.MIN_FFD` / SADF / TRENDSCAN, DR catalogue gaps |
+| Next action | Shibayan: Contabo + Supabase + NVIDIA secrets (Blocked). Agent: §36 Pareto rank curve / ANO pairwise scatter, `FS.P.SADF` / `FS.P.TRENDSCAN`, DR catalogue gaps |
 
 ## Blocked — needs Shibayan
 
