@@ -6,7 +6,12 @@ from typing import Any
 
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException
-from labcore.suitability import plot_daily_volatility, plot_sample_barriers, run_suitability
+from labcore.suitability import (
+    plot_daily_volatility,
+    plot_price_cusum,
+    plot_sample_barriers,
+    run_suitability,
+)
 from pydantic import BaseModel, Field
 
 from backend.app.security import AuthUser, require_write_role
@@ -25,6 +30,7 @@ class SuitabilityBody(BaseModel):
     pt_mult: float = Field(default=1.0, gt=0.0, le=10.0)
     sl_mult: float = Field(default=1.0, gt=0.0, le=10.0)
     n_samples: int = Field(default=3, ge=1, le=6)
+    cusum_mult: float = Field(default=1.0, gt=0.0, le=5.0)
 
 
 def _load_suitability_frame(
@@ -78,6 +84,27 @@ def suitability_volatility_plot(
             price_col=body.price_col,
             time_col=time_col,
             span=body.vol_span,
+            seed=42,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/api/v1/suitability/plots/price")
+def suitability_price_cusum_plot(
+    body: SuitabilityBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """FS.P.PRICE — close with CUSUM event markers (seed 42)."""
+    _ = user
+    df, time_col = _load_suitability_frame(body)
+    try:
+        return plot_price_cusum(
+            df,
+            price_col=body.price_col,
+            time_col=time_col,
+            vol_span=body.vol_span,
+            cusum_mult=body.cusum_mult,
             seed=42,
         )
     except Exception as exc:

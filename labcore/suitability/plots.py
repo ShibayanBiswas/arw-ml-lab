@@ -12,6 +12,7 @@ from labcore.suitability.fs_checks import (
     PT_SL_GRID,
     VERTICAL_BARRIER_GRID,
     _detect_price_col,
+    compute_cusum_filter_events,
     compute_daily_ewma_vol,
     compute_fixed_horizon_label_balance,
     compute_suitability_parameter_grid,
@@ -29,6 +30,87 @@ def _time_axis(df: pd.DataFrame, time_col: str | None) -> list[str]:
     if isinstance(df.index, pd.DatetimeIndex):
         return [ts.isoformat() for ts in df.index]
     return [str(i) for i in range(len(df))]
+
+
+def plot_price_cusum(
+    df: pd.DataFrame,
+    *,
+    price_col: str | None = None,
+    time_col: str | None = None,
+    vol_span: int = 100,
+    cusum_mult: float = 1.0,
+    seed: int = 42,
+) -> dict[str, Any]:
+    """FS.P.PRICE — close series with CUSUM filter event markers (h = cusum_mult × σ̄)."""
+    _ = seed
+    import plotly.graph_objects as go
+
+    col = price_col or _detect_price_col(df)
+    if col is None:
+        raise ValueError("no price column detected for CUSUM price plot")
+    comp = compute_cusum_filter_events(
+        df, col, vol_span=vol_span, h_mult=cusum_mult
+    )
+    if not comp.get("ok"):
+        raise ValueError(comp.get("reason", "CUSUM computation failed"))
+    times = _time_axis(df, time_col)
+    px = pd.to_numeric(df[col], errors="coerce")
+    y = [None if pd.isna(v) else float(v) for v in px.to_numpy()]
+    fig = go.Figure(
+        data=[
+            go.Scatter(
+                x=times,
+                y=y,
+                mode="lines",
+                name="close",
+                line=dict(color="#1f2937"),
+                hovertemplate="t=%{x}<br>price=%{y:.2f}<extra></extra>",
+            )
+        ]
+    )
+    up = [ev for ev in comp["events"] if ev["direction"] == 1]
+    down = [ev for ev in comp["events"] if ev["direction"] == -1]
+
+    def event_trace(rows: list[dict[str, Any]], name: str, colour: str, symbol: str) -> go.Scatter:
+        xs = [times[ev["df_iloc"]] if ev["df_iloc"] < len(times) else str(ev["bar"]) for ev in rows]
+        ys = [float(ev["price"]) for ev in rows]
+        return go.Scatter(
+            x=xs,
+            y=ys,
+            mode="markers",
+            name=name,
+            marker=dict(size=9, color=colour, symbol=symbol, line=dict(width=1, color="#fff")),
+            hovertemplate=f"{name}<br>t=%{{x}}<br>price=%{{y:.2f}}<extra></extra>",
+        )
+
+    if up:
+        fig.add_trace(event_trace(up, "CUSUM +", "#2ca02c", "triangle-up"))
+    if down:
+        fig.add_trace(event_trace(down, "CUSUM −", "#c44e52", "triangle-down"))
+    fig.update_layout(
+        title=f"Price with CUSUM events (h = {cusum_mult}×σ̄, σ̄ EWMA span={vol_span})",
+        xaxis_title="time",
+        yaxis_title="price",
+        height=460,
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0),
+    )
+    return {
+        "id": "FS.P.PRICE",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "price_col": col,
+            "time_col": time_col,
+            "vol_span": vol_span,
+            "cusum_mult": cusum_mult,
+            "h": float(comp["h"]),
+            "seed": seed,
+            "n_events": int(comp["n_events"]),
+            "n_up": len(up),
+            "n_down": len(down),
+            "n_bars": int(len(df)),
+        },
+    }
 
 
 def plot_daily_volatility(

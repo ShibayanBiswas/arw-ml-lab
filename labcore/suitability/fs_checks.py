@@ -296,6 +296,86 @@ def check_fs7_daily_vol(df: pd.DataFrame, price_col: str | None, *, span: int = 
     return FSResult("FS7", "FAIL", f"EWMA vol not estimable (non-null={non_null:.1%})", details)
 
 
+def compute_cusum_filter_events(
+    df: pd.DataFrame,
+    price_col: str | None = None,
+    *,
+    vol_span: int = 100,
+    h_mult: float = 1.0,
+    h: float | None = None,
+) -> dict[str, Any]:
+    """Symmetric CUSUM filter (AFML ch. 2) for FS9 / FS.P.PRICE."""
+    col = price_col or _detect_price_col(df)
+    if col is None or col not in df.columns:
+        return {"ok": False, "reason": "no price column for CUSUM events"}
+    px = pd.to_numeric(df[col], errors="coerce")
+    valid = px.notna()
+    n_valid = int(valid.sum())
+    if n_valid < 50:
+        return {"ok": False, "reason": "too few prices for CUSUM", "n": n_valid, "price_col": col}
+    px_vals = px[valid].to_numpy(dtype=float)
+    df_ilocs = np.flatnonzero(valid.to_numpy())
+    log_r = np.diff(np.log(px_vals))
+    if h is None:
+        vol = pd.Series(log_r).ewm(span=vol_span, min_periods=50).std()
+        vol_mean = float(vol.dropna().mean())
+        if not np.isfinite(vol_mean) or vol_mean <= 0:
+            return {
+                "ok": False,
+                "reason": "CUSUM threshold h not positive",
+                "h": vol_mean,
+                "price_col": col,
+            }
+        h_eff = vol_mean * h_mult
+    else:
+        h_eff = float(h)
+        if not np.isfinite(h_eff) or h_eff <= 0:
+            return {
+                "ok": False,
+                "reason": "CUSUM threshold h not positive",
+                "h": h_eff,
+                "price_col": col,
+            }
+    events: list[dict[str, Any]] = []
+    s_pos = 0.0
+    s_neg = 0.0
+    for j, r in enumerate(log_r):
+        if not np.isfinite(r):
+            continue
+        s_pos = max(0.0, s_pos + float(r))
+        s_neg = min(0.0, s_neg + float(r))
+        if s_pos > h_eff:
+            events.append(
+                {
+                    "bar": j,
+                    "df_iloc": int(df_ilocs[j]),
+                    "direction": 1,
+                    "price": float(px_vals[j]),
+                }
+            )
+            s_pos = 0.0
+        elif s_neg < -h_eff:
+            events.append(
+                {
+                    "bar": j,
+                    "df_iloc": int(df_ilocs[j]),
+                    "direction": -1,
+                    "price": float(px_vals[j]),
+                }
+            )
+            s_neg = 0.0
+    return {
+        "ok": True,
+        "price_col": col,
+        "vol_span": vol_span,
+        "h_mult": h_mult,
+        "h": h_eff,
+        "n_returns": int(len(log_r)),
+        "n_events": len(events),
+        "events": events,
+    }
+
+
 def check_fs9_event_count(df: pd.DataFrame, price_col: str | None) -> FSResult:
     """FS9 — CUSUM event count with h = mean daily EWMA σ (AFML cusum_filter thin).
 
@@ -303,30 +383,14 @@ def check_fs9_event_count(df: pd.DataFrame, price_col: str | None) -> FSResult:
     """
     if price_col is None or price_col not in df.columns:
         return FSResult("FS9", "FAIL", "no price column for CUSUM events")
-    px = pd.to_numeric(df[price_col], errors="coerce").dropna()
-    if len(px) < 50:
-        return FSResult("FS9", "FAIL", "too few prices for CUSUM", {"n": len(px)})
-    log_r = np.log(px).diff().dropna()
-    vol = log_r.ewm(span=100, min_periods=50).std()
-    h = float(vol.dropna().mean())
-    if not np.isfinite(h) or h <= 0:
-        return FSResult("FS9", "FAIL", "CUSUM threshold h not positive", {"h": h})
-    # Symmetric CUSUM filter (AFML ch. 2)
-    s_pos = 0.0
-    s_neg = 0.0
-    events = 0
-    for r in log_r.to_numpy(dtype=float):
-        if not np.isfinite(r):
-            continue
-        s_pos = max(0.0, s_pos + r)
-        s_neg = min(0.0, s_neg + r)
-        if s_pos > h:
-            events += 1
-            s_pos = 0.0
-        elif s_neg < -h:
-            events += 1
-            s_neg = 0.0
-    details = {"events": events, "h": h, "n_returns": int(len(log_r))}
+    comp = compute_cusum_filter_events(df, price_col)
+    if not comp.get("ok"):
+        reason = comp.get("reason", "CUSUM computation failed")
+        extra = {k: comp[k] for k in ("n", "h") if k in comp}
+        return FSResult("FS9", "FAIL", reason, extra)
+    events = int(comp["n_events"])
+    h = float(comp["h"])
+    details = {"events": events, "h": h, "n_returns": int(comp["n_returns"])}
     if events >= 300:
         return FSResult("FS9", "PASS", f"{events} CUSUM events", details)
     if events >= 100:
