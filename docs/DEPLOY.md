@@ -26,12 +26,13 @@ Supabase Auth magic-link redirects are **not** required for primary login (ADR-0
 | Piece | Status | Notes |
 |---|---|---|
 | GitHub | private `arw-ml-lab` | https://github.com/ShibayanBiswas/arw-ml-lab |
-| Supabase | healthy | ref `ushtfpelbpjfkjoppklz` — apply migration `20261115180000_lab_bff_auth.sql` |
-| Render Blueprint | **blocked** `need_payment_info` | Free-tier path: run `lab-api` + workers via `docker compose` / local; no payment without your OK |
-| Vercel | Hobby OK | **Only** project `arw-ml-lab` (ADR-0011). Root Directory `frontend`. Alias `https://arw-ml-lab.vercel.app`. Never create a second Git-linked project named `frontend`. |
-| Hosted API smoke | blocked until Render or self-host API | `scripts/smoke_hosted.sh` |
+| Supabase | healthy | ref `ushtfpelbpjfkjoppklz` (ap-south-1); BFF migration `20261115180000_lab_bff_auth.sql`; Storage global file limit still needs ≥ 2 GB on Pro |
+| Contabo VPS | **primary backend** (v2.3) | Runbook `docs/DEPLOY_CONTABO.md`. Blocked until `CONTABO_HOST` + SSH key + server `.env` (see `docs/PROGRESS.md`) |
+| Render Blueprint | **legacy** `need_payment_info` | Kept as alternative (`render.yaml`); do not pay unless you explicitly choose Render over Contabo |
+| Vercel | Hobby OK | **Only** project `arw-ml-lab` (ADR-0011). Root Directory `frontend`. Alias `https://arw-ml-lab.vercel.app`. Set `NEXT_PUBLIC_LAB_API_URL=https://<LAB_API_HOSTNAME>` after Contabo HTTPS is live |
+| Hosted API smoke | blocked until Contabo `/healthz` | `scripts/smoke_hosted.sh`; Deploy workflow smoke job |
 
-**Render:** Do **not** add a payment method unless you approve cost. Until then: Vercel frontend + local/`make dev` API.
+**Contabo:** preferred path. **Render:** do not add a payment method unless you approve that alternative.
 
 ## Standing rule — keep GitHub + Vercel current (ADR-0006)
 

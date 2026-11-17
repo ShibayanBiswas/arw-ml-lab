@@ -11,7 +11,7 @@
 - Migration `20261115180000_lab_bff_auth.sql` (`lab_app_users`, `lab_otps` + RLS); pgTAP `lab_bff_auth_test.sql`
 - FastAPI `AUTH_MODE=bff` + shared `JWT_SECRET`; `lab-session.ts` Bearer from session (bypass for pytest only)
 - Branding: **Machine Learning Lab**, ARWL logos under `frontend/public/brand/`, AuthShell / Sidebar
-- Docs: ADR-0005, `docs/DEPLOY.md` free-path notes, `docs/runbooks/HOSTED_CHECKLIST.md` updated
+- Docs: ADR-0005, `docs/DEPLOY.md` free-path notes, `docs/DEPLOY.md` updated
 - **Vercel MCP:** team SSO consent still required for repair/rename (link issued in-session; expires ~10 min). Render Blueprint still `need_payment_info` → local/`docker compose` API until payment OK
 
 ### Workstream 1 — Thin supervised

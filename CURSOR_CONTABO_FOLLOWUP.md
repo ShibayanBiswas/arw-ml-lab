@@ -7,12 +7,13 @@ You are the sole engineer on github.com/ShibayanBiswas/arw-ml-lab (main). Work A
 - Do not change application logic for this move. Only add deploy and infra files and edit docs, workflows and config.
 
 ## 0. Read first
-docs/DEPLOY_CONTABO.md (whole file, this is the spec), docs/adr/ADR-contabo.md, docs/contabo/DOC_EDITS.md, AGENTS.md, CURSOR_PROMPT.md §000, docs/ARCHITECTURE.md §39–§40 + §46, docs/STRESS_TEST.md, docs/PROGRESS.md, docs/DEPLOY.md, .github/workflows/*.yml, backend/Dockerfile, infra/docker-compose.yml, render.yaml, CURSOR_ONE_SHOT.md.
+docs/DEPLOY_CONTABO.md (whole file, this is the spec), docs/adr/ADR-contabo.md, AGENTS.md, CURSOR_PROMPT.md §000, docs/ARCHITECTURE.md §39–§40 + §46, docs/STRESS_TEST.md, docs/PROGRESS.md, docs/DEPLOY.md, .github/workflows/*.yml, backend/Dockerfile, infra/docker-compose.yml, render.yaml, CURSOR_ONE_SHOT.md.
 
-## 1. Docs first (docs-only commit)
-Apply docs/contabo/DOC_EDITS.md to the existing docs. Merge the edits; never overwrite newer repo text with kit text.
-Add the ADR to docs/DECISIONS.md as the next number. Put the v2.3 pointer at the top of docs/DEPLOY.md.
-Commit `docs: v2.3 contabo backend target` and push.
+## 1. Docs first (DONE — `cd50ada`)
+v2.3 Contabo DOC_EDITS applied; ADR-0017 in `docs/DECISIONS.md`; pointer on `docs/DEPLOY.md`. The one-time `docs/contabo/` kit was deleted in the prune commit.
+
+## 1B. Repo cleanup (prune)
+Delete superseded docs/junk per the Contabo prompt; keep the canonical set; record the deleted list in `docs/PROGRESS.md` Cleanup.
 
 ## 2. Server bootstrap over SSH
 - Read CONTABO_HOST, CONTABO_SSH_KEY_PATH, CONTABO_BOOTSTRAP_USER (default root), CONTABO_DEPLOY_USER (default deploy), LAB_API_HOSTNAME and ACME_EMAIL from my local .env. If LAB_API_HOSTNAME is empty, use `<ip-with-dashes>.sslip.io`.
@@ -73,3 +74,6 @@ Continue with CURSOR_ONE_SHOT.md from its Chunk B, through every remaining phase
   - get CI + Deploy green;
   - check Vercel is READY and https://<host>/healthz returns 200.
 - Never fabricate metrics.
+
+## 8. Final cleanup when everything is green
+After FINAL_REPORT.md: delete finished one-time prompts (`CURSOR_CONTABO_FOLLOWUP.md`, `CURSOR_KICKOFF.md`, older round prompts); keep or fold `CURSOR_PROMPT.md` / `CURSOR_ONE_SHOT.md`; re-run orphan/junk sweep; commit `chore: final prune`.

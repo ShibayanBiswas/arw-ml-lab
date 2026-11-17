@@ -22,7 +22,7 @@
 - Evaluation UI: Supervised → Model Detail + post-train EvalWorkbench tabs
 
 ### Deploy sync (ADR-0006)
-- Standing rule in `docs/DEPLOY.md` + HOSTED_CHECKLIST: commit → push → Vercel READY
+- Standing rule in `docs/DEPLOY.md` + DEPLOY.md live status: commit → push → Vercel READY
 - This closeout pushes `main` and verifies Vercel
 
 ## AC (real runs)

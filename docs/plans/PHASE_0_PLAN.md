@@ -26,7 +26,7 @@ Browser → Next.js BFF + Auth → Supabase local. Browser SSE → lab-api direc
 - `infra/docker-compose.yml`: frontend, lab-api, worker, redis
 - `backend/Dockerfile` matching `render.yaml`
 - Pin Supabase CLI in CI (ST-OPS-10)
-- Create `docs/DECISIONS.md`, `docs/TODO.md`
+- Create `docs/DECISIONS.md`, `docs/PROGRESS.md`
 
 ### B. Database
 

@@ -10,7 +10,7 @@ Date: 2026-11-15 (IST). Seed: 42.
 - Celery app with all documented queues (+ `q.demo` for Phase 0 AC)
 - Next.js 16 frontend: SP Workstation tokens/shell ported from `refs/sp-workstation` (git-ignored clone), 13 sidebar entries (Home Terminal + 12 modules with nested sub-pages), light/dark, collapsible sidebar, OTP login page, `JobProgress`
 - Import-allow-list test; CI Supabase CLI pinned to `3.1.0` (ST-OPS-10)
-- `docs/DECISIONS.md`, `docs/TODO.md`, `docs/plans/PHASE_0_PLAN.md`
+- `docs/DECISIONS.md`, `docs/PROGRESS.md`, `docs/plans/PHASE_0_PLAN.md`
 - `PyJWT` declared in `backend/requirements/api.txt`; `api.lock.txt` recompiled
 
 ## Acceptance criteria
@@ -101,7 +101,7 @@ Route (app)
 
 ## Open TODOs
 
-See `docs/TODO.md` — install Supabase CLI for `supabase start` / `supabase test db` on this machine; optional Playwright axe smoke later.
+See `docs/PROGRESS.md` — install Supabase CLI for `supabase start` / `supabase test db` on this machine; optional Playwright axe smoke later.
 
 ## Next phase
 

@@ -35,7 +35,15 @@
 
 ## Cleanup
 
-_(filled in the prune commit)_
+| Deleted | Reason |
+|---|---|
+| `docs/contabo/` (DOC_EDITS.md) | One-time Contabo doc-edit kit; applied in `cd50ada` |
+| `docs/TODO.md` | Stale OTP/lock TODOs; open items live in this file |
+| `docs/runbooks/HOSTED_CHECKLIST.md` | Overlapped `DEPLOY.md` / `DEPLOY_CONTABO.md`; unique ticks merged into `DEPLOY.md` Live status |
+| `scripts/_apply_contabo_doc_edits.py`, `_patch_contabo_remaining.py`, `_env_key_presence.py`, `_prune_inventory.py` | One-shot helper scripts |
+| empty `docs/runbooks/` | Emptied after checklist removal |
+
+Kept: phase plans + reports, `docs/adr/ADR-contabo.md` (referenced by ARCHITECTURE/DEPLOY_CONTABO), all FLOWCHART diagrams 01–21, `GAP_AUDIT`, `FINAL_REPORT`, contracts.
 
 ## One-shot commits (16 Nov 2026)
 A deploy gate → B.1–B.3 → C.1–C.64 (CLE/REE/F* in progress)

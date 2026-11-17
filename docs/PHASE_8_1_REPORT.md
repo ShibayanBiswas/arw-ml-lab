@@ -9,7 +9,7 @@
 - `backend/worker/maintenance.py` — CLI `--all` with safe no-op stubs for retention/reaper until Phase 8.2
 - `tests/unit/test_maintenance.py`
 - `.github/workflows/ci.yml` / `deploy.yml` — deploy smoke + optional DS1 EDA via `scripts/smoke_hosted.sh`
-- `docs/DEPLOY.md`, `docs/runbooks/HOSTED_CHECKLIST.md`, `docs/plans/PHASE_8_1_PLAN.md`
+- `docs/DEPLOY.md`, `docs/DEPLOY.md`, `docs/plans/PHASE_8_1_PLAN.md`
 - ADR-0003 (TradingLab deferred; smoke scope; branch/`main`; live IDs)
 
 ### GitHub

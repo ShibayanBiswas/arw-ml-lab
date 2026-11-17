@@ -21,7 +21,7 @@
 **Project rules and context**
 * Follow `AGENTS.md` and every rule in `.cursor/rules/` (they are always applied or scoped by glob). If a rule conflicts with this prompt, the rule wins; record the conflict in the phase report.
 * Reference documents with `@` (e.g. `@docs/ARCHITECTURE.md §35.7`, `@docs/diagrams/16_vlm_decision_loop.png`). Read the diagrams; they are part of the spec.
-* Keep a running `docs/DECISIONS.md` (architecture decision records) and `docs/TODO.md`.
+* Keep a running `docs/DECISIONS.md` (architecture decision records) and open items in `docs/PROGRESS.md`.
 * Use the terminal for real verification: run tests, linters and builds yourself; paste the key output into the phase report. **Never invent test results, metrics, benchmark numbers or plot values** — every number in a report must come from a run you executed.
 * Default seed **42** everywhere.
 

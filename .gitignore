@@ -31,6 +31,16 @@ artifacts/
 *.onnx
 lightning_logs/
 optuna*.db
+# logs / coverage / scratch
+*.log
+coverage.xml
+coverage/
+.coverage.*
+*.zip
+tmp/
+scratch/
+*.tmp
+
 # OS / editors
 .DS_Store
 Thumbs.db
