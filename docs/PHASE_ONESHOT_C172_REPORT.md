@@ -25,4 +25,4 @@
 - [x] Import allowlist green.
 - [x] Rule 70: sklearn wrappers only for encoding.
 
-**Ship commit:** (filled after commit)
+**Ship commit:** `c17bf11`
