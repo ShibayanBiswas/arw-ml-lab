@@ -4,7 +4,7 @@
 |---|---|
 | Current phase | Contabo v2.3 (blocked on host secrets) + One-shot CLE/REE → 8.2 |
 | Last completed step | oneshot-c105 `FS.P.GRID` suitability parameter heatmap (backfill; c106 `DR.P.CUMVAR` in 9ae8174) |
-| Last green commit | 33f7209 |
+| Last green commit | b3d30bf |
 | Open failures | Contabo host/SSH/.env; Supabase migrate secrets; NVIDIA_API_KEY; Deploy cannot smoke without LAB_API_URL |
 | Next action | Shibayan: Contabo + Supabase + NVIDIA secrets (Blocked). Agent: Celery `heartbeat_at` writes; DR biplot |
 
