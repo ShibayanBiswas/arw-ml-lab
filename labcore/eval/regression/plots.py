@@ -81,9 +81,8 @@ def plot_residual_hist(resid: np.ndarray) -> dict[str, Any]:
 def plot_qq(resid: np.ndarray, *, alpha: float = 0.05) -> dict[str, Any]:
     """REE.P.QQ — residual normal Q-Q with 95% order-statistic envelope.
 
-    Quantiles from ``statsmodels.graphics.gofplots.ProbPlot``; simultaneous
- 95% bounds use ``scipy.stats.beta`` on order-statistic ranks (David &
-    Nagaraja, 2003, order statistics).
+    Quantiles from ``statsmodels.graphics.gofplots.ProbPlot``; 95% bounds use
+    ``scipy.stats.beta`` on order-statistic ranks (David & Nagaraja, 2003).
     """
     import plotly.graph_objects as go
     from scipy import stats
