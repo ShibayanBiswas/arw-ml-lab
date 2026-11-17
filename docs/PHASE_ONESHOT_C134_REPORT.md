@@ -35,4 +35,4 @@ cd frontend && pnpm exec vitest run src/lib/suitability-api.test.ts
 - [x] Seed 42 on grid metadata; plot endpoints match backend stubs.
 - [x] Import allowlist green; vitest route map green.
 
-**Ship commit:** `ffa0187`
+**Ship commit:** `63be07c`
