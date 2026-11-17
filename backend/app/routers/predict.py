@@ -218,7 +218,17 @@ def _score_validated(
             "predictions": None,
             "csv": None,
         }
-    scored = predict_batch(m.pipeline, report.coerced, feature_names=m.feature_names)
+    level = float(
+        (m.feature_contract or {}).get("uncertainty", {}).get("confidence_level")
+        or (m.feature_contract or {}).get("confidence_level")
+        or 0.9
+    )
+    scored = predict_batch(
+        m.pipeline,
+        report.coerced,
+        feature_names=m.feature_names,
+        confidence_level=level,
+    )
     out_df = report.coerced.copy()
     out_df["prediction"] = scored["predictions"]
     if scored.get("probabilities") is not None:
@@ -228,6 +238,11 @@ def _score_validated(
                 out_df[f"proba_{j}"] = [row[j] for row in proba]
         else:
             out_df["probability"] = proba
+    for col in scored.get("interval_columns") or []:
+        if col == "pred_interval_method":
+            out_df[col] = scored.get("pred_interval_method")
+        elif col in scored:
+            out_df[col] = scored[col]
     csv_bytes = predictions_to_safe_csv(out_df)
     return {
         "validation": payload,
@@ -236,6 +251,9 @@ def _score_validated(
         "n_rows": scored["n_rows"],
         "predictions": scored["predictions"],
         "probabilities": scored.get("probabilities"),
+        "interval_columns": scored.get("interval_columns"),
+        "pred_interval_method": scored.get("pred_interval_method"),
+        "confidence_level": scored.get("confidence_level"),
         "csv": csv_bytes.decode("utf-8"),
     }
 

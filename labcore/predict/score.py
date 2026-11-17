@@ -16,6 +16,66 @@ from labcore.predict.humility import (
 _POLICY_KEYS = frozenset(HumilityPolicy.__dataclass_fields__)
 
 
+def _level_tag(confidence_level: float) -> str:
+    pct = int(round(float(confidence_level) * 100))
+    return str(pct)
+
+
+def try_predict_intervals(
+    pipeline: Any,
+    X: pd.DataFrame,
+    *,
+    confidence_level: float = 0.9,
+) -> dict[str, Any] | None:
+    """Return lower/upper arrays when the saved object exposes intervals (never refits).
+
+    Supports MAPIE-style ``predict_interval`` and a stored residual quantile
+    ``conformal_qhat_`` (split-conformal absolute residual).
+    """
+    level = float(confidence_level)
+    tag = _level_tag(level)
+
+    if hasattr(pipeline, "predict_interval"):
+        try:
+            y_pred, y_pis = pipeline.predict_interval(X)
+            pis = np.asarray(y_pis)
+            if pis.ndim == 3:
+                lower = pis[:, 0, 0]
+                upper = pis[:, 1, 0]
+            elif pis.ndim == 2 and pis.shape[1] >= 2:
+                lower = pis[:, 0]
+                upper = pis[:, 1]
+            else:
+                return None
+            return {
+                "pred_lower": np.asarray(lower, dtype=float).ravel().tolist(),
+                "pred_upper": np.asarray(upper, dtype=float).ravel().tolist(),
+                "pred_interval_method": "mapie_predict_interval",
+                "confidence_level": level,
+                "level_tag": tag,
+                "y_pred": np.asarray(y_pred).ravel().tolist(),
+            }
+        except Exception:
+            pass
+
+    qhat = getattr(pipeline, "conformal_qhat_", None)
+    if qhat is not None:
+        try:
+            y_hat = np.asarray(pipeline.predict(X), dtype=float).ravel()
+            q = float(qhat)
+            return {
+                "pred_lower": (y_hat - q).tolist(),
+                "pred_upper": (y_hat + q).tolist(),
+                "pred_interval_method": "split_conformal_residual",
+                "confidence_level": level,
+                "level_tag": tag,
+                "y_pred": y_hat.tolist(),
+            }
+        except Exception:
+            return None
+    return None
+
+
 def _policy_from_options(humility: dict[str, Any] | HumilityPolicy) -> HumilityPolicy:
     if isinstance(humility, HumilityPolicy):
         return humility
@@ -77,8 +137,9 @@ def predict_batch(
     X: pd.DataFrame,
     *,
     feature_names: list[str] | None = None,
+    confidence_level: float = 0.9,
 ) -> dict[str, Any]:
-    """Score a batch; never refits."""
+    """Score a batch; never refits. Adds conformal interval columns when available."""
     frame = X[feature_names] if feature_names is not None else X
     y_hat = np.asarray(pipeline.predict(frame))
     out: dict[str, Any] = {
@@ -92,4 +153,16 @@ def predict_batch(
             out["probabilities"] = proba.tolist()
         except Exception:
             pass
+    intervals = try_predict_intervals(pipeline, frame, confidence_level=confidence_level)
+    if intervals is not None:
+        tag = intervals["level_tag"]
+        out[f"pred_lower_{tag}"] = intervals["pred_lower"]
+        out[f"pred_upper_{tag}"] = intervals["pred_upper"]
+        out["pred_interval_method"] = intervals["pred_interval_method"]
+        out["confidence_level"] = intervals["confidence_level"]
+        out["interval_columns"] = [
+            f"pred_lower_{tag}",
+            f"pred_upper_{tag}",
+            "pred_interval_method",
+        ]
     return out

@@ -22,6 +22,8 @@ export function BatchPredictPanel({ modelId }: Props) {
   const [validation, setValidation] = useState<Record<string, unknown> | null>(null);
   const [csv, setCsv] = useState<string | null>(null);
   const [nRows, setNRows] = useState<number | null>(null);
+  const [intervalColumns, setIntervalColumns] = useState<string[] | null>(null);
+  const [intervalMethod, setIntervalMethod] = useState<string | null>(null);
 
   async function onDownloadTemplate() {
     setError(null);
@@ -49,6 +51,12 @@ export function BatchPredictPanel({ modelId }: Props) {
       setValidation(out.validation);
       setCsv(out.csv ?? null);
       setNRows(out.n_rows ?? null);
+      setIntervalColumns(
+        Array.isArray(out.interval_columns) ? (out.interval_columns as string[]) : null
+      );
+      setIntervalMethod(
+        typeof out.pred_interval_method === "string" ? out.pred_interval_method : null
+      );
       setStatus(out.scored ? `Scored ${out.n_rows ?? "—"} rows` : "Validation blocked scoring");
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -70,10 +78,14 @@ export function BatchPredictPanel({ modelId }: Props) {
         scored: boolean;
         csv?: string | null;
         n_rows?: number;
+        interval_columns?: string[];
+        pred_interval_method?: string;
       };
       setValidation(out.validation);
       setCsv(out.csv ?? null);
       setNRows(out.n_rows ?? null);
+      setIntervalColumns(out.interval_columns ?? null);
+      setIntervalMethod(out.pred_interval_method ?? null);
       setStatus(out.scored ? `Scored ${out.n_rows ?? "—"} rows` : "Validation blocked scoring");
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -162,6 +174,12 @@ export function BatchPredictPanel({ modelId }: Props) {
           ) : (
             <p className="text-[var(--muted)]">No blocking PVs</p>
           )}
+          {intervalColumns && intervalColumns.length > 0 ? (
+            <p className="text-[var(--muted)]" data-artefact="PRED.BATCH.CONFORMAL">
+              Conformal columns: {intervalColumns.join(", ")}
+              {intervalMethod ? ` · method=${intervalMethod}` : ""}
+            </p>
+          ) : null}
         </div>
       ) : null}
     </div>
