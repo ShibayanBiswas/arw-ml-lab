@@ -313,3 +313,106 @@ def anomaly_pareto_rank(
             ),
         },
     }
+
+
+def _top_features_by_score_corr(
+    X: np.ndarray,
+    scores: np.ndarray,
+    *,
+    top_k: int,
+    feature_names: list[str] | None,
+) -> tuple[list[str], list[float]]:
+    """Rank features by |Pearson r| with anomaly scores (scipy.stats.pearsonr)."""
+    from scipy.stats import pearsonr
+
+    n_feat = X.shape[1]
+    names = feature_names if feature_names is not None else [f"f{j}" for j in range(n_feat)]
+    if len(names) != n_feat:
+        raise ValueError("feature_names must match X column count")
+    corrs: list[tuple[int, float]] = []
+    sc = np.asarray(scores, dtype=float)
+    for j in range(n_feat):
+        col = np.asarray(X[:, j], dtype=float)
+        if np.nanstd(col) == 0 or np.nanstd(sc) == 0:
+            corrs.append((j, 0.0))
+            continue
+        r, _ = pearsonr(col, sc)
+        corrs.append((j, float(r) if np.isfinite(r) else 0.0))
+    corrs.sort(key=lambda t: abs(t[1]), reverse=True)
+    k = min(max(2, top_k), n_feat)
+    picked = corrs[:k]
+    return [names[i] for i, _ in picked], [r for _, r in picked]
+
+
+def anomaly_pairwise_feature_scatter(
+    X: np.ndarray,
+    scores: np.ndarray,
+    is_outlier: np.ndarray,
+    *,
+    feature_names: list[str] | None = None,
+    top_k: int = 4,
+    plot_id: str = "ANO.P.PAIRWISE",
+) -> dict[str, Any]:
+    """Pairwise scatter of top |score|-correlated features; flag anomalies (§36.7)."""
+    import pandas as pd
+    import plotly.express as px
+
+    X_arr = np.asarray(X, dtype=float)
+    sc = np.asarray(scores, dtype=float)
+    out = np.asarray(is_outlier, dtype=int)
+    if X_arr.shape[0] != len(sc) or X_arr.shape[0] != len(out):
+        raise ValueError("X, scores, and is_outlier must have the same number of rows")
+    if X_arr.shape[0] < 2:
+        raise ValueError("need at least two rows")
+    if X_arr.shape[1] < 2:
+        raise ValueError("need at least two features")
+
+    sel_names, sel_corrs = _top_features_by_score_corr(
+        X_arr, sc, top_k=top_k, feature_names=feature_names
+    )
+    n_feat = X_arr.shape[1]
+    base_names = feature_names if feature_names is not None else [f"f{j}" for j in range(n_feat)]
+    col_idx = [base_names.index(n) for n in sel_names]
+
+    group = np.where(out == 1, "flagged", "inlier")
+    data: dict[str, Any] = {"group": group, "score": sc}
+    for name, j in zip(sel_names, col_idx, strict=True):
+        data[name] = X_arr[:, j]
+    df = pd.DataFrame(data)
+
+    fig = px.scatter_matrix(
+        df,
+        dimensions=sel_names,
+        color="group",
+        color_discrete_map={"inlier": "#4a6fa5", "flagged": "#c0392b"},
+        opacity=0.65,
+        height=min(220 * len(sel_names) + 80, 900),
+        width=min(220 * len(sel_names) + 80, 900),
+        labels={c: c for c in sel_names},
+        title="Pairwise scatter (top score-linked features)",
+    )
+    fig.update_traces(diagonal_visible=False, showupperhalf=False, marker=dict(size=6))
+    fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.02))
+
+    inlier = out == 0
+    flagged = out == 1
+    sep = None
+    if np.any(inlier) and np.any(flagged):
+        pooled = float(np.nanstd(sc, ddof=1)) if len(sc) > 1 else None
+        if pooled and pooled > 0:
+            sep = float(np.mean(sc[flagged]) - np.mean(sc[inlier])) / pooled
+
+    return {
+        "id": plot_id,
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "top_k": len(sel_names),
+            "feature": sel_names,
+            "score_correlation": sel_corrs,
+            "n_flagged": int(flagged.sum()),
+            "n_inlier": int(inlier.sum()),
+            "n_pairs": len(sel_names) * (len(sel_names) - 1) // 2,
+            "score_separation_cohens_d": sep,
+        },
+    }

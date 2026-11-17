@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from labcore.unsupervised import fit_anomaly, fit_clustering, fit_dr
 from labcore.unsupervised.anomaly_plots import (
     anomaly_embedding_scatter,
+    anomaly_pairwise_feature_scatter,
     anomaly_pareto_rank,
     anomaly_ranked_bar,
     anomaly_score_hist,
@@ -57,6 +58,7 @@ class UnsupBody(BaseModel):
     dendro_max_rows: int = Field(default=2000, ge=3, le=5000)
     clustermap_max_features: int = Field(default=50, ge=2, le=200)
     top_n: int = Field(default=20, ge=1, le=500)
+    top_features: int = Field(default=4, ge=2, le=8)
     pc_x: int = Field(default=1, ge=1, le=32)
     pc_y: int = Field(default=2, ge=1, le=32)
     max_pcs: int = Field(default=0, ge=0, le=32)
@@ -160,6 +162,38 @@ def unsupervised_anomaly_pareto(
             **pareto,
             "algorithm": fitted["algorithm"],
             "contamination": fitted["contamination"],
+            "n_outliers": fitted["n_outliers"],
+            "seed": body.seed,
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/api/v1/unsupervised/anomaly/pairwise")
+def unsupervised_anomaly_pairwise(
+    body: UnsupBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """ANO.P.PAIRWISE — pairwise scatter of top score-linked features (seed 42)."""
+    _ = user
+    X = _frame(body.rows)
+    algo: Literal["isolation_forest", "lof", "pyod_copod"] = body.algorithm  # type: ignore[assignment]
+    try:
+        fitted = fit_anomaly(X, algorithm=algo, contamination=body.contamination, seed=body.seed)
+        scores = np.asarray(fitted["scores"], dtype=float)
+        flags = np.asarray(fitted["is_outlier"], dtype=int)
+        pairwise = anomaly_pairwise_feature_scatter(
+            X.to_numpy(dtype=float),
+            scores,
+            flags,
+            feature_names=[str(c) for c in X.columns],
+            top_k=body.top_features,
+        )
+        return {
+            **pairwise,
+            "algorithm": fitted["algorithm"],
+            "contamination": fitted["contamination"],
+            "threshold": fitted["threshold"],
             "n_outliers": fitted["n_outliers"],
             "seed": body.seed,
         }
