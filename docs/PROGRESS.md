@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Current phase | Contabo v2.3 (blocked on host secrets) + One-shot CLE/REE → 8.2 |
-| Last completed step | oneshot-c99 `FS.P.LABEL_BALANCE` |
-| Last green commit | 5208d2c |
+| Last completed step | oneshot-c100 `F60 pmdarima_auto_arima` |
+| Last green commit | (pending `phase oneshot-c100: F60 pmdarima_auto_arima`) |
 | Open failures | Contabo host/SSH/.env; Supabase migrate secrets; NVIDIA_API_KEY; Deploy cannot smoke without LAB_API_URL |
-| Next action | Shibayan: Contabo + Supabase + NVIDIA secrets (Blocked). Agent: `FS.P.GRID` / F60 pmdarima / CLU·DR·ANO plots |
+| Next action | Shibayan: Contabo + Supabase + NVIDIA secrets (Blocked). Agent: `FS.P.GRID` / remaining FS.P.* / CLU·DR·ANO plots |
 
 ## Blocked — needs Shibayan
 
