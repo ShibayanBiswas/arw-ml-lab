@@ -154,6 +154,83 @@ def plot_roc_multi(y_true: np.ndarray, y_score: np.ndarray) -> dict[str, Any]:
     }
 
 
+def plot_pr_multi(y_true: np.ndarray, y_score: np.ndarray) -> dict[str, Any]:
+    """CLE.P.PR_MULTI — per-class OvR PR + micro (sklearn OvR recipe)."""
+    import plotly.graph_objects as go
+    from sklearn.metrics import average_precision_score, precision_recall_curve
+    from sklearn.preprocessing import label_binarize
+
+    y_true = np.asarray(y_true)
+    y_score = np.asarray(y_score, dtype=float)
+    if y_score.ndim != 2:
+        raise ValueError("y_score must be (n_samples, n_classes)")
+    classes = np.unique(y_true)
+    n_classes = len(classes)
+    if n_classes < 2 or y_score.shape[1] != n_classes:
+        raise ValueError("y_score columns must match unique classes in y_true")
+
+    y_bin = label_binarize(y_true, classes=classes)
+    if n_classes == 2:
+        y_bin = np.hstack([1 - y_bin, y_bin])
+
+    precision: dict[str, np.ndarray] = {}
+    recall: dict[str, np.ndarray] = {}
+    ap: dict[str, float] = {}
+
+    for i, cls in enumerate(classes):
+        precision[str(cls)], recall[str(cls)], _ = precision_recall_curve(
+            y_bin[:, i], y_score[:, i]
+        )
+        ap[str(cls)] = float(average_precision_score(y_bin[:, i], y_score[:, i]))
+
+    precision["micro"], recall["micro"], _ = precision_recall_curve(
+        y_bin.ravel(), y_score.ravel()
+    )
+    ap["micro"] = float(average_precision_score(y_true, y_score, average="micro"))
+
+    fig = go.Figure()
+    for cls in classes:
+        fig.add_trace(
+            go.Scatter(
+                x=recall[str(cls)],
+                y=precision[str(cls)],
+                mode="lines",
+                name=f"class {cls} AP={ap[str(cls)]:.3f}",
+            )
+        )
+    fig.add_trace(
+        go.Scatter(
+            x=recall["micro"],
+            y=precision["micro"],
+            mode="lines",
+            name=f"micro AP={ap['micro']:.3f}",
+            line={"width": 2},
+        )
+    )
+    fig.update_layout(
+        title="Precision-Recall — OvR / micro",
+        xaxis_title="Recall",
+        yaxis_title="Precision",
+        height=440,
+    )
+
+    oracle_micro = float(average_precision_score(y_true, y_score, average="micro"))
+    oracle_per_class = average_precision_score(y_true, y_score, average=None)
+
+    return {
+        "id": "CLE.P.PR_MULTI",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "ap_per_class": {str(c): ap[str(c)] for c in classes},
+            "ap_micro": ap["micro"],
+            "ap_micro_oracle": oracle_micro,
+            "ap_per_class_oracle": [float(v) for v in oracle_per_class],
+            "classes": [str(c) for c in classes.tolist()],
+        },
+    }
+
+
 def plot_pr(y_true: np.ndarray, scores: np.ndarray) -> dict[str, Any]:
     import plotly.graph_objects as go
     from sklearn.metrics import average_precision_score
