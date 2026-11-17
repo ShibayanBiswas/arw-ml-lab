@@ -11,12 +11,12 @@ jobs:
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: frontend } }
     steps:
-      - uses: actions/checkout@v5
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
         with:
           # defaults.working-directory does not apply to `uses:` — point at frontend packageManager
           package_json_file: frontend/package.json
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with: { node-version: 22, cache: pnpm, cache-dependency-path: frontend/pnpm-lock.yaml }
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint && pnpm exec tsc --noEmit && pnpm test --run && pnpm build
@@ -26,7 +26,7 @@ jobs:
   backend:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with: { submodules: recursive }
       - uses: astral-sh/setup-uv@v6
       - run: uv sync --all-extras --frozen
@@ -51,8 +51,8 @@ jobs:
   kit-checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with: { python-version: "3.12" }
       - run: pip install pandas==2.3.3 pyarrow==26.0.1 jsonschema==4.26.0 pytest pyyaml
       - run: pytest tests/unit/test_predict_samples.py -q
@@ -71,7 +71,7 @@ jobs:
   supabase:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: supabase/setup-cli@v1
         with: { version: "3.1.0" }  # pinned Phase 0 (ST-OPS-10); bump deliberately
       - run: supabase start

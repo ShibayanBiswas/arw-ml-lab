@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Current phase | Contabo v2.3 (blocked on host secrets) + One-shot CLE/REE → 8.2 |
-| Last completed step | oneshot-c223 OPS.DEPLOY.BACKUP_SCP; c222 HEALTHCHECK.PING; c221 BACKUP.SCRIPT |
-| Last green commit | 45d170b (c223 pending) |
+| Last completed step | oneshot-c224 OPS.ACTIONS.NODE bump; c223 OPS.DEPLOY.BACKUP_SCP |
+| Last green commit | 27c75db (c224 pending) |
 | Open failures | Contabo host/SSH/.env; Supabase migrate secrets; NVIDIA_API_KEY; Deploy cannot smoke without LAB_API_URL; Actions billing; TradingLab parity (submodule) |
 | Next action | Shibayan: Contabo + Supabase + NVIDIA + Actions billing (Blocked). Agent: continue 8.2 offline gaps; TradingLab parity when submodule present |
 
@@ -19,7 +19,7 @@
 | `SUPABASE_ACCESS_TOKEN` | `gh secret set SUPABASE_ACCESS_TOKEN --env production --repo ShibayanBiswas/arw-ml-lab` (stdin) |
 | `SUPABASE_DB_PASSWORD` | `gh secret set SUPABASE_DB_PASSWORD --env production --repo ShibayanBiswas/arw-ml-lab` (stdin) |
 | TradingLab submodule | `vendor/tradinglab` for **parity** tests vs thin FS16–18 (SADF/trendscan/MA-cross already online) |
-| GitHub Actions billing | CI/Deploy jobs die in ~2–4s (e.g. run `44082239122` failed). Account payments failed or spending limit. Fix https://github.com/settings/billing then re-run Actions |
+| GitHub Actions billing | CI/Deploy still die in ~2–4s (e.g. `44087280966`). Fix https://github.com/settings/billing — add payment method and/or raise Actions budget / clear “Stop usage when budget limit is reached”, then re-run failed workflows |
 
 ## Contabo move checklist (agent)
 
