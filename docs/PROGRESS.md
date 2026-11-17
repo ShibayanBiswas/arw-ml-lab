@@ -4,9 +4,9 @@
 |---|---|
 | Current phase | Contabo v2.3 (blocked on host secrets) + One-shot CLE/REE → 8.2 |
 | Last completed step | oneshot-c116 FS.P.PRICE |
-| Last green commit | 86eba7a |
+| Last green commit | 961c39a |
 | Open failures | Contabo host/SSH/.env; Supabase migrate secrets; NVIDIA_API_KEY; Deploy cannot smoke without LAB_API_URL |
-| Next action | Shibayan: Contabo + Supabase + NVIDIA secrets (Blocked). Agent: CLU.P.DB (uncommitted c117), CLU.P (gap, dendrogram), FS.P.UNIQUENESS / HOLDING, remaining DR·ANO plots |
+| Next action | Shibayan: Contabo + Supabase + NVIDIA secrets (Blocked). Agent: CLU.P (gap, dendrogram), FS.P.UNIQUENESS / HOLDING, remaining DR·ANO plots |
 
 ## Blocked — needs Shibayan
 
