@@ -1,7 +1,7 @@
 # ARW ML Lab — One-shot finish report (interim)
 
 **Date:** 17 Nov 2026 (IST)
-**Tip:** see `docs/PROGRESS.md` (oneshot through ~c230; Contabo still blocked)
+**Tip:** see `docs/PROGRESS.md` (oneshot through ~c231; Contabo still blocked)
 **Frontend:** https://arw-ml-lab.vercel.app → READY
 **Backend target:** Contabo VPS — **not live** (`docs/DEPLOY_CONTABO.md`, ADR-0017)
 

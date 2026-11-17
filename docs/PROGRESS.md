@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Current phase | Contabo v2.3 (blocked on host secrets) + One-shot CLE/REE → 8.2 |
-| Last completed step | oneshot-c230 DEPLOY_CONTABO egress nft pointer; c229 OPS.EGRESS.NFT |
-| Last green commit | 65190ae |
+| Last completed step | oneshot-c231 OPTUNA/HEALTHCHECK in Contabo §7 env; tip c230 egress docs |
+| Last green commit | 075459a (c231 pending) |
 | Open failures | Contabo host/SSH/.env; Supabase migrate secrets; NVIDIA_API_KEY; Deploy cannot smoke without LAB_API_URL; Actions billing; TradingLab parity (submodule) |
 | Next action | Shibayan: Contabo + Supabase + NVIDIA + Actions billing (Blocked). Agent: continue 8.2 offline gaps; TradingLab parity when submodule present |
 

@@ -298,7 +298,8 @@ Owner `deploy`, mode `600` (`chmod 600 /opt/arw-ml-lab/.env`), never in git, nev
 | Supabase | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWKS_URL`, `DATABASE_URL` (transaction pooler), `DATABASE_URL_SESSION` (session pooler), `SUPABASE_S3_ENDPOINT`, `SUPABASE_S3_REGION`, `SUPABASE_S3_ACCESS_KEY_ID`, `SUPABASE_S3_SECRET_ACCESS_KEY` |
 | AI (§40) | `AI_ENABLED=true`, `AI_PROVIDER_PRIMARY=nvidia`, `AI_BASE_URL=https://integrate.api.nvidia.com/v1`, `NVIDIA_API_KEY`, optional `GEMINI_API_KEY`/`OPENROUTER_API_KEY`/`GROQ_API_KEY`, `AI_RPM_LIMIT=35`, `AI_DAILY_REQUEST_CAP=500`, `AI_USER_DAILY_REQUEST_CAP=150`, `AI_IMAGE_MAX_B64_BYTES=170000` |
 | Limits | `LAB_MAX_ROWS=2000000`, `LAB_JOB_SOFT_LIMIT_TRAIN_MIN=90`, `LAB_JOB_HARD_LIMIT_TRAIN_MIN=120`, `LAB_PREDICT_MAX_MB=50`, `LAB_PREDICT_MAX_ROWS=1000000`, `LAB_PREDICT_CHUNK_ROWS=50000`, `LAB_PREDICT_RETENTION_DAYS=30`, `STORAGE_BUCKET_PREDICTIONS=predictions`, `TABPFN_ENABLED=false`, `LAB_GPU_WORKER=false` |
-| Observability | `SENTRY_DSN`, `SENTRY_ENVIRONMENT=production` |
+| Optuna | `OPTUNA_STORAGE_URL` = Postgres session URL (`DATABASE_URL_SESSION` style) so tune studies resume after worker restart (§39.3) |
+| Observability | `SENTRY_DSN`, `SENTRY_ENVIRONMENT=production`, optional `HEALTHCHECK_PING_URL` (lab-beat → healthchecks.io after maintenance) |
 | MLflow (optional) | `MLFLOW_TRACKING_URI=http://mlflow:5000` only when the profile is on |
 
 `/opt/arw-ml-lab/.deploy.env` (written by the deploy job, not secret): `IMAGE_TAG=<sha>`, `PREV_IMAGE_TAG=<sha>`, `GHCR_OWNER=shibayanbiswas`.
