@@ -349,6 +349,7 @@ export async function predictBatchJson(
     n_rows?: number;
     refit?: boolean;
     interval_columns?: string[];
+    classification_columns?: string[];
     pred_interval_method?: string;
     confidence_level?: number;
   };
@@ -375,6 +376,7 @@ export async function predictBatchUpload(modelId: string, file: File) {
     n_rows?: number;
     refit?: boolean;
     interval_columns?: string[];
+    classification_columns?: string[];
     pred_interval_method?: string;
     confidence_level?: number;
   };

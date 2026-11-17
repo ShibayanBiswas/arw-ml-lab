@@ -24,6 +24,7 @@ export function BatchPredictPanel({ modelId }: Props) {
   const [nRows, setNRows] = useState<number | null>(null);
   const [intervalColumns, setIntervalColumns] = useState<string[] | null>(null);
   const [intervalMethod, setIntervalMethod] = useState<string | null>(null);
+  const [clfColumns, setClfColumns] = useState<string[] | null>(null);
 
   async function onDownloadTemplate() {
     setError(null);
@@ -57,6 +58,11 @@ export function BatchPredictPanel({ modelId }: Props) {
       setIntervalMethod(
         typeof out.pred_interval_method === "string" ? out.pred_interval_method : null
       );
+      setClfColumns(
+        Array.isArray(out.classification_columns)
+          ? (out.classification_columns as string[])
+          : null
+      );
       setStatus(out.scored ? `Scored ${out.n_rows ?? "—"} rows` : "Validation blocked scoring");
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -80,12 +86,14 @@ export function BatchPredictPanel({ modelId }: Props) {
         n_rows?: number;
         interval_columns?: string[];
         pred_interval_method?: string;
+        classification_columns?: string[];
       };
       setValidation(out.validation);
       setCsv(out.csv ?? null);
       setNRows(out.n_rows ?? null);
       setIntervalColumns(out.interval_columns ?? null);
       setIntervalMethod(out.pred_interval_method ?? null);
+      setClfColumns(out.classification_columns ?? null);
       setStatus(out.scored ? `Scored ${out.n_rows ?? "—"} rows` : "Validation blocked scoring");
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -178,6 +186,11 @@ export function BatchPredictPanel({ modelId }: Props) {
             <p className="text-[var(--muted)]" data-artefact="PRED.BATCH.CONFORMAL">
               Conformal columns: {intervalColumns.join(", ")}
               {intervalMethod ? ` · method=${intervalMethod}` : ""}
+            </p>
+          ) : null}
+          {clfColumns && clfColumns.length > 0 ? (
+            <p className="text-[var(--muted)]" data-artefact="PRED.BATCH.CLF.COLS">
+              Classification columns: {clfColumns.join(", ")}
             </p>
           ) : null}
         </div>
