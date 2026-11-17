@@ -60,16 +60,17 @@ def insights_run(
             "content": json.dumps({"stage": body.stage, "FACTS": body.facts}, default=str),
         },
     ]
-    try:
-        client = get_ai_client(prefer_mock=False)
-        raw = client.chat(messages, temperature=0.0)
-    except Exception:
-        # Provider unreachable → numbers-only within the request (AC: ≤10 s)
-        parsed = resolve_insight(
-            body.facts,
-            policy=NumbersOnlyPolicy(key_present=False),
-            seed=42,
-        )
+    from labcore.ai.resilient import resilient_chat
+
+    result = resilient_chat(
+        messages,
+        facts=body.facts,
+        client=get_ai_client(prefer_mock=False),
+        key_present=bool(os.environ.get("NVIDIA_API_KEY")),
+        seed=42,
+    )
+    if result.get("mode") != "provider":
+        parsed = result
         validation = validate_insights_payload(parsed, facts=body.facts)
         return {
             "stage": body.stage,
@@ -79,9 +80,10 @@ def insights_run(
             "validation": validation,
             "seed": 42,
             "mode": "numbers-only",
-            "reason": "provider_error",
+            "reason": result.get("reason", "provider_error"),
         }
 
+    raw = result["raw"]
     content = raw.get("choices", [{}])[0].get("message", {}).get("content", "{}")
     try:
         parsed = json.loads(content) if isinstance(content, str) else content
