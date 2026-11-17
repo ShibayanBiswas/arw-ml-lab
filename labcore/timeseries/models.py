@@ -41,6 +41,7 @@ ModelKey = Literal[
     "seasonal_ses_optimized",
     "mfles",
     "tbats",
+    "auto_tbats",
     "arima",
     "arima_fourier",
     "var",
@@ -462,6 +463,20 @@ def forecast_tbats(y_train: np.ndarray, h: int, *, m: int = 12) -> np.ndarray:
     )
 
 
+def forecast_auto_tbats(y_train: np.ndarray, h: int, *, m: int = 12) -> np.ndarray:
+    """F16 — AutoTBATS via statsforecast (arma errors off for CI speed)."""
+    from statsforecast.models import AutoTBATS
+
+    ok, reason = seasonal_allowed(len(y_train), float(m), h)
+    if not ok:
+        raise ValueError(f"auto_tbats gate: {reason}")
+    return _sf_point_forecast(
+        y_train,
+        h,
+        AutoTBATS(season_length=m, use_arma_errors=False),
+    )
+
+
 def forecast_arima(
     y_train: np.ndarray,
     h: int,
@@ -740,6 +755,8 @@ def forecast(
         return {"key": key, "y_pred": forecast_mfles(y_train, h, m=m), "resid": None}
     if key == "tbats":
         return {"key": key, "y_pred": forecast_tbats(y_train, h, m=m), "resid": None}
+    if key == "auto_tbats":
+        return {"key": key, "y_pred": forecast_auto_tbats(y_train, h, m=m), "resid": None}
     if key == "arima":
         return {"key": key, "y_pred": forecast_arima(y_train, h), "resid": None}
     if key == "arima_fourier":
@@ -823,6 +840,7 @@ TS_MODEL_CATALOGUE: list[dict[str, str]] = [
     },
     {"id": "mfles", "library": "statsforecast", "name": "MFLES"},
     {"id": "tbats", "library": "statsforecast", "name": "TBATS"},
+    {"id": "auto_tbats", "library": "statsforecast", "name": "AutoTBATS"},
     {"id": "arima", "library": "statsforecast", "name": "ARIMA"},
     {
         "id": "arima_fourier",
