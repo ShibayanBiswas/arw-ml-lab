@@ -256,10 +256,14 @@ def _score_validated(
         out_df["insufficient_history"] = flag.to_numpy()
     # §45.4 — probabilities labelled calibrated vs uncalibrated from contract
     from labcore.predict.calibration_label import calibration_status_label
+    from labcore.predict.threshold_label import pred_threshold_from_contract
 
     cal_status = calibration_status_label(m.feature_contract, m.pipeline)
     if scored.get("probabilities") is not None:
         out_df["calibration_status"] = cal_status
+    thr = pred_threshold_from_contract(m.feature_contract)
+    if thr is not None and scored.get("probabilities") is not None:
+        out_df["pred_threshold"] = thr
     csv_bytes = predictions_to_safe_csv(out_df)
     return {
         "validation": payload,
@@ -276,6 +280,7 @@ def _score_validated(
         "pred_interval_method": scored.get("pred_interval_method"),
         "confidence_level": scored.get("confidence_level"),
         "calibration_status": cal_status if scored.get("probabilities") is not None else None,
+        "pred_threshold": thr,
         "csv": csv_bytes.decode("utf-8"),
     }
 
