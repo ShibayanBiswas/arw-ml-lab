@@ -646,6 +646,71 @@ export function reportsNotebookPath(): string {
   return "/api/v1/reports/notebook";
 }
 
+export type AuditLogRow = {
+  id: number;
+  workspace_id: string;
+  user_id: string;
+  action: string;
+  entity: string | null;
+  entity_id: string | null;
+  detail: Record<string, unknown>;
+  created_at: string;
+};
+
+export function adminAuditPath(): string {
+  return "/api/v1/admin/audit";
+}
+
+export function adminAuditExportPath(): string {
+  return "/api/v1/admin/audit/export";
+}
+
+export function adminAuditExportUrl(params?: { limit?: number }): string {
+  const q = params?.limit ? `?limit=${params.limit}` : "";
+  return `${labApiBase()}${adminAuditExportPath()}${q}`;
+}
+
+export async function downloadAdminAuditExport(params?: { limit?: number }) {
+  const search = new URLSearchParams();
+  if (params?.limit != null) search.set("limit", String(params.limit));
+  const qs = search.toString();
+  const res = await fetch(`${labApiBase()}${adminAuditExportPath()}${qs ? `?${qs}` : ""}`, {
+    headers: labAuthHeaders(),
+  });
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(`admin audit export: ${res.status} ${detail}`);
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "audit_log_export.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export async function fetchAdminAuditLog(params?: { limit?: number; offset?: number }) {
+  const search = new URLSearchParams();
+  if (params?.limit != null) search.set("limit", String(params.limit));
+  if (params?.offset != null) search.set("offset", String(params.offset));
+  const qs = search.toString();
+  const res = await fetch(`${labApiBase()}${adminAuditPath()}${qs ? `?${qs}` : ""}`, {
+    headers: labAuthHeaders(),
+  });
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(`admin audit: ${res.status} ${detail}`);
+  }
+  return (await res.json()) as {
+    id: string;
+    seed: number;
+    source: string;
+    count: number;
+    rows: AuditLogRow[];
+  };
+}
+
 export async function runReportsNotebook(body: ReportsNotebookBody) {
   const res = await fetch(`${labApiBase()}${reportsNotebookPath()}`, {
     method: "POST",
@@ -660,5 +725,36 @@ export async function runReportsNotebook(body: ReportsNotebookBody) {
     id: string;
     nbformat_json: string;
     seed: number;
+  };
+}
+
+export type ReportsExecutiveBody = {
+  title?: string;
+  stage?: string;
+  facts?: Record<string, unknown>;
+  insights?: Record<string, unknown> | null;
+};
+
+export function reportsExecutivePath(includePdf = false): string {
+  const q = includePdf ? "?include_pdf=true" : "";
+  return `/api/v1/reports/executive${q}`;
+}
+
+export async function runReportsExecutive(body: ReportsExecutiveBody, includePdf = false) {
+  const res = await fetch(`${labApiBase()}${reportsExecutivePath(includePdf)}`, {
+    method: "POST",
+    headers: { ...labAuthHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(`reports executive: ${res.status} ${detail}`);
+  }
+  return (await res.json()) as {
+    id: string;
+    seed: number;
+    html: string;
+    pdf_available: boolean;
+    pdf_base64?: string;
   };
 }

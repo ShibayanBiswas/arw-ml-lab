@@ -14,6 +14,7 @@ from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
 
 from backend.app.routers import (
+    admin,
     auth,
     catalog,
     datasets,
@@ -98,6 +99,7 @@ def create_app() -> FastAPI:
     app.include_router(wfo.router)
     app.include_router(reports.router)
     app.include_router(monitoring.router)
+    app.include_router(admin.router)
     return app
 
 

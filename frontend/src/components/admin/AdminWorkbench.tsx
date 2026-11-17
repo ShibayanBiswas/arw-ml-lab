@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AuditLogPanel } from "@/components/admin/AuditLogPanel";
 import { labApiBase } from "@/lib/api";
 
 type Mode =
@@ -54,6 +55,7 @@ export function AdminWorkbench({ mode }: { mode: Mode }) {
       {mode === "users" && (
         <p className="text-sm text-[var(--muted)]">Supabase Auth roster — managed in hosted project.</p>
       )}
+      {mode === "audit" && <AuditLogPanel />}
     </div>
   );
 }

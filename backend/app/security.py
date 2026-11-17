@@ -15,6 +15,7 @@ from backend.app.settings import Settings, get_settings
 Role = Literal["owner", "admin", "scientist", "analyst", "viewer"]
 
 WRITE_ROLES: frozenset[Role] = frozenset({"owner", "admin", "scientist", "analyst"})
+ADMIN_ROLES: frozenset[Role] = frozenset({"owner", "admin"})
 
 
 @dataclass(frozen=True)
@@ -150,6 +151,15 @@ def require_write_role(user: AuthUser = Depends(get_current_user)) -> AuthUser:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"Role '{user.role}' cannot mutate resources",
+        )
+    return user
+
+
+def require_admin_role(user: AuthUser = Depends(get_current_user)) -> AuthUser:
+    if user.role not in ADMIN_ROLES:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Role '{user.role}' cannot access admin audit",
         )
     return user
 
