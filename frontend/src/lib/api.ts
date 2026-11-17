@@ -320,16 +320,29 @@ export async function predictSingle(
   };
 }
 
-export async function predictBatchJson(modelId: string, rows: Record<string, unknown>[]) {
+export async function predictBatchJson(
+  modelId: string,
+  rows: Record<string, unknown>[],
+  idempotencyKey?: string
+) {
+  const headers = labAuthHeaders();
+  // §45.8 — reuse async batch jobs when the client retries with the same key
+  headers["Idempotency-Key"] =
+    idempotencyKey ??
+    (typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `batch-${Date.now()}`);
   const res = await fetch(`${labApiBase()}/api/v1/predict/batch`, {
     method: "POST",
-    headers: labAuthHeaders(),
+    headers,
     body: JSON.stringify({ model_id: modelId, rows }),
   });
   if (!res.ok) throw new Error(`predict batch: ${res.status}`);
   return (await res.json()) as {
-    validation: Record<string, unknown>;
-    scored: boolean;
+    validation?: Record<string, unknown>;
+    scored?: boolean;
+    async?: boolean;
+    job_id?: string;
     predictions?: unknown[];
     probabilities?: number[][];
     csv?: string | null;
