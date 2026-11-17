@@ -312,7 +312,7 @@ Trigger stays `workflow_run` of CI on `main` + `workflow_dispatch`. Jobs:
 2. **`build`** (parallel with migrate) — `permissions: { contents: read, packages: write }`; `docker/setup-buildx-action`, `docker/login-action` to `ghcr.io` with `GITHUB_TOKEN`; matrix `{api, worker-light, worker-train}` → `docker/build-push-action` with `file: backend/Dockerfile`, `build-args: REQUIREMENTS_LOCK=…`, tags `ghcr.io/<owner>/arw-ml-lab-<svc>:${{ github.sha }}` and `:main`, `cache-from/to: type=gha,scope=<svc>`.
 3. **`deploy`** — `needs: [migrate, build]`, `environment: production`, `concurrency: { group: deploy-prod, cancel-in-progress: false }`, `permissions: { packages: read }`. Steps:
    - write `CONTABO_SSH_KEY` to `~/.ssh/id_ed25519` (600) and `CONTABO_KNOWN_HOSTS` to `~/.ssh/known_hosts` (`StrictHostKeyChecking yes`; never `ssh-keyscan` inside CI);
-   - `scp docker-compose.prod.yml infra/caddy/Caddyfile` → `/opt/arw-ml-lab/`;
+   - `scp docker-compose.prod.yml infra/caddy/Caddyfile infra/contabo/deploy.sh scripts/backup_contabo.sh` → `/opt/arw-ml-lab/` (compose + Caddyfile + `deploy.sh` + nightly backup script);
    - `ssh deploy@$CONTABO_HOST` and run `deploy.sh <sha>` with the GHCR token piped on stdin (`echo "$GITHUB_TOKEN" | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin`; the token expires with the job, no long-lived registry secret on the server).
 4. **`smoke`** — `curl -fsS "$LAB_API_URL/healthz"` (30 × 10 s) from the runner over the public HTTPS hostname; optional DS1 EDA via `scripts/smoke_hosted.sh` when `vars.SMOKE_EDA == 'true'`.
 
