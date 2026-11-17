@@ -20,6 +20,7 @@ from sklearn.model_selection import train_test_split
 
 from labcore.cv.schemes import build_splitter, default_scheme_for_task, nested_default
 from labcore.cv.visualise import iter_splits, plot_cv_folds
+from labcore.integrity.sample_size_policy import cv_scheme_for_n, eligible_algorithms
 from labcore.preprocess.recipe import RecipeSpec, compile_recipe
 from labcore.registry.algorithms import build_estimator, thin_algorithm_specs
 from labcore.registry.spec import AlgorithmSpec
@@ -125,7 +126,7 @@ def run_supervised_cv(
         stratify=stratify,
     )
 
-    scheme = config.cv_scheme or default_scheme_for_task(config.task)
+    scheme = config.cv_scheme or cv_scheme_for_n(len(X_tr), config.task)
     nested_on = config.nested if config.nested is not None else nested_default(len(X_tr))
     if scheme == "nested":
         nested_on = True
@@ -150,6 +151,7 @@ def run_supervised_cv(
     cv_plot = plot_cv_folds(fold_indices, title=f"CV folds ({scheme})", gap=gap)
 
     specs = _select_specs(config.algorithm_keys, config.task)
+    specs, _size_gated = eligible_algorithms(len(X_tr), specs)
     rows: list[dict[str, Any]] = []
     champion_payload: dict[str, Any] | None = None
 
