@@ -26,3 +26,5 @@ cd frontend && pnpm exec vitest run src/lib/reports-api.test.ts
 - [x] No fabricated metrics; HTML lists caller-supplied FACTS only.
 - [x] API response `seed: 42`.
 - [x] Import allowlist + vitest green.
+
+**Ship commits:** `33a7596` (feature), `073ef08` (vitest route)
