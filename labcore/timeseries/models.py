@@ -7,11 +7,12 @@ from typing import Any, Literal
 import numpy as np
 import pandas as pd
 
-from labcore.timeseries.horizon_guard import seasonal_allowed
+from labcore.timeseries.horizon_guard import sarima_allowed, seasonal_allowed
 
 ModelKey = Literal[
     "seasonal_naive",
     "sarima_airline",
+    "sarima",
     "historic_average",
     "theta",
     "auto_ets",
@@ -97,26 +98,34 @@ def forecast_seasonal_naive(
     return np.asarray(fc[col], dtype=float)
 
 
-def forecast_sarima_airline(
+def forecast_sarima(
     y_train: np.ndarray,
     h: int,
     *,
     m: int = 12,
+    order: tuple[int, int, int] = (0, 1, 1),
+    seasonal_order: tuple[int, int, int, int] | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """SARIMA(0,1,1)(0,1,1)m — classic airline model (statsmodels SARIMAX).
+    """F10 — SARIMA (p,d,q)(P,D,Q)m via statsmodels ``SARIMAX``.
 
     Returns (point forecast, in-sample residuals after fit).
     """
     from statsmodels.tsa.statespace.sarimax import SARIMAX
 
-    ok, reason = seasonal_allowed(len(y_train), float(m), h)
+    if seasonal_order is None:
+        seasonal_order = (0, 1, 1, m)
+    n = len(y_train)
+    ok, reason = sarima_allowed(n, h, m=m, order=order, seasonal_order=seasonal_order)
     if not ok:
-        raise ValueError(f"sarima seasonal gate: {reason}")
+        raise ValueError(f"sarima gate: {reason}")
+    ok_seas, reason_seas = seasonal_allowed(n, float(seasonal_order[3] or m), h)
+    if not ok_seas:
+        raise ValueError(f"sarima seasonal gate: {reason_seas}")
     y = np.asarray(y_train, dtype=float)
     model = SARIMAX(
         y,
-        order=(0, 1, 1),
-        seasonal_order=(0, 1, 1, m),
+        order=order,
+        seasonal_order=seasonal_order,
         enforce_stationarity=False,
         enforce_invertibility=False,
     )
@@ -124,6 +133,22 @@ def forecast_sarima_airline(
     pred = np.asarray(fitted.forecast(h), dtype=float)
     resid = np.asarray(fitted.resid, dtype=float)
     return pred, resid
+
+
+def forecast_sarima_airline(
+    y_train: np.ndarray,
+    h: int,
+    *,
+    m: int = 12,
+) -> tuple[np.ndarray, np.ndarray]:
+    """SARIMA(0,1,1)(0,1,1)m — classic airline preset (delegates to F10)."""
+    return forecast_sarima(
+        y_train,
+        h,
+        m=m,
+        order=(0, 1, 1),
+        seasonal_order=(0, 1, 1, m),
+    )
 
 
 def forecast_sarimax(
@@ -676,6 +701,9 @@ def forecast(
     if key == "sarima_airline":
         yhat, resid = forecast_sarima_airline(y_train, h, m=m)
         return {"key": key, "y_pred": yhat, "resid": resid}
+    if key == "sarima":
+        yhat, resid = forecast_sarima(y_train, h, m=m)
+        return {"key": key, "y_pred": yhat, "resid": resid}
     if key == "historic_average":
         yhat = forecast_historic_average(y_train, h)
         return {"key": key, "y_pred": yhat, "resid": None}
@@ -803,6 +831,7 @@ def forecast(
 TS_MODEL_CATALOGUE: list[dict[str, str]] = [
     {"id": "seasonal_naive", "library": "statsforecast", "name": "Seasonal Naive"},
     {"id": "sarima_airline", "library": "statsmodels", "name": "SARIMA airline"},
+    {"id": "sarima", "library": "statsmodels", "name": "SARIMA"},
     {"id": "historic_average", "library": "statsforecast", "name": "Historic Average"},
     {"id": "theta", "library": "statsforecast", "name": "Theta"},
     {"id": "auto_ets", "library": "statsforecast", "name": "AutoETS"},
