@@ -31,6 +31,7 @@ export function TrainWorkbench({ mode }: Props) {
   const [championKey, setChampionKey] = useState<string | null>(null);
   const [tuneResult, setTuneResult] = useState<Record<string, unknown> | null>(null);
   const [refitFull, setRefitFull] = useState(true);
+  const [holdoutReuse, setHoldoutReuse] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     void listSamples()
@@ -97,11 +98,19 @@ export function TrainWorkbench({ mode }: Props) {
       const result = (exp.result || {}) as {
         eval?: Record<string, unknown>;
         champion?: { algorithm_key?: string };
+        holdout_reuse?: Record<string, unknown>;
+        refit_full?: Record<string, unknown>;
       };
       setEvalPayload(result.eval || null);
       setChampionKey(result.champion?.algorithm_key || String(lb[0]?.algorithm_key || ""));
+      setHoldoutReuse(result.holdout_reuse || null);
       setTuneResult(null);
-      setStatus(`Done — ${lb.length} models`);
+      const reuseN = result.holdout_reuse?.use_count;
+      setStatus(
+        `Done — ${lb.length} models` +
+          (reuseN != null ? ` · hold-out uses: ${String(reuseN)}` : "") +
+          (result.refit_full?.refit_performed === true ? " · refit_full" : "")
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setStatus("");
@@ -302,6 +311,19 @@ export function TrainWorkbench({ mode }: Props) {
             </tbody>
           </table>
         </div>
+        </div>
+      ) : null}
+      {holdoutReuse ? (
+        <div
+          className="rounded border border-[var(--border)] p-3 text-sm"
+          data-artefact="MI.HOLDOUT.REUSE"
+          title="MI-16 / ST-ML-04"
+        >
+          Hold-out test set: used{" "}
+          <strong>{String(holdoutReuse.use_count ?? "—")}</strong> time
+          {Number(holdoutReuse.use_count) === 1 ? "" : "s"}
+          {holdoutReuse.is_reuse ? " · reuse flagged" : " · first use (locked)"}
+          {holdoutReuse.seed != null ? ` · seed ${String(holdoutReuse.seed)}` : ""}
         </div>
       ) : null}
       {(mode === "detail" || evalPayload) && (
