@@ -57,4 +57,8 @@ def reports_notebook(
         facts=body.facts,
         pip_pins=body.pip_pins,
     )
-    return {"nbformat_json": notebook_to_json(nb), "seed": 42}
+    return {
+        "id": "REP.T.NOTEBOOK",
+        "nbformat_json": notebook_to_json(nb),
+        "seed": 42,
+    }

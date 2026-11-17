@@ -633,3 +633,32 @@ export async function runMonitoringPsiDrift(body: MonitoringPsiBody) {
   }
   return (await res.json()) as Record<string, unknown>;
 }
+
+export type ReportsNotebookBody = {
+  title?: string;
+  dataset_id: string;
+  algorithm_key: string;
+  facts?: Record<string, unknown>;
+  pip_pins?: string[];
+};
+
+export function reportsNotebookPath(): string {
+  return "/api/v1/reports/notebook";
+}
+
+export async function runReportsNotebook(body: ReportsNotebookBody) {
+  const res = await fetch(`${labApiBase()}${reportsNotebookPath()}`, {
+    method: "POST",
+    headers: { ...labAuthHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(`reports notebook: ${res.status} ${detail}`);
+  }
+  return (await res.json()) as {
+    id: string;
+    nbformat_json: string;
+    seed: number;
+  };
+}

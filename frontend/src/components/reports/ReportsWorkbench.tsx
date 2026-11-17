@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { labApiBase } from "@/lib/api";
 import { labAuthHeaders } from "@/lib/lab-session";
+import { ReproductionNotebookPanel } from "@/components/reports/ReproductionNotebookPanel";
 
 type Mode = "home" | "builder" | "templates" | "history";
 
@@ -41,19 +42,27 @@ export function ReportsWorkbench({ mode }: { mode: Mode }) {
           FACTS-only report builder (ARCHITECTURE §25). AI text is advisory.
         </p>
       </header>
-      <button
-        type="button"
-        className="bg-[var(--gold)] px-3 py-1.5 text-sm text-[var(--ink)]"
-        onClick={() => void build()}
-      >
-        Build demo report
-      </button>
-      {status && <p className="text-sm text-[var(--muted)]">{status}</p>}
-      {error && <p className="text-sm text-red-700">{error}</p>}
-      {report && (
-        <pre className="max-h-96 overflow-auto border border-[var(--line)] p-3 text-xs">
-          {JSON.stringify(report, null, 2)}
-        </pre>
+      {mode === "templates" && <ReproductionNotebookPanel />}
+      {mode === "builder" && (
+        <>
+          <button
+            type="button"
+            className="bg-[var(--gold)] px-3 py-1.5 text-sm text-[var(--ink)]"
+            onClick={() => void build()}
+          >
+            Build demo report
+          </button>
+          {status && <p className="text-sm text-[var(--muted)]">{status}</p>}
+          {error && <p className="text-sm text-red-700">{error}</p>}
+          {report && (
+            <pre className="max-h-96 overflow-auto border border-[var(--line)] p-3 text-xs">
+              {JSON.stringify(report, null, 2)}
+            </pre>
+          )}
+        </>
+      )}
+      {mode !== "builder" && mode !== "templates" && (
+        <p className="text-sm text-[var(--muted)]">Use Builder or Templates for exports.</p>
       )}
     </div>
   );
