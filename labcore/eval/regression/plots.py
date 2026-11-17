@@ -1756,3 +1756,117 @@ def plot_pi_band(
             "y_upper_sorted": hi_s.tolist(),
         },
     }
+
+
+def _y_pred_decile_labels(y_pred: np.ndarray, *, n_bins: int = 10) -> np.ndarray:
+    """ŷ-decile bin indices (same quantile recipe as REE.P.ERR_SEGMENT)."""
+    yp = np.asarray(y_pred, dtype=float)
+    try:
+        edges = np.quantile(yp, np.linspace(0, 1, n_bins + 1))
+        edges = np.unique(edges)
+        if len(edges) < 3:
+            raise ValueError("too few unique bins")
+        return np.digitize(yp, edges[1:-1], right=True)
+    except Exception:
+        return np.zeros(len(yp), dtype=int)
+
+
+def plot_coverage_bin(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    y_lower: np.ndarray,
+    y_upper: np.ndarray,
+    *,
+    confidence_level: float | None = None,
+    n_bins: int = 10,
+) -> dict[str, Any]:
+    """REE.P.COVERAGE_BIN — empirical coverage by ŷ-decile vs nominal (MAPIE)."""
+    import plotly.graph_objects as go
+    from mapie.metrics.regression import (
+        regression_coverage_score,
+        regression_mean_width_score,
+    )
+
+    yt = np.asarray(y_true, dtype=float).ravel()
+    yp = np.asarray(y_pred, dtype=float).ravel()
+    lo = np.asarray(y_lower, dtype=float).ravel()
+    hi = np.asarray(y_upper, dtype=float).ravel()
+    n = len(yt)
+    if not (len(yp) == len(lo) == len(hi) == n):
+        raise ValueError("y_true, y_pred, y_lower, y_upper must have the same length")
+    if n == 0:
+        raise ValueError("need at least one sample for COVERAGE_BIN")
+
+    y_intervals = np.stack([lo, hi], axis=1)[:, :, np.newaxis]
+    picp = float(np.asarray(regression_coverage_score(yt, y_intervals)).ravel()[0])
+    mpiw = float(np.asarray(regression_mean_width_score(y_intervals)).ravel()[0])
+
+    labels = _y_pred_decile_labels(yp, n_bins=n_bins)
+    rows: list[dict[str, Any]] = []
+    for decile in sorted(np.unique(labels)):
+        mask = labels == decile
+        n_bin = int(mask.sum())
+        if n_bin == 0:
+            continue
+        intervals_bin = y_intervals[mask]
+        cov = float(np.asarray(regression_coverage_score(yt[mask], intervals_bin)).ravel()[0])
+        width = float(np.asarray(regression_mean_width_score(intervals_bin)).ravel()[0])
+        rows.append(
+            {
+                "decile": int(decile),
+                "n": n_bin,
+                "coverage": cov,
+                "mean_width": width,
+            }
+        )
+
+    xs = [str(r["decile"]) for r in rows]
+    cov_y = [r["coverage"] for r in rows]
+    fig = go.Figure()
+    fig.add_trace(
+        go.Bar(
+            x=xs,
+            y=cov_y,
+            name="Empirical coverage",
+            marker_color="#c9a227",
+        )
+    )
+    nominal = confidence_level
+    if nominal is not None:
+        fig.add_hline(
+            y=nominal,
+            line_dash="dash",
+            line_color="gray",
+            annotation_text=f"nominal {nominal:.0%}",
+        )
+    title = "Interval coverage by ŷ decile"
+    if nominal is not None:
+        title += f" (nominal {nominal:.0%})"
+    fig.update_layout(
+        title=title,
+        xaxis_title="ŷ decile",
+        yaxis_title="Empirical coverage",
+        yaxis_range=[0, 1.05],
+        height=400,
+    )
+
+    conditional_coverage_gap: float | None = None
+    if nominal is not None and rows:
+        conditional_coverage_gap = float(
+            max(abs(float(r["coverage"]) - nominal) for r in rows)
+        )
+
+    return {
+        "id": "REE.P.COVERAGE_BIN",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "n": n,
+            "n_bins": n_bins,
+            "confidence_level": confidence_level,
+            "picp": picp,
+            "mean_interval_width": mpiw,
+            "conditional_coverage_gap": conditional_coverage_gap,
+            "by_decile": rows,
+        },
+    }
