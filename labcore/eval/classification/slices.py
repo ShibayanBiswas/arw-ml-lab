@@ -22,11 +22,12 @@ def metric_by_segment(
     y_true = np.asarray(y_true)
     y_pred = np.asarray(y_pred)
     segment = np.asarray(segment)
+    avg_mode = "binary" if len(np.unique(y_true)) == 2 else "macro"
     mf = MetricFrame(
         metrics={
             "accuracy": accuracy_score,
-            "f1": lambda yt, yp: f1_score(yt, yp, zero_division=np.nan, average="binary"),
-            "recall": lambda yt, yp: recall_score(yt, yp, zero_division=np.nan, average="binary"),
+            "f1": lambda yt, yp: f1_score(yt, yp, zero_division=np.nan, average=avg_mode),
+            "recall": lambda yt, yp: recall_score(yt, yp, zero_division=np.nan, average=avg_mode),
         },
         y_true=y_true,
         y_pred=y_pred,
@@ -40,6 +41,7 @@ def metric_by_segment(
     import plotly.graph_objects as go
 
     segs = [str(r["segment"]) for r in rows]
+    metric_colors = {"accuracy": "#1f77b4", "f1": "#ff7f0e", "recall": "#2ca02c"}
     fig = go.Figure()
     for metric in ("accuracy", "f1", "recall"):
         fig.add_trace(
@@ -47,9 +49,33 @@ def metric_by_segment(
                 x=segs,
                 y=[float(r[metric]) if r.get(metric) == r.get(metric) else None for r in rows],
                 name=metric,
+                marker_color=metric_colors[metric],
             )
         )
-    fig.update_layout(title="Metrics by segment", barmode="group", height=400)
+        ov = overall.get(metric)
+        if ov is not None and ov == ov:
+            fig.add_hline(
+                y=ov,
+                line_dash="dot",
+                line_color=metric_colors[metric],
+                annotation_text=f"overall {metric}",
+                annotation_position="right",
+            )
+    fig.update_layout(
+        title="Metrics by segment",
+        barmode="group",
+        height=420,
+        yaxis=dict(range=[0, 1.05], title="Score"),
+        xaxis_title="Segment",
+    )
+    plot_numbers = {
+        "averaging": avg_mode,
+        "overall": overall,
+        "by_segment": {
+            str(r["segment"]): {k: r.get(k) for k in ("accuracy", "f1", "recall")}
+            for r in rows
+        },
+    }
     return {
         "id": "CLE.T.SLICES",
         "kind": "table",
@@ -60,6 +86,7 @@ def metric_by_segment(
                 "id": "CLE.P.SLICES",
                 "kind": "plot",
                 "plotly": fig.to_plotly_json(),
+                "numbers": plot_numbers,
             }
         ],
     }

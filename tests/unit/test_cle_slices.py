@@ -27,5 +27,8 @@ def test_metric_by_segment_binary():
     seg = (X_te[:, 0] >= np.median(X_te[:, 0])).astype(int)
     out = metric_by_segment(y_te, pred, seg, seed=42)
     assert out["id"] == "CLE.T.SLICES"
-    assert out["plots"][0]["id"] == "CLE.P.SLICES"
+    plot = out["plots"][0]
+    assert plot["id"] == "CLE.P.SLICES"
     assert len(out["rows"]) >= 2
+    assert plot["numbers"]["averaging"] == "binary"
+    assert plot["numbers"]["overall"]["accuracy"] == out["overall"]["accuracy"]
