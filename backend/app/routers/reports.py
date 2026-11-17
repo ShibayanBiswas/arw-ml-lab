@@ -8,8 +8,10 @@ from fastapi import APIRouter, Depends
 from labcore.reports import (
     build_executive_html,
     build_formula_sheet,
+    build_reproduction_bundle_zip,
     build_reproduction_notebook,
     build_run_report,
+    bundle_to_base64,
     notebook_to_json,
     render_executive_pdf_b64,
 )
@@ -33,6 +35,7 @@ class NotebookBody(BaseModel):
     algorithm_key: str
     facts: dict[str, Any] = Field(default_factory=dict)
     pip_pins: list[str] | None = None
+    data_sha256: str | None = None
 
 
 class FormulasBody(BaseModel):
@@ -104,6 +107,31 @@ def reports_notebook(
         "id": "REP.T.NOTEBOOK",
         "nbformat_json": notebook_to_json(nb),
         "seed": 42,
+    }
+
+
+@router.post("/api/v1/reports/bundle")
+def reports_bundle(
+    body: NotebookBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    _ = user
+    blob = build_reproduction_bundle_zip(
+        title=body.title,
+        dataset_id=body.dataset_id,
+        algorithm_key=body.algorithm_key,
+        seed=42,
+        facts=body.facts,
+        pip_pins=body.pip_pins,
+        data_hash=body.data_sha256,
+    )
+    slug = f"{body.dataset_id}-{body.algorithm_key}".replace("/", "_")
+    return {
+        "id": "REP.T.BUNDLE",
+        "seed": 42,
+        "timezone": "Asia/Kolkata",
+        "filename": f"reproduction-{slug}-seed42.zip",
+        "zip_base64": bundle_to_base64(blob),
     }
 
 

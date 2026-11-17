@@ -9,6 +9,11 @@ from labcore.reports.executive import (
 from labcore.reports.formulas import build_formula_sheet, list_formula_entries
 from labcore.reports.leaderboard_export import build_leaderboard_export_manifest
 from labcore.reports.notebook import build_reproduction_notebook, notebook_to_json
+from labcore.reports.reproduction_bundle import (
+    build_reproduction_bundle_manifest,
+    build_reproduction_bundle_zip,
+    bundle_to_base64,
+)
 
 __all__ = [
     "build_run_report",
@@ -20,4 +25,7 @@ __all__ = [
     "build_formula_sheet",
     "list_formula_entries",
     "build_leaderboard_export_manifest",
+    "build_reproduction_bundle_manifest",
+    "build_reproduction_bundle_zip",
+    "bundle_to_base64",
 ]

@@ -711,6 +711,29 @@ export async function fetchAdminAuditLog(params?: { limit?: number; offset?: num
   };
 }
 
+export function reportsBundlePath(): string {
+  return "/api/v1/reports/bundle";
+}
+
+export async function runReportsBundle(body: ReportsNotebookBody) {
+  const res = await fetch(`${labApiBase()}${reportsBundlePath()}`, {
+    method: "POST",
+    headers: { ...labAuthHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(`reports bundle: ${res.status} ${detail}`);
+  }
+  return (await res.json()) as {
+    id: string;
+    seed: number;
+    timezone: string;
+    filename: string;
+    zip_base64: string;
+  };
+}
+
 export async function runReportsNotebook(body: ReportsNotebookBody) {
   const res = await fetch(`${labApiBase()}${reportsNotebookPath()}`, {
     method: "POST",
