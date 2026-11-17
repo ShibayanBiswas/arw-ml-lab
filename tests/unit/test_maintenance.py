@@ -17,6 +17,29 @@ def test_run_all_returns_seed() -> None:
     assert out["seed"] == 42
     assert "reaper" in out
     assert "storage" in out
+    assert out["healthcheck"]["configured"] is False
+
+
+def test_ping_healthcheck_unset(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("HEALTHCHECK_PING_URL", raising=False)
+    assert m.ping_healthcheck() == {"configured": False, "ok": True, "reason": "unset"}
+
+
+def test_ping_healthcheck_ok(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("HEALTHCHECK_PING_URL", "https://hc.example/ping")
+
+    class _Resp:
+        status = 200
+
+        def __enter__(self) -> "_Resp":
+            return self
+
+        def __exit__(self, *args: object) -> None:
+            return None
+
+    with patch("urllib.request.urlopen", return_value=_Resp()):
+        out = m.ping_healthcheck()
+    assert out == {"configured": True, "ok": True, "status": 200}
 
 
 def test_main_all_exit_zero() -> None:

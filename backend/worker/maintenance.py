@@ -9,8 +9,11 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import sys
 import time
+import urllib.error
+import urllib.request
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime
@@ -303,6 +306,23 @@ def storage_lifecycle() -> dict[str, int | str]:
     }
 
 
+def ping_healthcheck() -> dict[str, str | bool]:
+    """Optional external heartbeat — DEPLOY_CONTABO §11 HEALTHCHECK_PING_URL."""
+    url = (os.environ.get("HEALTHCHECK_PING_URL") or "").strip()
+    if not url:
+        return {"configured": False, "ok": True, "reason": "unset"}
+    try:
+        with urllib.request.urlopen(url, timeout=10) as resp:  # noqa: S310 — operator-configured URL
+            status = int(getattr(resp, "status", 0) or 0)
+        ok = 200 <= status < 300
+        if not ok:
+            log.warning("healthcheck ping returned status=%s", status)
+        return {"configured": True, "ok": ok, "status": status}
+    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        log.warning("healthcheck ping failed: %s", exc)
+        return {"configured": True, "ok": False, "reason": type(exc).__name__}
+
+
 def run_all() -> dict[str, object]:
     started = datetime.now(UTC).isoformat()
     result = {
@@ -310,6 +330,7 @@ def run_all() -> dict[str, object]:
         "reaper": reaper_stale_heartbeats(),
         "predictions": retention_expired_predictions(),
         "storage": storage_lifecycle(),
+        "healthcheck": ping_healthcheck(),
         "seed": MAINTENANCE_SEED,
     }
     log.info("maintenance complete: %s", result)
