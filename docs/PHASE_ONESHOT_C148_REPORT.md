@@ -21,4 +21,4 @@
 - [x] Import allowlist green.
 - [x] Rule 70: stdlib-only helper in `labcore/security/`.
 
-**Ship commit:** (filled after commit)
+**Ship commit:** `cd83a1e`
