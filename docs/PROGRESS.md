@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Current phase | Contabo v2.3 (blocked on host secrets) + One-shot CLE/REE → 8.2 |
-| Last completed step | oneshot-c237 NVIDIA chat timeout 8s; c236 blocked inventory |
-| Last green commit | 985db55 |
+| Last completed step | oneshot-c237 NVIDIA 8s timeout; tip 617b367 |
+| Last green commit | 617b367 |
 | Open failures | Contabo host/SSH/.env; Supabase migrate secrets; NVIDIA_API_KEY; Deploy cannot smoke without LAB_API_URL; Actions billing; TradingLab parity (submodule) |
 | Next action | Shibayan: Contabo + Supabase + NVIDIA + Actions billing (Blocked). Agent: continue 8.2 offline gaps; TradingLab parity when submodule present |
 
@@ -19,6 +19,7 @@
 | `SUPABASE_ACCESS_TOKEN` | `gh secret set SUPABASE_ACCESS_TOKEN --env production --repo ShibayanBiswas/arw-ml-lab` (stdin) |
 | `SUPABASE_DB_PASSWORD` | `gh secret set SUPABASE_DB_PASSWORD --env production --repo ShibayanBiswas/arw-ml-lab` (stdin) |
 | TradingLab submodule | `vendor/tradinglab` for **parity** tests vs thin FS16–18 (SADF/trendscan/MA-cross already online) |
+| Vercel MCP / CLI team scope | Open authorize link from agent (team `shibayan-biswas-projects`) or run `vercel link` in `frontend/` so `NEXT_PUBLIC_LAB_API_URL` can be set after Contabo hostname exists |
 | GitHub Actions billing | CI/Deploy still die in ~2–4s (e.g. `44087280966`). Fix https://github.com/settings/billing — add payment method and/or raise Actions budget / clear “Stop usage when budget limit is reached”, then re-run failed workflows |
 
 ## Contabo move checklist (agent)
