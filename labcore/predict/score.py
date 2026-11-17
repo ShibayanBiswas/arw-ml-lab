@@ -7,12 +7,28 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from labcore.predict.humility import (
+    HumilityPolicy,
+    apply_humility_row,
+    suppress_prediction_if_abstain,
+)
+
+_POLICY_KEYS = frozenset(HumilityPolicy.__dataclass_fields__)
+
+
+def _policy_from_options(humility: dict[str, Any] | HumilityPolicy) -> HumilityPolicy:
+    if isinstance(humility, HumilityPolicy):
+        return humility
+    kwargs = {k: v for k, v in humility.items() if k in _POLICY_KEYS}
+    return HumilityPolicy(**kwargs)
+
 
 def predict_single(
     pipeline: Any,
     row: dict[str, Any] | pd.Series | pd.DataFrame,
     *,
     feature_names: list[str] | None = None,
+    humility: dict[str, Any] | HumilityPolicy | None = None,
 ) -> dict[str, Any]:
     """Score one row with a fitted pipeline. Never calls fit."""
     if isinstance(row, pd.DataFrame):
@@ -27,8 +43,9 @@ def predict_single(
             raise ValueError(f"missing features: {missing}")
         X = X[feature_names]
     y_hat = np.asarray(pipeline.predict(X))
+    pred = y_hat[0].item() if hasattr(y_hat[0], "item") else y_hat[0]
     out: dict[str, Any] = {
-        "prediction": y_hat[0].item() if hasattr(y_hat[0], "item") else y_hat[0],
+        "prediction": pred,
         "n_rows": 1,
         "refit": False,
     }
@@ -38,6 +55,20 @@ def predict_single(
             out["probabilities"] = proba[0].tolist()
         except Exception:
             pass
+    if humility is not None:
+        pol = _policy_from_options(humility)
+        opts = humility if isinstance(humility, dict) else {}
+        h = apply_humility_row(
+            ood_score=float(opts.get("ood_score", 0.0)),
+            flag_ood=opts.get("flag_ood"),
+            flag_out_of_range=list(opts.get("flag_out_of_range") or []),
+            interval_lower=opts.get("interval_lower"),
+            interval_upper=opts.get("interval_upper"),
+            training_target_scale=opts.get("training_target_scale"),
+            policy=pol,
+        )
+        out["humility"] = h
+        out["prediction"] = suppress_prediction_if_abstain(pred, h)
     return out
 
 
