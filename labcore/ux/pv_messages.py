@@ -14,8 +14,12 @@ IMPLEMENTED_PV_CODES: tuple[str, ...] = (
     "PV08",
     "PV09",
     "PV10",
+    "PV11",
+    "PV12",
+    "PV13",
     "PV14",
     "PV15",
+    "PV16",
 )
 
 PV_MESSAGES: dict[str, dict[str, str]] = {
@@ -59,6 +63,18 @@ PV_MESSAGES: dict[str, dict[str, str]] = {
         "title": "Input looks out of distribution",
         "fix": "Review extreme values; predictions may be flagged as uncertain.",
     },
+    "PV11": {
+        "title": "Batch feature drift",
+        "fix": "Compare PSI/KS against the training reference; retrain if drift is high.",
+    },
+    "PV12": {
+        "title": "Sequential history issue",
+        "fix": "Parse the time column, sort within series, remove duplicate timestamps, and supply enough lookback rows for lag features.",
+    },
+    "PV13": {
+        "title": "Forecast horizon rejected",
+        "fix": "Request a horizon within HorizonGuard h_max for the series length and frequency.",
+    },
     "PV14": {
         "title": "Duplicate row keys",
         "fix": "Remove duplicate identifiers or aggregate rows before upload.",
@@ -66,6 +82,10 @@ PV_MESSAGES: dict[str, dict[str, str]] = {
     "PV15": {
         "title": "Formula-like cells sanitised",
         "fix": "Leading = + - @ cells are escaped on export; no action required.",
+    },
+    "PV16": {
+        "title": "Identifier-like columns present",
+        "fix": "Identifier values are never sent to VLM/LLM prompts; mask or drop before export if needed.",
     },
 }
 

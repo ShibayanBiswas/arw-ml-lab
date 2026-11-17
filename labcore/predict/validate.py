@@ -1,8 +1,8 @@
 """Prediction upload validation — PV01–PV16 (ARCHITECTURE §45.3).
 
 Implemented: PV01–PV09, PV10 (contract-stat OOD), PV11 (PSI/KS when ``reference_df``),
-PV13 (HorizonGuard when series meta + h_request), PV14–PV16.
-Deferred: PV12 (sequential history).
+PV12 (sequential time/sort/dupes/lookback when ``time_column``), PV13 (HorizonGuard
+when series meta + h_request), PV14–PV16.
 """
 
 from __future__ import annotations
@@ -243,6 +243,220 @@ def _row_ood_scores(
         z = ((col - float(med)) / scale).abs().fillna(0.0).to_numpy(dtype=float)
         scores = np.maximum(scores, z)
     return scores
+
+
+def _lookback_from_contract(contract: dict[str, Any]) -> int:
+    """Max lag / lookback from contract (explicit lookback or derived lag features)."""
+    raw = contract.get("lookback")
+    if raw is not None:
+        try:
+            return max(0, int(raw))
+        except (TypeError, ValueError):
+            pass
+    max_lag = 0
+    for der in contract.get("derived_features") or []:
+        if not isinstance(der, dict):
+            continue
+        for key in ("lookback", "lag", "n_lags", "window"):
+            if der.get(key) is None:
+                continue
+            try:
+                max_lag = max(max_lag, int(der[key]))
+            except (TypeError, ValueError):
+                continue
+        name = str(der.get("name") or "")
+        if "lag" in name.lower():
+            digits = "".join(ch for ch in name if ch.isdigit())
+            if digits:
+                max_lag = max(max_lag, int(digits))
+    return max_lag
+
+
+def _resolve_upload_col(df: pd.DataFrame, contract_name: str | None) -> str | None:
+    """Map a contract column name onto the upload frame (exact then normalised)."""
+    if not contract_name:
+        return None
+    cols = list(map(str, df.columns))
+    if contract_name in cols:
+        return contract_name
+    by_norm = {_norm_name(c): c for c in cols}
+    return by_norm.get(_norm_name(contract_name))
+
+
+def _apply_pv12_sequential(
+    df: pd.DataFrame,
+    contract: dict[str, Any],
+    report: ValidationReport,
+) -> None:
+    """PV12 — sequential (non-TS) time parse / sort / dupes / lookback (§45.3)."""
+    time_col = contract.get("time_column")
+    if not time_col:
+        report.deferred.append(
+            PVIssue(
+                code="PV12",
+                severity="deferred",
+                message="sequential history checks not computed yet",
+            )
+        )
+        return
+
+    upload_time = _resolve_upload_col(df, str(time_col))
+    if upload_time is None:
+        report.blocking.append(
+            PVIssue(
+                code="PV12",
+                severity="block",
+                message=f"time column '{time_col}' missing from upload",
+                column=str(time_col),
+            )
+        )
+        return
+
+    parsed = pd.to_datetime(df[upload_time], errors="coerce", utc=False, format="mixed")
+    n_bad = int(parsed.isna().sum())
+    if n_bad == len(df):
+        report.blocking.append(
+            PVIssue(
+                code="PV12",
+                severity="block",
+                message=f"time column '{time_col}' did not parse for any row",
+                column=str(time_col),
+                n_rows=n_bad,
+            )
+        )
+        return
+    if n_bad > 0:
+        report.warnings.append(
+            PVIssue(
+                code="PV12",
+                severity="warn",
+                message=f"time column '{time_col}' failed to parse on {n_bad} row(s)",
+                column=str(time_col),
+                n_rows=n_bad,
+            )
+        )
+
+    series_col_name = contract.get("series_column")
+    upload_series = _resolve_upload_col(df, str(series_col_name) if series_col_name else None)
+
+    work = pd.DataFrame({"_t": parsed})
+    if upload_series is not None:
+        work["_s"] = df[upload_series].astype(str)
+    else:
+        work["_s"] = "_"
+
+    # Sort check (offer auto-sort)
+    needs_sort = False
+    for _, grp in work.groupby("_s", sort=False):
+        t = grp["_t"]
+        valid = t.dropna()
+        if len(valid) >= 2 and not valid.is_monotonic_increasing:
+            needs_sort = True
+            break
+    if needs_sort:
+        report.warnings.append(
+            PVIssue(
+                code="PV12",
+                severity="warn",
+                message="rows are not sorted by time within series — auto-sort offered",
+                column=str(time_col),
+                details={"auto_sort": True},
+            )
+        )
+    else:
+        report.info.append(
+            PVIssue(
+                code="PV12",
+                severity="info",
+                message="rows sorted by time within series",
+                column=str(time_col),
+            )
+        )
+
+    # Duplicate timestamps per series
+    dup_mask = work.duplicated(subset=["_s", "_t"], keep=False) & work["_t"].notna()
+    n_dup = int(dup_mask.sum())
+    if n_dup > 0:
+        report.warnings.append(
+            PVIssue(
+                code="PV12",
+                severity="warn",
+                message=f"duplicate timestamps per series on {n_dup} row(s)",
+                column=str(time_col),
+                n_rows=n_dup,
+            )
+        )
+
+    lookback = _lookback_from_contract(contract)
+    if lookback <= 0:
+        report.info.append(
+            PVIssue(
+                code="PV12",
+                severity="info",
+                message="no lag lookback required for this contract",
+                details={"lookback": 0},
+            )
+        )
+        return
+
+    # Per series: first ``lookback`` rows (after chronological order) lack history
+    insufficient_idx: list[Any] = []
+    for _, grp in work.groupby("_s", sort=False):
+        order = grp["_t"].argsort(kind="mergesort")
+        ordered = grp.iloc[order]
+        # skip unparseable times at the head of the ranking
+        valid_pos = [i for i, ok in enumerate(ordered["_t"].notna().tolist()) if ok]
+        for pos in valid_pos[:lookback]:
+            insufficient_idx.append(ordered.index[pos])
+
+    n_insuff = len(insufficient_idx)
+    if n_insuff > 0 and n_insuff >= int(work["_t"].notna().sum()):
+        report.blocking.append(
+            PVIssue(
+                code="PV12",
+                severity="block",
+                message=(
+                    f"lookback={lookback}: insufficient history for all rows "
+                    "(need prior bars for lag features)"
+                ),
+                column=str(time_col),
+                n_rows=n_insuff,
+                details={
+                    "lookback": lookback,
+                    "insufficient_history": True,
+                    "row_indices": [int(i) if isinstance(i, (int, np.integer)) else str(i)
+                                    for i in insufficient_idx[:50]],
+                },
+            )
+        )
+    elif n_insuff > 0:
+        report.warnings.append(
+            PVIssue(
+                code="PV12",
+                severity="warn",
+                message=(
+                    f"lookback={lookback}: {n_insuff} row(s) marked insufficient_history "
+                    "for lag features"
+                ),
+                column=str(time_col),
+                n_rows=n_insuff,
+                details={
+                    "lookback": lookback,
+                    "insufficient_history": True,
+                    "row_indices": [int(i) if isinstance(i, (int, np.integer)) else str(i)
+                                    for i in insufficient_idx[:50]],
+                },
+            )
+        )
+    else:
+        report.info.append(
+            PVIssue(
+                code="PV12",
+                severity="info",
+                message=f"lookback={lookback}: history available for all rows",
+                details={"lookback": lookback},
+            )
+        )
 
 
 def validate_predict_frame(
@@ -506,10 +720,8 @@ def validate_predict_frame(
             PVIssue(code="PV13", severity="deferred", message="TS horizon checks not computed yet")
         )
 
-    # Deferred: sequential
-    report.deferred.append(
-        PVIssue(code="PV12", severity="deferred", message="sequential history checks not computed yet")
-    )
+    # PV12 — sequential time / sort / dupes / lookback (oneshot-c246)
+    _apply_pv12_sequential(df, contract, report)
 
     if report.blocking:
         report.ok = False
