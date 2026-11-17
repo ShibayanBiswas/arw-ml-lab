@@ -35,4 +35,4 @@ cd frontend && pnpm exec vitest run src/lib/reports-api.test.ts
 - [x] API response `seed: 42`.
 - [x] Import allowlist + vitest green.
 
-**Ship commit:** _(filled after commit)_
+**Ship commit:** `2b49953`
