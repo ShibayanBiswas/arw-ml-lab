@@ -33,4 +33,4 @@ cd frontend && pnpm exec vitest run src/lib/admin-api.test.ts
 - [x] API `seed: 42`.
 - [x] Import allowlist + vitest green.
 
-**Ship commit:** _(set after commit)_
+**Ship commit:** `2c20f1d`
