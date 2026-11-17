@@ -49,6 +49,7 @@ services:
     cpus: "1.0"
     environment:
       SERVICE_ROLE: api
+      AUTH_TEST_BYPASS: "false"
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
     command:
       - uvicorn
@@ -86,6 +87,7 @@ services:
     stop_grace_period: 300s
     environment:
       SERVICE_ROLE: worker-light
+      AUTH_TEST_BYPASS: "false"
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
     command:
       - celery
@@ -114,6 +116,7 @@ services:
     stop_grace_period: 300s
     environment:
       SERVICE_ROLE: worker-train
+      AUTH_TEST_BYPASS: "false"
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       OMP_NUM_THREADS: "2"
       MKL_NUM_THREADS: "2"
@@ -143,6 +146,7 @@ services:
     cpus: "0.25"
     environment:
       SERVICE_ROLE: beat
+      AUTH_TEST_BYPASS: "false"
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
     command:
       - sh

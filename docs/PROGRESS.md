@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Current phase | Contabo v2.3 (blocked on host secrets) + One-shot CLE/REE → 8.2 |
-| Last completed step | oneshot-c217 PRED.HUMILITY action selector FE; oneshot-c216 OPS.MAX_ROWS |
-| Last green commit | 382b30c |
+| Last completed step | oneshot-c218 SEC.AUTH.BYPASS compose pin; oneshot-c217 PRED.HUMILITY FE |
+| Last green commit | (pending push after c218) |
 | Open failures | Contabo host/SSH/.env; Supabase migrate secrets; NVIDIA_API_KEY; Deploy cannot smoke without LAB_API_URL; Actions billing; TradingLab parity (submodule) |
 | Next action | Shibayan: Contabo + Supabase + NVIDIA + Actions billing (Blocked). Agent: continue 8.2 offline gaps; TradingLab parity when submodule present |
 
