@@ -5,8 +5,8 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import PlainTextResponse
-from labcore.train.export import leaderboard_to_csv
+from fastapi.responses import PlainTextResponse, Response
+from labcore.train.export import leaderboard_to_csv, leaderboard_to_xlsx_bytes
 from pydantic import BaseModel, Field
 
 from backend.app.dataset_store import DATASET_STORE
@@ -155,4 +155,20 @@ def export_leaderboard_csv(
         body,
         media_type="text/csv; charset=utf-8",
         headers={"Content-Disposition": f'attachment; filename="leaderboard-{experiment_id}.csv"'},
+    )
+
+
+@router.get("/api/v1/experiments/{experiment_id}/leaderboard.xlsx")
+def export_leaderboard_xlsx(
+    experiment_id: str,
+    user: AuthUser = Depends(require_write_role),
+) -> Response:
+    rec = EXPERIMENT_STORE.get(experiment_id)
+    if rec is None:
+        raise HTTPException(status_code=404, detail="experiment not found")
+    body = leaderboard_to_xlsx_bytes(list(rec.leaderboard or []))
+    return Response(
+        content=body,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="leaderboard-{experiment_id}.xlsx"'},
     )
