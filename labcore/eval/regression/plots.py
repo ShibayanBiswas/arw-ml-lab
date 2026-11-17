@@ -368,18 +368,39 @@ def plot_leverage_studentised(
 
 
 def plot_studentised_residuals(stud: np.ndarray) -> dict[str, Any]:
+    """REE.P.STUDENTISED_INDEX — externally studentised residuals vs index (±3 bands)."""
     import plotly.graph_objects as go
 
-    idx = np.arange(len(stud))
+    stud = np.asarray(stud, dtype=float)
+    n = int(len(stud))
+    idx = np.arange(n, dtype=float)
     fig = go.Figure(go.Scatter(x=idx, y=stud, mode="markers", name="studentised"))
-    fig.add_hline(y=0, line_dash="dash")
+    fig.add_hline(y=0, line_dash="dash", line_color="gray")
+    for band, label in ((3.0, "+3"), (-3.0, "−3")):
+        fig.add_hline(
+            y=band,
+            line_dash="dot",
+            line_color="crimson",
+            annotation_text=label,
+            annotation_position="top left" if band > 0 else "bottom left",
+        )
     fig.update_layout(
-        title="Studentised residuals",
+        title="Studentised residuals vs index",
         xaxis_title="Index",
-        yaxis_title="Studentised residual",
+        yaxis_title="Externally studentised residual",
         height=400,
     )
-    return {"id": "REE.P.STUD_RESID", "kind": "plot", "plotly": fig.to_plotly_json()}
+    return {
+        "id": "REE.P.STUDENTISED_INDEX",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "n": n,
+            "bands": [-3.0, 3.0],
+            "studentised_resid": [float(v) for v in stud],
+            "index": [float(i) for i in idx],
+        },
+    }
 
 
 def plot_bland_altman(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, Any]:

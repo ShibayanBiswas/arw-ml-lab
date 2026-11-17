@@ -246,7 +246,7 @@ def test_expanded_ree_plots_ds12_fixture():
     for need in (
         "REE.P.COOKS",
         "REE.P.LEVERAGE",
-        "REE.P.STUD_RESID",
+        "REE.P.STUDENTISED_INDEX",
         "REE.P.BLAND_ALTMAN",
         "REE.P.RESID_ACF",
         "REE.P.ABS_RESID",
