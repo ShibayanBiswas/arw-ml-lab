@@ -48,6 +48,8 @@ class Settings(BaseSettings):
     otel_service_name: str = Field(default="lab-api", alias="OTEL_SERVICE_NAME")
     # Optuna RDB URL for resumable studies (§39.3); empty → DATABASE_URL_SESSION → in-memory
     optuna_storage_url: str = Field(default="", alias="OPTUNA_STORAGE_URL")
+    # Contabo §12 / OPS-01 row cap (raise only after load tests)
+    lab_max_rows: int = Field(default=2_000_000, alias="LAB_MAX_ROWS")
 
     def resolved_optuna_storage_url(self) -> str:
         """Prefer explicit OPTUNA_STORAGE_URL; else session pooler for workers."""

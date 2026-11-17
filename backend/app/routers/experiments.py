@@ -93,12 +93,25 @@ def _reject_memory_overflow(ds: Any) -> None:
         raise HTTPException(status_code=422, detail=decision["message"])
 
 
+def _reject_max_rows(ds: Any) -> None:
+    from backend.app.settings import get_settings
+    from labcore.ops.max_rows_guard import guard_max_rows
+
+    n_rows, _n_cols = _dataset_shape(ds)
+    if n_rows <= 0:
+        return
+    decision = guard_max_rows(n_rows=n_rows, lab_max_rows=get_settings().lab_max_rows)
+    if decision.get("refused"):
+        raise HTTPException(status_code=422, detail=decision["message"])
+
+
 @router.post("/api/v1/experiments/train")
 def start_train(body: TrainBody, user: AuthUser = Depends(require_write_role)) -> dict[str, str]:
     ds = DATASET_STORE.get(body.dataset_id)
     if ds is None:
         raise HTTPException(status_code=404, detail="dataset not found")
     _reject_gpu_or_hidden(body.algorithm_keys)
+    _reject_max_rows(ds)
     _reject_memory_overflow(ds)
     exp = EXPERIMENT_STORE.create(
         workspace_id=user.workspace_id or ds.workspace_id,
@@ -123,6 +136,7 @@ def start_tune(body: TuneBody, user: AuthUser = Depends(require_write_role)) -> 
     if ds is None:
         raise HTTPException(status_code=404, detail="dataset not found")
     _reject_gpu_or_hidden([body.algorithm_key])
+    _reject_max_rows(ds)
     _reject_memory_overflow(ds)
     exp = EXPERIMENT_STORE.create(
         workspace_id=user.workspace_id or ds.workspace_id,
