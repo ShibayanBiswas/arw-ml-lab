@@ -435,3 +435,36 @@ def plot_compare_bars_ree(
         "plotly": fig.to_plotly_json(),
         "numbers": {"scores": model_scores, "cis": cis},
     }
+
+
+def plot_regression_cd(
+    fold_scores: dict[str, list[float]],
+    *,
+    higher_is_better: bool = False,
+    metric: str = "rmse",
+    alpha: float = 0.05,
+) -> dict[str, Any]:
+    """REE.P.CD — Friedman–Nemenyi critical-difference diagram (≥3 models)."""
+    import pandas as pd
+
+    from labcore.eval.cd_diagram import friedman_nemenyi, plot_cd_ranks
+
+    df = pd.DataFrame({k: np.asarray(v, dtype=float) for k, v in fold_scores.items()})
+    if df.shape[1] < 3 or df.shape[0] < 2:
+        return {
+            "id": "REE.P.CD",
+            "kind": "plot",
+            "plotly": {"data": [], "layout": {"title": "CD diagram needs ≥3 models and ≥2 folds"}},
+            "numbers": {"status": "not computed", "reason": "need ≥3 models and ≥2 folds"},
+        }
+    work = df if higher_is_better else -df
+    result = friedman_nemenyi(work, alpha=alpha)
+    fig = plot_cd_ranks(result)
+    if result.get("status") == "ok":
+        fig.setdefault("layout", {})["title"] = f"Critical difference ({metric})"
+    return {
+        "id": "REE.P.CD",
+        "kind": "plot",
+        "plotly": fig,
+        "numbers": {**result, "metric": metric, "higher_is_better": higher_is_better},
+    }
