@@ -1,28 +1,21 @@
 # ARW ML Lab — One-shot finish report (interim)
 
 **Date:** 17 Nov 2026 (IST)
-**Tip:** `64952aa` — oneshot-c110 ST-OPS-07 prediction Storage purge on expired jobs
+**Tip:** `c020ffa` — oneshot-c129 FE.WB.UNSUP_ANOM
 **Live frontend:** https://arw-ml-lab.vercel.app/login → **200**
 **Repo:** https://github.com/ShibayanBiswas/arw-ml-lab
 **Backend target:** Contabo VPS (`docs/DEPLOY_CONTABO.md`, ADR-0017) — **not yet live**
 
-Honest interim. Contabo infra + GHCR/SSH deploy workflow are in tree. Hosted Contabo prove and full 4A→8.2 AC closure are **not** done. One-shot continued offline through ~c108 (CLE/REE/FS/DR/CLU/ANO/OPS/F*).
+## Contabo (v2.3) — repo ready, host blocked
 
-## Contabo move (v2.3)
+Docs, prune, `docker-compose.prod.yml`, Caddy, `deploy.sh`, bootstrap script, and GHCR+SSH `deploy.yml` are on `main`. Cannot bootstrap or smoke until you unblock the items in `docs/PROGRESS.md` → **Blocked**.
 
-| Item | Status |
-|---|---|
-| Docs + ADR-0017 + prune | done |
-| compose.prod / Caddy / deploy.sh / bootstrap script | done |
-| deploy.yml migrate → GHCR build → SSH deploy → smoke | done in repo |
-| SSH bootstrap / server `.env` / known_hosts / LAB_API_URL | **blocked** — no CONTABO_HOST |
-| GitHub CONTABO_USER + CONTABO_SSH_KEY + SMOKE_EDA | set |
-| CI + Deploy runners | **blocked** — Actions billing/payment |
+Critical: **GitHub Actions billing** (jobs fail immediately) + **CONTABO_HOST** / SSH key path + Supabase migrate secrets + `NVIDIA_API_KEY` in local `.env` only.
 
-## Blocked — needs Shibayan
+## One-shot offline progress
 
-Exact commands: `docs/PROGRESS.md` → Blocked (Contabo `.env`, Actions billing, Supabase migrate secrets, NVIDIA_API_KEY, TradingLab).
+Continued Chunk C catalogue work through oneshot ~c127 (CLE/REE/FS/CLU/DR/ANO/OPS/F*). Full 4A→8.2 AC closure and hosted Contabo prove remain open.
 
 ## Next
 
-Continue catalogue/Chunk C offline; Contabo prove resumes when host + Actions billing + migrate secrets are unblocked.
+Unblock Contabo + Actions billing (PROGRESS), then agent resumes SSH bootstrap → server `.env` → Deploy green → browser DS1 EDA → FINAL prune.
