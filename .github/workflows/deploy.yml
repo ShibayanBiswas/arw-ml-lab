@@ -7,9 +7,13 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: "supabase db push --dry-run only (no apply, no Render)"
+        description: "supabase db push --dry-run only (no apply, no Contabo deploy)"
         type: boolean
         default: false
+      image_tag:
+        description: "Optional IMAGE_TAG override (SHA already in GHCR); empty = github.sha"
+        type: string
+        default: ""
 
 jobs:
   migrate:
@@ -37,62 +41,138 @@ jobs:
         if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run == true) }}
         run: supabase db push --remote --yes
 
-  render:
-    needs: migrate
+  build:
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run == true) && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - svc: api
+            lock: backend/requirements/api.lock.txt
+          - svc: worker-light
+            lock: backend/requirements/worker-light.lock.txt
+          - svc: worker-train
+            lock: backend/requirements/worker-train.lock.txt
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Resolve tags
+        id: tags
+        run: |
+          SHA="${{ github.event.workflow_run.head_sha || github.sha }}"
+          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "owner=$OWNER" >> "$GITHUB_OUTPUT"
+          echo "image=ghcr.io/${OWNER}/arw-ml-lab-${{ matrix.svc }}" >> "$GITHUB_OUTPUT"
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/Dockerfile
+          push: true
+          build-args: |
+            REQUIREMENTS_LOCK=${{ matrix.lock }}
+          tags: |
+            ${{ steps.tags.outputs.image }}:${{ steps.tags.outputs.sha }}
+            ${{ steps.tags.outputs.image }}:main
+          cache-from: type=gha,scope=${{ matrix.svc }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.svc }}
+
+  deploy:
+    needs: [migrate, build]
     if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run == true) }}
     runs-on: ubuntu-latest
     environment: production
+    concurrency:
+      group: deploy-prod
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      packages: read
     steps:
-      - name: Render deploy (gated)
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - name: Require Contabo secrets
         env:
-          RENDER_ENABLED: ${{ vars.RENDER_ENABLED }}
-          HOOK_API: ${{ secrets.RENDER_DEPLOY_HOOK_API }}
-          HOOK_LIGHT: ${{ secrets.RENDER_DEPLOY_HOOK_WORKER_LIGHT }}
-          HOOK_TRAIN: ${{ secrets.RENDER_DEPLOY_HOOK_WORKER_TRAIN }}
+          CONTABO_HOST: ${{ secrets.CONTABO_HOST }}
+          CONTABO_USER: ${{ secrets.CONTABO_USER }}
+          CONTABO_SSH_KEY: ${{ secrets.CONTABO_SSH_KEY }}
+          CONTABO_KNOWN_HOSTS: ${{ secrets.CONTABO_KNOWN_HOSTS }}
         run: |
-          if [ "${RENDER_ENABLED}" != "true" ]; then
-            echo "Render not provisioned (need_payment_info / RENDER_ENABLED!=true), skipped"
-            echo "Set vars.RENDER_ENABLED=true and RENDER_DEPLOY_HOOK_* secrets after Blueprint is live."
-            exit 0
+          test -n "$CONTABO_HOST" || (echo "CONTABO_HOST missing" && exit 1)
+          test -n "$CONTABO_USER" || (echo "CONTABO_USER missing" && exit 1)
+          test -n "$CONTABO_SSH_KEY" || (echo "CONTABO_SSH_KEY missing" && exit 1)
+          test -n "$CONTABO_KNOWN_HOSTS" || (echo "CONTABO_KNOWN_HOSTS missing" && exit 1)
+      - name: Write SSH key and known_hosts
+        env:
+          CONTABO_SSH_KEY: ${{ secrets.CONTABO_SSH_KEY }}
+          CONTABO_KNOWN_HOSTS: ${{ secrets.CONTABO_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$CONTABO_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$CONTABO_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+      - name: Resolve IMAGE_TAG
+        id: tag
+        run: |
+          if [ -n "${{ inputs.image_tag }}" ]; then
+            echo "sha=${{ inputs.image_tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "sha=${{ github.event.workflow_run.head_sha || github.sha }}" >> "$GITHUB_OUTPUT"
           fi
-          missing=0
-          for name_h in "API:$HOOK_API" "LIGHT:$HOOK_LIGHT" "TRAIN:$HOOK_TRAIN"; do
-            name="${name_h%%:*}"
-            h="${name_h#*:}"
-            if [ -z "$h" ]; then
-              echo "ERROR: RENDER_DEPLOY_HOOK_$name empty while RENDER_ENABLED=true"
-              missing=1
-            else
-              curl -fsS -X POST "$h" > /dev/null
-              echo "triggered $name"
-            fi
-          done
-          if [ "$missing" = "1" ]; then
-            echo "One or more deploy hooks missing — set GitHub Environment secrets"
-            exit 1
-          fi
-
-  # Vercel deploys through its Git integration (Root Directory = frontend).
+      - name: Copy compose, Caddyfile, deploy.sh
+        env:
+          CONTABO_HOST: ${{ secrets.CONTABO_HOST }}
+          CONTABO_USER: ${{ secrets.CONTABO_USER }}
+        run: |
+          ssh -o StrictHostKeyChecking=yes "${CONTABO_USER}@${CONTABO_HOST}" \
+            'mkdir -p /opt/arw-ml-lab/infra/caddy /opt/arw-ml-lab/infra/contabo'
+          scp -o StrictHostKeyChecking=yes docker-compose.prod.yml \
+            "${CONTABO_USER}@${CONTABO_HOST}:/opt/arw-ml-lab/docker-compose.prod.yml"
+          scp -o StrictHostKeyChecking=yes infra/caddy/Caddyfile \
+            "${CONTABO_USER}@${CONTABO_HOST}:/opt/arw-ml-lab/infra/caddy/Caddyfile"
+          scp -o StrictHostKeyChecking=yes infra/contabo/deploy.sh \
+            "${CONTABO_USER}@${CONTABO_HOST}:/opt/arw-ml-lab/deploy.sh"
+          ssh -o StrictHostKeyChecking=yes "${CONTABO_USER}@${CONTABO_HOST}" \
+            'chmod 750 /opt/arw-ml-lab/deploy.sh'
+      - name: GHCR login + deploy
+        env:
+          CONTABO_HOST: ${{ secrets.CONTABO_HOST }}
+          CONTABO_USER: ${{ secrets.CONTABO_USER }}
+          IMAGE_TAG: ${{ steps.tag.outputs.sha }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Token on stdin only — never on the remote argv
+          printf '%s\n' "$GHCR_TOKEN" | ssh -o StrictHostKeyChecking=yes \
+            "${CONTABO_USER}@${CONTABO_HOST}" \
+            "docker login ghcr.io -u '${{ github.actor }}' --password-stdin && /opt/arw-ml-lab/deploy.sh '${IMAGE_TAG}'"
 
   smoke:
-    needs: render
+    needs: deploy
     if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run == true) }}
     runs-on: ubuntu-latest
     environment: production
     steps:
       - uses: actions/checkout@v5
-      - name: Hosted smoke (gated on Render)
+      - name: Hosted smoke
         env:
-          RENDER_ENABLED: ${{ vars.RENDER_ENABLED }}
           LAB_API_URL: ${{ vars.LAB_API_URL }}
           SMOKE_EDA: ${{ vars.SMOKE_EDA }}
         run: |
-          if [ "${RENDER_ENABLED}" != "true" ]; then
-            echo "Render not provisioned (need_payment_info / RENDER_ENABLED!=true), skipped"
-            echo "Hosted smoke requires vars.LAB_API_URL after lab-api is live."
-            exit 0
-          fi
-          test -n "$LAB_API_URL" || (echo "LAB_API_URL variable missing while RENDER_ENABLED=true" && exit 1)
+          test -n "$LAB_API_URL" || (echo "LAB_API_URL variable missing" && exit 1)
           for i in $(seq 1 30); do
             if curl -fsS "$LAB_API_URL/healthz"; then
               echo
@@ -104,6 +184,6 @@ jobs:
               fi
               exit 0
             fi
-            sleep 20
+            sleep 10
           done
           exit 1

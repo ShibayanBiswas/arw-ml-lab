@@ -1,0 +1,215 @@
+# Contabo production stack (docs/DEPLOY_CONTABO.md §5).
+# IMAGE_TAG / GHCR_OWNER come from /opt/arw-ml-lab/.deploy.env
+# Secrets come from /opt/arw-ml-lab/.env (never commit).
+
+name: arw-ml-lab
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-app-env: &app-env
+  env_file:
+    - .env
+    - .deploy.env
+  networks:
+    - lab
+  restart: unless-stopped
+  logging: *default-logging
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    mem_limit: 128m
+    cpus: "0.25"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      LAB_API_HOSTNAME: ${LAB_API_HOSTNAME:?set LAB_API_HOSTNAME}
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL}
+    depends_on:
+      lab-api:
+        condition: service_healthy
+    networks:
+      - lab
+    logging: *default-logging
+
+  lab-api:
+    <<: *app-env
+    image: ghcr.io/${GHCR_OWNER:-shibayanbiswas}/arw-ml-lab-api:${IMAGE_TAG:?set IMAGE_TAG}
+    mem_limit: 1g
+    cpus: "1.0"
+    environment:
+      SERVICE_ROLE: api
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+    command:
+      - uvicorn
+      - backend.app.main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --workers
+      - "2"
+      - --proxy-headers
+      - --forwarded-allow-ips=*
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/healthz',timeout=3).status==200 else 1)",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  worker-light:
+    <<: *app-env
+    image: ghcr.io/${GHCR_OWNER:-shibayanbiswas}/arw-ml-lab-worker-light:${IMAGE_TAG:?set IMAGE_TAG}
+    mem_limit: 1536m
+    cpus: "1.0"
+    init: true
+    stop_grace_period: 300s
+    environment:
+      SERVICE_ROLE: worker-light
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+    command:
+      - celery
+      - -A
+      - backend.worker.celery_app
+      - worker
+      - -Q
+      - q.ingest,q.eda,q.insights,q.report,q.predict.batch
+      - --concurrency
+      - "2"
+      - --prefetch-multiplier
+      - "1"
+      - --max-tasks-per-child
+      - "20"
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  worker-train:
+    <<: *app-env
+    image: ghcr.io/${GHCR_OWNER:-shibayanbiswas}/arw-ml-lab-worker-train:${IMAGE_TAG:?set IMAGE_TAG}
+    mem_limit: 3584m
+    memswap_limit: 5120m
+    cpus: "2.0"
+    init: true
+    stop_grace_period: 300s
+    environment:
+      SERVICE_ROLE: worker-train
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      OMP_NUM_THREADS: "2"
+      MKL_NUM_THREADS: "2"
+      TORCH_NUM_THREADS: "2"
+      LAB_GPU_WORKER: "false"
+    command:
+      - celery
+      - -A
+      - backend.worker.celery_app
+      - worker
+      - -Q
+      - q.train.cpu,q.tune,q.explain,q.forecast,q.predict.heavy
+      - --concurrency
+      - "1"
+      - --prefetch-multiplier
+      - "1"
+      - --max-tasks-per-child
+      - "10"
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  lab-beat:
+    <<: *app-env
+    image: ghcr.io/${GHCR_OWNER:-shibayanbiswas}/arw-ml-lab-worker-light:${IMAGE_TAG:?set IMAGE_TAG}
+    mem_limit: 256m
+    cpus: "0.25"
+    environment:
+      SERVICE_ROLE: beat
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+    command:
+      - sh
+      - -c
+      - while true; do python -m backend.worker.maintenance --all; sleep 3600; done
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    mem_limit: 640m
+    cpus: "0.5"
+    command:
+      - redis-server
+      - --requirepass
+      - ${REDIS_PASSWORD:?set REDIS_PASSWORD}
+      - --appendonly
+      - "yes"
+      - --maxmemory
+      - 512mb
+      - --maxmemory-policy
+      - noeviction
+    volumes:
+      - redis_data:/data
+    networks:
+      - lab
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    logging: *default-logging
+    # no ports: — Redis is internal only
+
+  mlflow:
+    profiles: ["mlflow"]
+    image: ghcr.io/mlflow/mlflow:v2.19.0
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: "0.5"
+    env_file:
+      - .env
+    environment:
+      MLFLOW_BACKEND_STORE_URI: ${DATABASE_URL_SESSION}
+      MLFLOW_DEFAULT_ARTIFACT_ROOT: s3://models/mlflow
+    command:
+      - mlflow
+      - server
+      - --host
+      - 0.0.0.0
+      - --port
+      - "5000"
+      - --backend-store-uri
+      - ${DATABASE_URL_SESSION}
+      - --default-artifact-root
+      - s3://models/mlflow
+    networks:
+      - lab
+    logging: *default-logging
+
+networks:
+  lab:
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:
+  redis_data:
