@@ -24,4 +24,4 @@
 - [x] Import allowlist green.
 - [x] Rule 70: sklearn `PowerTransformer` + scipy Box-Cox only.
 
-**Ship commit:** _(pending)_
+**Ship commit:** `5ee2b20`
