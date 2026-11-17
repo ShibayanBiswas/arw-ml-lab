@@ -1,7 +1,7 @@
 # ARW ML Lab — One-shot finish report (interim)
 
 **Date:** 17 Nov 2026 (IST)
-**Tip:** `c2499f2` — oneshot-c145 SEC.ZAP.BASELINE
+**Tip:** `cf5617d` — oneshot-c147 OPS.SENTRY.SCRUBBER (ST-OPS-09)
 **Live frontend:** https://arw-ml-lab.vercel.app/login → **200**
 **Repo:** https://github.com/ShibayanBiswas/arw-ml-lab
 **Backend target:** Contabo VPS (`docs/DEPLOY_CONTABO.md`, ADR-0017) — **not yet live**

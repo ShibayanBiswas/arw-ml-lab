@@ -36,6 +36,8 @@ class Settings(BaseSettings):
         default="00000000-0000-0000-0000-000000000010",
         alias="LAB_DEFAULT_WORKSPACE_ID",
     )
+    sentry_dsn: str = Field(default="", alias="SENTRY_DSN")
+    sentry_environment: str = Field(default="development", alias="SENTRY_ENVIRONMENT")
 
 
 @lru_cache

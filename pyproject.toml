@@ -32,6 +32,7 @@ dev = [
   "uvicorn[standard]==0.54.0",
   "sqlalchemy==2.1.8",
   "tenacity==9.2.1",
+  "sentry-sdk==2.75.0",
 ]
 
 [tool.uv]

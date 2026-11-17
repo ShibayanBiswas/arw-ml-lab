@@ -34,6 +34,7 @@ from backend.app.routers import (
     unsupervised,
     wfo,
 )
+from backend.app.observability import init_sentry
 from backend.app.schemas import Healthz
 from backend.app.settings import get_settings
 
@@ -42,6 +43,8 @@ limiter = Limiter(key_func=get_remote_address, default_limits=["120/minute"])
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    settings = get_settings()
+    init_sentry(dsn=settings.sentry_dsn, environment=settings.sentry_environment)
     # OTel is optional locally; workers/instrumentation wire in Phase 8.2
     yield
 
