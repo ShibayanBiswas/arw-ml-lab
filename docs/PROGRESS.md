@@ -4,7 +4,7 @@
 |---|---|
 | Current phase | Contabo v2.3 move → then One-shot remainder → 8.2 |
 | Last completed step | docs: Contabo DOC_EDITS + ADR-0017 applied |
-| Last green commit | (pending push: oneshot-c65 CLE.P.MULTILABEL_BARS) |
+| Last green commit | 64a563b (oneshot-c65 CLE.P.MULTILABEL_BARS) |
 | Open failures | Contabo host/SSH/.env secrets missing; Supabase migrate secrets; NVIDIA_API_KEY |
 | Next action | Shibayan: fill Contabo + AI secrets (see Blocked). Agent: prune → infra → workflow; resume when host reachable |
 
