@@ -2,7 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { EvalWorkbench } from "@/components/train/EvalWorkbench";
-import { getExperiment, getJob, listSamples, loadSample, startTrain, startTune } from "@/lib/api";
+import {
+  downloadExperimentLeaderboard,
+  getExperiment,
+  getJob,
+  listSamples,
+  loadSample,
+  startTrain,
+  startTune,
+} from "@/lib/api";
 
 type Props = {
   mode: "recipe" | "leaderboard" | "models" | "detail" | "task" | "cv" | "runs" | "compare";
@@ -223,6 +231,33 @@ export function TrainWorkbench({ mode }: Props) {
       ) : null}
       {expId ? <p className="font-mono text-xs text-[var(--fg-subtle)]">experiment {expId}</p> : null}
       {board.length && mode !== "detail" ? (
+        <div className="space-y-2">
+          {expId ? (
+            <div className="flex flex-wrap gap-2" data-artefact="REP.T.LEADERBOARD">
+              <button
+                type="button"
+                className="rounded border border-[var(--border)] px-3 py-1.5 text-sm"
+                onClick={() =>
+                  void downloadExperimentLeaderboard(expId, "csv").catch((e) =>
+                    setError(e instanceof Error ? e.message : String(e))
+                  )
+                }
+              >
+                Download CSV
+              </button>
+              <button
+                type="button"
+                className="rounded border border-[var(--border)] px-3 py-1.5 text-sm"
+                onClick={() =>
+                  void downloadExperimentLeaderboard(expId, "xlsx").catch((e) =>
+                    setError(e instanceof Error ? e.message : String(e))
+                  )
+                }
+              >
+                Download XLSX
+              </button>
+            </div>
+          ) : null}
         <div className="overflow-x-auto rounded-xl border border-[var(--border)]">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-[var(--bg-elevated)] text-[10px] uppercase tracking-wider text-[var(--fg-subtle)]">
@@ -252,6 +287,7 @@ export function TrainWorkbench({ mode }: Props) {
               })}
             </tbody>
           </table>
+        </div>
         </div>
       ) : null}
       {(mode === "detail" || evalPayload) && (

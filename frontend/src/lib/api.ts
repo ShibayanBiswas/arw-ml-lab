@@ -206,6 +206,37 @@ export async function getExperiment(experimentId: string) {
   };
 }
 
+/** ST-UX-02 / REP.T.LEADERBOARD — CSV export (SEC-04 escaped server-side). */
+export function experimentLeaderboardCsvPath(experimentId: string): string {
+  return `/api/v1/experiments/${experimentId}/leaderboard.csv`;
+}
+
+export function experimentLeaderboardXlsxPath(experimentId: string): string {
+  return `/api/v1/experiments/${experimentId}/leaderboard.xlsx`;
+}
+
+export async function downloadExperimentLeaderboard(
+  experimentId: string,
+  format: "csv" | "xlsx" = "csv"
+) {
+  const path =
+    format === "xlsx"
+      ? experimentLeaderboardXlsxPath(experimentId)
+      : experimentLeaderboardCsvPath(experimentId);
+  const res = await fetch(`${labApiBase()}${path}`, { headers: labAuthHeaders() });
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(`leaderboard ${format}: ${res.status} ${detail}`);
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `leaderboard-${experimentId}.${format}`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export type FeatureContract = {
   contract_version?: string;
   dataset_id?: string;

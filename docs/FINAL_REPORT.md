@@ -19,4 +19,4 @@ Then agent resumes: SSH bootstrap → server `.env` → Deploy green → DS1 EDA
 
 ## Offline one-shot (continued)
 
-Catalogue, FE workbenches, Phase 7 reports/admin/load/ZAP, and many STRESS ops/security/ML integrity contracts advanced through oneshot ~c181 (PRED.HUMILITY, TRAIN.REFIT.FULL) while Contabo stayed blocked. Full hosted prove and TradingLab FS16–18 remain open.
+Catalogue, FE workbenches, Phase 7 reports/admin/load/ZAP, and STRESS contracts through oneshot ~c183 (PRED.HUMILITY, TRAIN.REFIT.FULL, UX.MOBILE.PREDICT, leaderboard FE export) while Contabo stayed blocked. Full hosted prove and TradingLab FS16–18 remain open.
