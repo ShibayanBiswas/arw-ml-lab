@@ -8,7 +8,7 @@ import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException
 from labcore.unsupervised import fit_anomaly, fit_clustering, fit_dr
 from labcore.unsupervised.cluster_plots import kmeans_k_sweep
-from labcore.unsupervised.dr_plots import shepard_diagram
+from labcore.unsupervised.dr_plots import pca_scree, shepard_diagram
 from pydantic import BaseModel, Field
 
 from backend.app.security import AuthUser, require_write_role
@@ -92,6 +92,20 @@ def unsupervised_k_sweep(
             k_max=body.k_max,
             seed=body.seed,
         )
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/api/v1/unsupervised/dr/scree")
+def unsupervised_scree(
+    body: UnsupBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """DR.P.SCREE — PCA eigenvalues + Kaiser line (seed 42)."""
+    _ = user
+    X = _frame(body.rows)
+    try:
+        return pca_scree(X.to_numpy(dtype=float), seed=body.seed)
     except Exception as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
