@@ -2,34 +2,34 @@
 
 | Field | Value |
 |---|---|
-| Current phase | Contabo v2.3 move → then One-shot remainder → 8.2 |
-| Last completed step | docs: Contabo DOC_EDITS + ADR-0017 applied |
-| Last green commit | 7be6874 (oneshot-c66 CLE.P.CONFORMAL) |
-| Open failures | Contabo host/SSH/.env secrets missing; Supabase migrate secrets; NVIDIA_API_KEY |
-| Next action | Shibayan: fill Contabo + AI secrets (see Blocked). Agent: prune → infra → workflow; resume when host reachable |
+| Current phase | Contabo v2.3 (blocked on host secrets) + One-shot CLE/REE → 8.2 |
+| Last completed step | oneshot-c66 CLE.P.CONFORMAL |
+| Last green commit | a56190f |
+| Open failures | Contabo host/SSH/.env; Supabase migrate secrets; NVIDIA_API_KEY; Deploy cannot smoke without LAB_API_URL |
+| Next action | Shibayan: Contabo + Supabase + NVIDIA secrets (Blocked). Agent: continue CLE/REE/Chunk C offline |
 
 ## Blocked — needs Shibayan
 
 | Item | Exact action |
 |---|---|
-| Contabo VPS + SSH | Put in local `.env`: `CONTABO_HOST=<ip>`, `CONTABO_SSH_KEY_PATH=<path to private key that can still log in as root or deploy>`, optional `CONTABO_BOOTSTRAP_USER=root`, `CONTABO_DEPLOY_USER=deploy`, `LAB_API_HOSTNAME=` (empty → sslip.io), `ACME_EMAIL=<you@domain>` |
-| CI deploy key | Agent will create `~/.ssh/arw_ci_deploy` once host is set; you only need your bootstrap key path in `.env` |
-| `NVIDIA_API_KEY` | Add to local `.env` (agent copies **only** to `/opt/arw-ml-lab/.env` on the VPS; never Vercel/GitHub) |
-| Supabase server env | Ensure local `.env` also has `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWKS_URL`, `DATABASE_URL`, `DATABASE_URL_SESSION`, S3 keys for the VPS `.env` |
+| Contabo VPS + SSH | Put in local `.env`: `CONTABO_HOST=<ip>`, `CONTABO_SSH_KEY_PATH=<private key that can log in as root or deploy>`, optional `CONTABO_BOOTSTRAP_USER=root`, `CONTABO_DEPLOY_USER=deploy`, `LAB_API_HOSTNAME=` (empty → sslip.io), `ACME_EMAIL=<you@domain>` |
+| CI deploy key | Already created at `~/.ssh/arw_ci_deploy` and set as `CONTABO_SSH_KEY` / `CONTABO_USER=deploy` in GitHub `production`. After bootstrap, agent will set `CONTABO_KNOWN_HOSTS` + `LAB_API_URL` |
+| `NVIDIA_API_KEY` | Add to local `.env` (copied **only** to `/opt/arw-ml-lab/.env` on the VPS; never Vercel/GitHub) |
+| Supabase server env for VPS | Local `.env` needs `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWKS_URL`, `DATABASE_URL`, `DATABASE_URL_SESSION`, S3 keys |
 | `SUPABASE_ACCESS_TOKEN` | `gh secret set SUPABASE_ACCESS_TOKEN --env production --repo ShibayanBiswas/arw-ml-lab` (stdin) |
 | `SUPABASE_DB_PASSWORD` | `gh secret set SUPABASE_DB_PASSWORD --env production --repo ShibayanBiswas/arw-ml-lab` (stdin) |
-| `SUPABASE_PROJECT_ID` | `gh secret set SUPABASE_PROJECT_ID --env production --repo ShibayanBiswas/arw-ml-lab` (value `ushtfpelbpjfkjoppklz` via stdin) |
-| TradingLab submodule | `vendor/tradinglab` for FS6–19 + AFML parity |
+| TradingLab submodule | `vendor/tradinglab` for FS16–18 + AFML parity |
 
 ## Contabo move checklist (agent)
 
-- [x] DOC_EDITS + ADR-0017 + DEPLOY.md v2.3 pointer
-- [ ] 1B prune
-- [ ] SSH bootstrap + verify
-- [ ] compose.prod / Caddy / deploy.sh / server `.env`
-- [ ] deploy.yml GHCR+SSH
-- [ ] gh secrets/vars + Vercel `NEXT_PUBLIC_LAB_API_URL`
-- [ ] Deploy green + smoke + rollback drill + backup cron
+- [x] DOC_EDITS + ADR-0017 + DEPLOY.md v2.3 pointer (`cd50ada`)
+- [x] 1B prune (`96af997`)
+- [ ] SSH bootstrap + verify (**blocked** — no `CONTABO_HOST`)
+- [x] compose.prod / Caddy / deploy.sh in repo (`9419aa3`); server `.env` **blocked**
+- [x] deploy.yml GHCR+SSH (`9419aa3`); actionlint clean
+- [ ] gh secrets/vars complete (`CONTABO_USER`, `CONTABO_SSH_KEY`, `SMOKE_EDA` set; host/known_hosts/LAB_API_URL/Supabase tokens still missing)
+- [ ] Vercel `NEXT_PUBLIC_LAB_API_URL` (**blocked** — no hostname)
+- [ ] Deploy green + smoke + rollback + backup cron
 - [ ] One-shot remainder → FINAL_REPORT
 - [ ] Final prune
 
@@ -40,12 +40,12 @@
 | `docs/contabo/` (DOC_EDITS.md) | One-time Contabo doc-edit kit; applied in `cd50ada` |
 | `docs/TODO.md` | Stale OTP/lock TODOs; open items live in this file |
 | `docs/runbooks/HOSTED_CHECKLIST.md` | Overlapped `DEPLOY.md` / `DEPLOY_CONTABO.md`; unique ticks merged into `DEPLOY.md` Live status |
-| `scripts/_apply_contabo_doc_edits.py`, `_patch_contabo_remaining.py`, `_env_key_presence.py`, `_prune_inventory.py` | One-shot helper scripts |
+| one-shot helper scripts under `scripts/_*.py` | Temporary Contabo edit/prune helpers |
 | empty `docs/runbooks/` | Emptied after checklist removal |
 
-Kept: phase plans + reports, `docs/adr/ADR-contabo.md` (referenced by ARCHITECTURE/DEPLOY_CONTABO), all FLOWCHART diagrams 01–21, `GAP_AUDIT`, `FINAL_REPORT`, contracts.
+Kept: phase plans + reports, `docs/adr/ADR-contabo.md`, diagrams 01–21, `GAP_AUDIT`, `FINAL_REPORT`, contracts.
 
-## One-shot commits (16 Nov 2026)
+## One-shot commits (16–17 Nov 2026)
 A deploy gate → B.1–B.3 → C.1–C.66 (CLE/REE/F* in progress)
 
 See docs/FINAL_REPORT.md for the full table.

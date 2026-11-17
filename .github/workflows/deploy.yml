@@ -72,9 +72,11 @@ jobs:
         run: |
           SHA="${{ github.event.workflow_run.head_sha || github.sha }}"
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
-          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
-          echo "owner=$OWNER" >> "$GITHUB_OUTPUT"
-          echo "image=ghcr.io/${OWNER}/arw-ml-lab-${{ matrix.svc }}" >> "$GITHUB_OUTPUT"
+          {
+            echo "sha=$SHA"
+            echo "owner=$OWNER"
+            echo "image=ghcr.io/${OWNER}/arw-ml-lab-${{ matrix.svc }}"
+          } >> "$GITHUB_OUTPUT"
       - uses: docker/build-push-action@v6
         with:
           context: .
@@ -173,10 +175,10 @@ jobs:
           SMOKE_EDA: ${{ vars.SMOKE_EDA }}
         run: |
           test -n "$LAB_API_URL" || (echo "LAB_API_URL variable missing" && exit 1)
-          for i in $(seq 1 30); do
+          for _attempt in $(seq 1 30); do
             if curl -fsS "$LAB_API_URL/healthz"; then
               echo
-              echo "healthz ok"
+              echo "healthz ok (attempt ${_attempt})"
               if [ "${SMOKE_EDA}" = "true" ]; then
                 bash scripts/smoke_hosted.sh
               else
