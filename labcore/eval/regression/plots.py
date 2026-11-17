@@ -70,12 +70,80 @@ def plot_residual_scatter(y_pred: np.ndarray, resid: np.ndarray) -> dict[str, An
     return plot_resid_fitted(y_pred, resid)
 
 
-def plot_residual_hist(resid: np.ndarray) -> dict[str, Any]:
+def plot_residual_hist(resid: np.ndarray, *, bins: int = 30) -> dict[str, Any]:
+    """REE.P.RESID_HIST — residual histogram, ``scipy.stats.gaussian_kde``, normal PDF overlay."""
     import plotly.graph_objects as go
+    from scipy import stats
+    from scipy.stats import gaussian_kde
 
-    fig = go.Figure(go.Histogram(x=resid, nbinsx=30))
-    fig.update_layout(title="Residual histogram", xaxis_title="Residual", height=400)
-    return {"id": "REE.P.RESID_HIST", "kind": "plot", "plotly": fig.to_plotly_json()}
+    resid = np.asarray(resid, dtype=float)
+    resid = resid[np.isfinite(resid)]
+    if len(resid) < 2:
+        fig = go.Figure()
+        fig.update_layout(title="Residual histogram (insufficient data)", height=400)
+        return {
+            "id": "REE.P.RESID_HIST",
+            "kind": "plot",
+            "plotly": fig.to_plotly_json(),
+            "numbers": {"status": "not computed", "n": int(len(resid))},
+        }
+
+    mu = float(np.mean(resid))
+    sd = float(np.std(resid, ddof=1)) or 1.0
+    density, bin_edges = np.histogram(resid, bins=bins, density=True)
+    bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2.0
+    lo = float(bin_edges[0])
+    hi = float(bin_edges[-1])
+    pad = 0.05 * (hi - lo) if hi > lo else 1.0
+    xs = np.linspace(lo - pad, hi + pad, 200)
+    kde = gaussian_kde(resid)
+    kde_y = kde(xs)
+    normal_y = stats.norm.pdf(xs, loc=mu, scale=sd)
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Bar(
+            x=bin_centers,
+            y=density,
+            name="histogram",
+            opacity=0.55,
+            marker_line_width=0,
+        )
+    )
+    fig.add_trace(go.Scatter(x=xs, y=kde_y, mode="lines", name="KDE", line={"width": 2}))
+    fig.add_trace(
+        go.Scatter(
+            x=xs,
+            y=normal_y,
+            mode="lines",
+            name="normal",
+            line={"dash": "dash", "width": 2},
+        )
+    )
+    fig.update_layout(
+        title="Residual histogram",
+        xaxis_title="Residual",
+        yaxis_title="Density",
+        barmode="overlay",
+        height=400,
+    )
+    return {
+        "id": "REE.P.RESID_HIST",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "bins": int(bins),
+            "n": int(len(resid)),
+            "mu": mu,
+            "sd": sd,
+            "bin_centers": bin_centers.tolist(),
+            "hist_density": density.tolist(),
+            "kde_x": xs.tolist(),
+            "kde_y": kde_y.tolist(),
+            "normal_x": xs.tolist(),
+            "normal_y": normal_y.tolist(),
+        },
+    }
 
 
 def plot_qq(resid: np.ndarray, *, alpha: float = 0.05) -> dict[str, Any]:
@@ -170,14 +238,48 @@ def plot_qq(resid: np.ndarray, *, alpha: float = 0.05) -> dict[str, Any]:
 
 
 def plot_cooks_distance(cooks: np.ndarray) -> dict[str, Any]:
+    """REE.P.COOKS — Cook's distance stem plot with 4/n reference line."""
     import plotly.graph_objects as go
 
-    idx = np.arange(len(cooks))
-    fig = go.Figure(go.Scatter(x=idx, y=cooks, mode="markers", name="Cook's D"))
-    fig.update_layout(
-        title="Cook's distance", xaxis_title="Index", yaxis_title="Cook's D", height=400
+    cooks = np.asarray(cooks, dtype=float)
+    n = int(len(cooks))
+    idx = np.arange(n, dtype=float)
+    threshold = (4.0 / n) if n > 0 else float("nan")
+
+    fig = go.Figure(
+        go.Bar(
+            x=idx,
+            y=cooks,
+            name="Cook's D",
+            marker_line_width=0,
+            opacity=0.85,
+        )
     )
-    return {"id": "REE.P.COOKS", "kind": "plot", "plotly": fig.to_plotly_json()}
+    if n > 0 and np.isfinite(threshold):
+        fig.add_hline(
+            y=threshold,
+            line_dash="dash",
+            annotation_text="4/n",
+            annotation_position="top right",
+        )
+    fig.update_layout(
+        title="Cook's distance",
+        xaxis_title="Index",
+        yaxis_title="Cook's D",
+        bargap=0.35,
+        height=400,
+    )
+    return {
+        "id": "REE.P.COOKS",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "n": n,
+            "threshold_4_over_n": float(threshold) if np.isfinite(threshold) else None,
+            "cooks_d": [float(v) for v in cooks],
+            "index": idx.tolist(),
+        },
+    }
 
 
 def plot_studentised_residuals(stud: np.ndarray) -> dict[str, Any]:
