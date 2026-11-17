@@ -26,4 +26,4 @@ tests\unit\test_import_allowlist.py .                                    [100%]
 - [x] `/healthz` returns `seed: 42`.
 - [x] Import allowlist green.
 
-**Ship commit:** (filled after commit)
+**Ship commit:** `6a03cd6`

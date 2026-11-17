@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Current phase | Contabo v2.3 (blocked on host secrets) + One-shot CLE/REE → 8.2 |
-| Last completed step | oneshot-c145 SEC.ZAP.BASELINE (ZAP lab-api + manifest) |
-| Last green commit | c2499f2 |
+| Last completed step | oneshot-c145 SEC.ZAP.BASELINE; **c144** `LOAD.P.HEALTHZ_CATALOG` (Locust public API) |
+| Last green commit | 6a03cd6 |
 | Open failures | Contabo host/SSH/.env; Supabase migrate secrets; NVIDIA_API_KEY; Deploy cannot smoke without LAB_API_URL |
 | Next action | Shibayan: Contabo + Supabase + NVIDIA secrets (Blocked). Agent: Chunk C / F* / Phase 7 remainder per FINAL_REPORT |
 
