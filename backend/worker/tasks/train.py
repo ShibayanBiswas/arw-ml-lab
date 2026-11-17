@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 import pandas as pd
+from labcore.ops.soft_time_limit import is_soft_time_limit_exc, save_best_so_far
 from labcore.preprocess.recipe import RecipeSpec
 from labcore.train.run import TrainConfig, run_supervised_cv
 
@@ -17,6 +18,7 @@ from backend.worker.celery_app import celery_app
 @celery_app.task(name="lab.train.run", bind=True, queue="q.train.cpu")
 def run_train_task(self, job_id: str, experiment_id: str, body: dict[str, Any]) -> dict[str, Any]:  # noqa: ANN001
     _ = self
+    partial: dict[str, Any] | None = None
     JOB_STORE.update(
         job_id,
         status="running",
@@ -81,6 +83,7 @@ def run_train_task(self, job_id: str, experiment_id: str, body: dict[str, Any]) 
             "n_models": len(result["leaderboard"]),
             "model_id": model_id,
         }
+        partial = {**result, **out}
         JOB_STORE.update(
             job_id,
             status="done",
@@ -91,6 +94,15 @@ def run_train_task(self, job_id: str, experiment_id: str, body: dict[str, Any]) 
         )
         return out
     except Exception as exc:
+        if is_soft_time_limit_exc(exc):
+            return save_best_so_far(
+                job_update=JOB_STORE.update,
+                experiment_update=EXPERIMENT_STORE.update,
+                job_id=job_id,
+                experiment_id=experiment_id,
+                partial=partial,
+                seed=42,
+            )
         EXPERIMENT_STORE.update(experiment_id, status="error")
         JOB_STORE.update(
             job_id,
