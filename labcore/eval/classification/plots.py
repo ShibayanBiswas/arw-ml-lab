@@ -214,6 +214,95 @@ def plot_per_class_prf(
     return {"id": "CLE.P.PER_CLASS_PRF", "kind": "plot", "plotly": fig.to_plotly_json()}
 
 
+def plot_per_class_bars(
+    y_true: np.ndarray | list[np.ndarray],
+    y_pred: np.ndarray | list[np.ndarray],
+    *,
+    labels: list[Any] | None = None,
+) -> dict[str, Any]:
+    """CLE.P.PER_CLASS_BARS — grouped P/R/F1 per class with ±1 std across folds when CV lists."""
+    import plotly.graph_objects as go
+    from sklearn.metrics import precision_recall_fscore_support
+
+    if isinstance(y_true, np.ndarray):
+        folds_true: list[np.ndarray] = [y_true]
+        folds_pred: list[np.ndarray] = [y_pred]  # type: ignore[assignment]
+    else:
+        folds_true = [np.asarray(t).ravel() for t in y_true]
+        folds_pred = [np.asarray(p).ravel() for p in y_pred]  # type: ignore[union-attr]
+        if len(folds_true) != len(folds_pred):
+            raise ValueError("y_true and y_pred fold lists must have the same length")
+
+    if labels is None:
+        seen: set[Any] = set()
+        for yt in folds_true:
+            for v in np.unique(yt):
+                seen.add(v.item() if isinstance(v, np.generic) else v)
+        labels = sorted(seen, key=str)
+
+    per_fold_p: list[np.ndarray] = []
+    per_fold_r: list[np.ndarray] = []
+    per_fold_f1: list[np.ndarray] = []
+    for yt, yp in zip(folds_true, folds_pred, strict=True):
+        p, r, f1, _ = precision_recall_fscore_support(
+            yt, yp, labels=labels, zero_division=np.nan
+        )
+        per_fold_p.append(p.astype(float))
+        per_fold_r.append(r.astype(float))
+        per_fold_f1.append(f1.astype(float))
+
+    p_arr = np.vstack(per_fold_p)
+    r_arr = np.vstack(per_fold_r)
+    f1_arr = np.vstack(per_fold_f1)
+    p_mean = np.nanmean(p_arr, axis=0)
+    r_mean = np.nanmean(r_arr, axis=0)
+    f1_mean = np.nanmean(f1_arr, axis=0)
+    p_std = np.nanstd(p_arr, axis=0, ddof=1) if p_arr.shape[0] > 1 else np.zeros_like(p_mean)
+    r_std = np.nanstd(r_arr, axis=0, ddof=1) if r_arr.shape[0] > 1 else np.zeros_like(r_mean)
+    f1_std = np.nanstd(f1_arr, axis=0, ddof=1) if f1_arr.shape[0] > 1 else np.zeros_like(f1_mean)
+
+    x = [str(l) for l in labels]
+    fig = go.Figure()
+    for name, mean, std, color in (
+        ("Precision", p_mean, p_std, "#2e86ab"),
+        ("Recall", r_mean, r_std, "#c9a227"),
+        ("F1", f1_mean, f1_std, "#6b4e71"),
+    ):
+        fig.add_trace(
+            go.Bar(
+                x=x,
+                y=mean,
+                name=name,
+                marker_color=color,
+                error_y=dict(type="data", array=std, visible=True, thickness=1.2),
+            )
+        )
+    n_folds = len(folds_true)
+    title = "Per-class metrics"
+    if n_folds > 1:
+        title += f" (mean ± std, {n_folds} folds)"
+    fig.update_layout(title=title, barmode="group", height=420, bargap=0.15)
+
+    numbers: dict[str, Any] = {
+        "n_folds": n_folds,
+        "labels": [str(l) for l in labels],
+        "precision_mean": {str(l): float(v) for l, v in zip(labels, p_mean, strict=True)},
+        "recall_mean": {str(l): float(v) for l, v in zip(labels, r_mean, strict=True)},
+        "f1_mean": {str(l): float(v) for l, v in zip(labels, f1_mean, strict=True)},
+    }
+    if n_folds > 1:
+        numbers["precision_std"] = {str(l): float(v) for l, v in zip(labels, p_std, strict=True)}
+        numbers["recall_std"] = {str(l): float(v) for l, v in zip(labels, r_std, strict=True)}
+        numbers["f1_std"] = {str(l): float(v) for l, v in zip(labels, f1_std, strict=True)}
+
+    return {
+        "id": "CLE.P.PER_CLASS_BARS",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": numbers,
+    }
+
+
 def plot_top_confusions(
     cm_counts: list[list[float]], labels: list[str], *, top_n: int = 10
 ) -> dict[str, Any]:

@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Current phase | Contabo v2.3 (blocked on host secrets) + One-shot CLE/REE → 8.2 |
-| Last completed step | oneshot-c66 CLE.P.CONFORMAL |
-| Last green commit | a56190f |
+| Last completed step | oneshot-c67 CLE.P.SLICES |
+| Last green commit | (pending — oneshot-c67) |
 | Open failures | Contabo host/SSH/.env; Supabase migrate secrets; NVIDIA_API_KEY; Deploy cannot smoke without LAB_API_URL |
 | Next action | Shibayan: Contabo + Supabase + NVIDIA secrets (Blocked). Agent: continue CLE/REE/Chunk C offline |
 
@@ -46,6 +46,6 @@
 Kept: phase plans + reports, `docs/adr/ADR-contabo.md`, diagrams 01–21, `GAP_AUDIT`, `FINAL_REPORT`, contracts.
 
 ## One-shot commits (16–17 Nov 2026)
-A deploy gate → B.1–B.3 → C.1–C.66 (CLE/REE/F* in progress)
+A deploy gate → B.1–B.3 → C.1–C.67 (CLE/REE/F* in progress)
 
 See docs/FINAL_REPORT.md for the full table.
