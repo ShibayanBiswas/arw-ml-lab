@@ -7,6 +7,10 @@ from labcore.integrity.holdout_reuse import (
     build_holdout_audit_row,
     log_holdout_test_use,
 )
+from labcore.integrity.data_quality_contract import (
+    ARTEFACT_ID as DATA_QUALITY_ARTEFACT_ID,
+    data_quality_manifest,
+)
 from labcore.integrity.nested_cv_contract import (
     ARTEFACT_ID as NESTED_CV_ARTEFACT_ID,
     NESTED_CV_AUTO_THRESHOLD,
@@ -14,6 +18,7 @@ from labcore.integrity.nested_cv_contract import (
 )
 
 __all__ = [
+    "DATA_QUALITY_ARTEFACT_ID",
     "AUDIT_ACTION_HOLDOUT",
     "HOLDOUT_REUSE_ARTEFACT_ID",
     "HoldoutReuseRegistry",
@@ -21,5 +26,6 @@ __all__ = [
     "NESTED_CV_AUTO_THRESHOLD",
     "build_holdout_audit_row",
     "build_nested_cv_manifest",
+    "data_quality_manifest",
     "log_holdout_test_use",
 ]
