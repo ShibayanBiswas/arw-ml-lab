@@ -22,4 +22,4 @@
 - [x] Import allowlist green.
 - [x] Rule 70: stdlib-only in new `labcore` module.
 
-**Ship commit:** `c44714e`
+**Ship commit:** `c82f337`
