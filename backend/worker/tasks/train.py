@@ -50,6 +50,25 @@ def run_train_task(self, job_id: str, experiment_id: str, body: dict[str, Any]) 
             event={"type": "progress", "pct": 0.4, "step": "cv"},
         )
         result = run_supervised_cv(df, cfg)
+        # MI-16: best-effort audit_log write when Postgres is reachable (oneshot-c225)
+        try:
+            from labcore.integrity.holdout_reuse import persist_holdout_audit_row
+
+            hr = result.get("holdout_reuse") or {}
+            audit_row = hr.get("audit_row")
+            if isinstance(audit_row, dict):
+                from backend.worker.maintenance import _connect_postgres
+
+                conn = _connect_postgres()
+                if conn is not None:
+                    try:
+                        persist_meta = persist_holdout_audit_row(audit_row, execute=conn.execute)
+                        hr["audit_persist"] = persist_meta
+                        result["holdout_reuse"] = hr
+                    finally:
+                        conn.close()
+        except Exception:  # noqa: BLE001 — never fail the train job on audit I/O
+            pass
         # Persist champion pipeline for Prediction Studio (never pickle into experiment JSON)
         pipeline = result.pop("champion_pipeline", None)
         model_id = None

@@ -2,16 +2,24 @@
 
 The final test split is locked after the first evaluation; each later evaluation
 increments ``use_count`` and emits an audit row with action ``test.evaluation``.
+Postgres ``audit_log`` insert is available via ``persist_holdout_audit_row`` (oneshot-c225).
 """
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
 ARTEFACT_ID = "MI.HOLDOUT.REUSE"
 AUDIT_ACTION_HOLDOUT = "test.evaluation"
 AUDIT_ENTITY = "run"
+
+_AUDIT_INSERT_SQL = """
+INSERT INTO public.audit_log (workspace_id, action, entity, entity_id, detail)
+VALUES (%s::uuid, %s, %s, %s, %s::jsonb)
+RETURNING id
+"""
 
 
 @dataclass
@@ -82,6 +90,41 @@ def log_holdout_test_use(
         "locked_after_first_use": True,
         "audit_row": audit_row,
     }
+
+
+def persist_holdout_audit_row(
+    audit_row: dict[str, Any],
+    *,
+    execute: Callable[..., Any] | None = None,
+) -> dict[str, Any]:
+    """Persist ``audit_row`` to ``public.audit_log`` when an executor is provided.
+
+    ``execute`` should accept ``(sql, params)`` like ``psycopg.Connection.execute``.
+    Without ``execute``, returns ``{"persisted": False}`` (offline / unit path).
+    """
+    import json
+
+    if execute is None:
+        return {"persisted": False, "reason": "no_executor"}
+    detail = audit_row.get("detail") or {}
+    cur = execute(
+        _AUDIT_INSERT_SQL,
+        (
+            audit_row.get("workspace_id"),
+            audit_row.get("action"),
+            audit_row.get("entity"),
+            audit_row.get("entity_id"),
+            json.dumps(detail),
+        ),
+    )
+    row_id = None
+    try:
+        fetched = cur.fetchone() if hasattr(cur, "fetchone") else None
+        if fetched is not None:
+            row_id = fetched[0] if not isinstance(fetched, dict) else fetched.get("id")
+    except Exception:  # noqa: BLE001 — persistence must not break training
+        row_id = None
+    return {"persisted": True, "audit_id": row_id, "action": AUDIT_ACTION_HOLDOUT}
 
 
 _GLOBAL_REGISTRY = HoldoutReuseRegistry()

@@ -9,6 +9,7 @@ from labcore.integrity.holdout_reuse import (
     AUDIT_ACTION_HOLDOUT,
     HoldoutReuseRegistry,
     log_holdout_test_use,
+    persist_holdout_audit_row,
 )
 from labcore.train.run import TrainConfig, run_supervised_cv
 
@@ -39,6 +40,32 @@ def test_first_use_then_reuse_counts_and_audit() -> None:
     assert second["use_count"] == 2
     assert second["is_reuse"] is True
     assert second["id"] == ARTEFACT_ID
+
+
+def test_persist_holdout_audit_row_with_mock_executor() -> None:
+    calls: list[tuple[str, tuple[object, ...]]] = []
+
+    class _Cur:
+        def fetchone(self) -> tuple[int]:
+            return (99,)
+
+    def execute(sql: str, params: tuple[object, ...]) -> _Cur:
+        calls.append((sql, params))
+        return _Cur()
+
+    row = {
+        "workspace_id": "00000000-0000-0000-0000-000000000010",
+        "action": AUDIT_ACTION_HOLDOUT,
+        "entity": "run",
+        "entity_id": "run-x",
+        "detail": {"use_count": 2, "is_reuse": True, "seed": 42},
+    }
+    assert persist_holdout_audit_row(row)["persisted"] is False
+    out = persist_holdout_audit_row(row, execute=execute)
+    assert out["persisted"] is True
+    assert out["audit_id"] == 99
+    assert "audit_log" in calls[0][0]
+    assert calls[0][1][1] == AUDIT_ACTION_HOLDOUT
 
 
 def test_run_supervised_cv_includes_holdout_reuse() -> None:
