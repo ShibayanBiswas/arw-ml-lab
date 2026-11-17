@@ -25,4 +25,4 @@
 - [x] Import allowlist green.
 - [x] Rule 70: stdlib zip/json + existing `build_reproduction_notebook` only.
 
-**Ship commit:** `880bae2`
+**Ship commit:** `428fd4f`
