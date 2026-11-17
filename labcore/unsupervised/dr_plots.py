@@ -59,6 +59,63 @@ def pca_scree(
     }
 
 
+def pca_cumulative_variance(
+    X: np.ndarray,
+    *,
+    seed: int = 42,
+) -> dict[str, Any]:
+    """DR.P.CUMVAR — cumulative explained variance with 80/90/95% markers."""
+    import plotly.graph_objects as go
+
+    Xs = StandardScaler().fit_transform(np.asarray(X, dtype=float))
+    n_comp = min(Xs.shape[1], max(1, Xs.shape[0] - 1))
+    model = PCA(n_components=n_comp, random_state=seed)
+    model.fit(Xs)
+    evr = np.asarray(model.explained_variance_ratio_, dtype=float)
+    cumulative = np.cumsum(evr)
+    comps = list(range(1, len(evr) + 1))
+    cum_pct = (cumulative * 100.0).tolist()
+    markers = (80.0, 90.0, 95.0)
+    k_at: dict[str, int | None] = {}
+    for pct in markers:
+        hit = np.where(cumulative * 100.0 >= pct)[0]
+        k_at[f"k_at_{int(pct)}pct"] = int(hit[0] + 1) if len(hit) else None
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(x=comps, y=cum_pct, mode="lines+markers", name="cumulative %"),
+    )
+    for pct in markers:
+        fig.add_hline(
+            y=pct,
+            line_dash="dash",
+            annotation_text=f"{int(pct)}%",
+        )
+        kk = k_at[f"k_at_{int(pct)}pct"]
+        if kk is not None:
+            fig.add_vline(x=kk, line_dash="dot", opacity=0.35)
+    title_bits = ", ".join(f"{int(p)}%→k={k_at[f'k_at_{int(p)}pct']}" for p in markers)
+    fig.update_layout(
+        title=f"Cumulative variance ({title_bits})",
+        xaxis_title="Number of components (k)",
+        yaxis_title="Cumulative explained variance (%)",
+        yaxis_range=[0, 100.5],
+        height=400,
+    )
+    return {
+        "id": "DR.P.CUMVAR",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "component": comps,
+            "explained_variance_ratio": [float(v) for v in evr],
+            "cumulative_variance_pct": [float(v) for v in cum_pct],
+            **k_at,
+        },
+        "seed": seed,
+    }
+
+
 def shepard_diagram(
     X: np.ndarray,
     embedding: np.ndarray,

@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from labcore.unsupervised import fit_anomaly, fit_clustering, fit_dr
 from labcore.unsupervised.anomaly_plots import anomaly_ranked_bar
 from labcore.unsupervised.cluster_plots import kmeans_k_sweep, silhouette_knife
-from labcore.unsupervised.dr_plots import pca_scree, shepard_diagram
+from labcore.unsupervised.dr_plots import pca_cumulative_variance, pca_scree, shepard_diagram
 from pydantic import BaseModel, Field
 
 from backend.app.security import AuthUser, require_write_role
@@ -148,6 +148,20 @@ def unsupervised_scree(
     X = _frame(body.rows)
     try:
         return pca_scree(X.to_numpy(dtype=float), seed=body.seed)
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/api/v1/unsupervised/dr/cumvar")
+def unsupervised_cumvar(
+    body: UnsupBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """DR.P.CUMVAR — PCA cumulative explained variance (seed 42)."""
+    _ = user
+    X = _frame(body.rows)
+    try:
+        return pca_cumulative_variance(X.to_numpy(dtype=float), seed=body.seed)
     except Exception as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
