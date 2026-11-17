@@ -21,3 +21,5 @@
 - [x] Spy indices verified on real sklearn `cross_validate` folds.
 - [x] Import allowlist green.
 - [x] Rule 70: sklearn Pipeline / LogisticRegression / StandardScaler only.
+
+**Ship commit:** `b637cb3`
