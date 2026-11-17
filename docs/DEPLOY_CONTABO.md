@@ -388,6 +388,7 @@ Restore drill (once, then quarterly): fresh VPS → bootstrap → copy `.env` �
 - **Errors**: Sentry (`SENTRY_DSN` on server, `NEXT_PUBLIC_SENTRY_DSN` on Vercel).
 - **Logs**: `docker compose logs -f --tail 200 <svc>`; rotation via `daemon.json` (10 MB × 3 per container). Caddy logs JSON to stdout.
 - **Resources**: `docker stats --no-stream`, `free -h`, `df -h /`; alert manually if disk > 80 % (`docker image prune -af --filter until=168h`).
+- **Egress (optional, OPS-14)**: on the host, `python scripts/render_egress_nft.py` prints an nftables drop-by-default snippet with `# ALLOW_HOST` lines from `data/samples/urls.txt` + NVIDIA/Supabase; resolve IPs then `nft -f` only after review (never apply blindly).
 
 ## 12. Operations
 
