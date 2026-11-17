@@ -116,6 +116,13 @@ export function TrainWorkbench({ mode }: Props) {
         <p className="mt-2 text-sm text-[var(--fg-muted)]">
           Phase 2-cont-2: recipe + CV catalogue + Optuna Quick/Balanced + Eval Core.
         </p>
+        <p
+          className="mt-2 text-xs text-[var(--muted)] lg:hidden"
+          data-testid="train-desktop-notice"
+          data-ux="ST-UX-04"
+        >
+          Training setup is desktop-first — use a wider viewport for the full recipe and CV controls.
+        </p>
       </div>
       {mode !== "leaderboard" || !board.length ? (
         <div className="panel-luxe max-w-xl space-y-3 rounded-2xl p-4">

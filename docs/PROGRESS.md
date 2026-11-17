@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Current phase | Contabo v2.3 (blocked on host secrets) + One-shot CLE/REE → 8.2 |
-| Last completed step | oneshot-c181 **TRAIN.REFIT.FULL** (ST-FEAT-02); oneshot-c180 **PRED.HUMILITY** (ST-FEAT-01) |
-| Last green commit | (pending c181 push) |
+| Last completed step | oneshot-c182 **UX.MOBILE.PREDICT** (ST-UX-04); oneshot-c181 **TRAIN.REFIT.FULL**; oneshot-c180 **PRED.HUMILITY** |
+| Last green commit | (pending c182) |
 | Open failures | Contabo host/SSH/.env; Supabase migrate secrets; NVIDIA_API_KEY; Deploy cannot smoke without LAB_API_URL; Actions billing |
-| Next action | Shibayan: Contabo + Supabase + NVIDIA secrets (Blocked). Agent: ST-UX-04 mobile predict / Chunk C remainder per FINAL_REPORT |
+| Next action | Shibayan: Contabo + Supabase + NVIDIA secrets (Blocked). Agent: ST-UX-02 hosted wiring / Chunk C remainder / 8.2 offline gaps |
 
 ## Blocked — needs Shibayan
 

@@ -116,7 +116,11 @@ export function CustomPredictForm({ modelId }: Props) {
   const featureNamesShap = (shap?.feature_names as string[] | undefined) ?? featureNames;
 
   return (
-    <div className="space-y-4 p-4">
+    <div
+      className="min-w-[360px] space-y-4 p-4"
+      data-testid="predict-custom-mobile"
+      data-ux="ST-UX-04"
+    >
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
@@ -135,7 +139,9 @@ export function CustomPredictForm({ modelId }: Props) {
         {status ? <span className="self-center text-sm text-[var(--muted)]">{status}</span> : null}
       </div>
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
-      <div className="grid gap-3 md:grid-cols-2">
+      {/* ST-UX-04: form stacks above result ≥360px; side-by-side only from lg */}
+      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:items-start">
+        <div className="grid gap-3 sm:grid-cols-2" data-testid="predict-form-pane">
         {feats.map((f) => {
           if (f.kind === "boolean") {
             return (
@@ -201,7 +207,8 @@ export function CustomPredictForm({ modelId }: Props) {
             </label>
           );
         })}
-      </div>
+        </div>
+        <div className="space-y-3" data-testid="predict-result-pane">
       {result ? (
         <div className="rounded border border-[var(--border)] p-3 text-sm">
           <p>
@@ -214,7 +221,11 @@ export function CustomPredictForm({ modelId }: Props) {
             </p>
           ) : null}
         </div>
-      ) : null}
+      ) : (
+        <div className="rounded border border-dashed border-[var(--border)] p-3 text-sm text-[var(--muted)]">
+          Result card appears here (stacks below the form under 1024 px).
+        </div>
+      )}
       {Array.isArray(shapValues) ? (
         <div className="rounded border border-[var(--border)] p-3 text-sm">
           <p className="mb-2 font-medium">SHAP (local)</p>
@@ -231,6 +242,8 @@ export function CustomPredictForm({ modelId }: Props) {
           </ul>
         </div>
       ) : null}
+        </div>
+      </div>
     </div>
   );
 }
