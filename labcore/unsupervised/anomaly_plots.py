@@ -11,25 +11,55 @@ def anomaly_score_hist(
     scores: np.ndarray,
     *,
     threshold: float | None = None,
+    is_outlier: np.ndarray | None = None,
     plot_id: str = "ANO.P.SCORE_HIST",
 ) -> dict[str, Any]:
     """Histogram of anomaly scores with optional threshold line."""
     import plotly.graph_objects as go
 
     s = np.asarray(scores, dtype=float)
-    fig = go.Figure(go.Histogram(x=s, nbinsx=30, name="score"))
+    fig = go.Figure()
+    out_mask = None
+    if is_outlier is not None:
+        out = np.asarray(is_outlier, dtype=int)
+        if len(out) != len(s):
+            raise ValueError("is_outlier must match scores length")
+        out_mask = out == 1
+        inlier = ~out_mask
+        if np.any(inlier):
+            fig.add_trace(go.Histogram(x=s[inlier], nbinsx=30, name="inlier", opacity=0.75))
+        if np.any(out_mask):
+            fig.add_trace(go.Histogram(x=s[out_mask], nbinsx=30, name="flagged", opacity=0.85))
+        fig.update_layout(barmode="overlay")
+    else:
+        fig.add_trace(go.Histogram(x=s, nbinsx=30, name="score"))
     if threshold is not None:
-        fig.add_vline(x=float(threshold), line_dash="dash")
+        fig.add_vline(x=float(threshold), line_dash="dash", line_color="#c9a227")
     fig.update_layout(title="Anomaly score distribution", xaxis_title="Score", height=360)
+
+    n_above = int((s >= threshold).sum()) if threshold is not None else None
+    sep = None
+    if out_mask is not None and np.any(out_mask) and np.any(~out_mask):
+        pooled = float(np.nanstd(s, ddof=1)) if len(s) > 1 else None
+        if pooled and pooled > 0:
+            sep = (float(np.mean(s[out_mask]) - np.mean(s[~out_mask])) / pooled)
+
+    numbers: dict[str, Any] = {
+        "mean": float(np.nanmean(s)),
+        "std": float(np.nanstd(s, ddof=1)) if len(s) > 1 else None,
+        "threshold": threshold,
+        "n_above_threshold": n_above,
+    }
+    if out_mask is not None:
+        numbers["n_flagged"] = int(out_mask.sum())
+        numbers["n_inlier"] = int((~out_mask).sum())
+        numbers["score_separation_cohens_d"] = sep
+
     return {
         "id": plot_id,
         "kind": "plot",
         "plotly": fig.to_plotly_json(),
-        "numbers": {
-            "mean": float(np.nanmean(s)),
-            "std": float(np.nanstd(s, ddof=1)) if len(s) > 1 else None,
-            "threshold": threshold,
-        },
+        "numbers": numbers,
     }
 
 

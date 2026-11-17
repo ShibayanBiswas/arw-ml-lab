@@ -60,6 +60,6 @@ def fit_anomaly(
         "n_outliers": int(is_outlier.sum()),
         "contamination": float(contamination),
         "threshold": thr,
-        "plots": [anomaly_score_hist(scores_arr, threshold=thr)],
+        "plots": [anomaly_score_hist(scores_arr, threshold=thr, is_outlier=is_outlier)],
         "seed": seed,
     }

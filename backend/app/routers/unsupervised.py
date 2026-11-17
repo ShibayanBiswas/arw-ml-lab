@@ -9,7 +9,11 @@ import numpy as np
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException
 from labcore.unsupervised import fit_anomaly, fit_clustering, fit_dr
-from labcore.unsupervised.anomaly_plots import anomaly_embedding_scatter, anomaly_ranked_bar
+from labcore.unsupervised.anomaly_plots import (
+    anomaly_embedding_scatter,
+    anomaly_ranked_bar,
+    anomaly_score_hist,
+)
 from labcore.unsupervised.cluster_plots import (
     correlation_clustermap,
     dbscan_k_distance,
@@ -107,6 +111,31 @@ def unsupervised_anomaly(
     algo: Literal["isolation_forest", "lof", "pyod_copod"] = body.algorithm  # type: ignore[assignment]
     try:
         return fit_anomaly(X, algorithm=algo, contamination=body.contamination, seed=body.seed)
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/api/v1/unsupervised/anomaly/score-hist")
+def unsupervised_anomaly_score_hist(
+    body: UnsupBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """ANO.P.SCORE_HIST — score histogram with contamination threshold (seed 42)."""
+    _ = user
+    X = _frame(body.rows)
+    algo: Literal["isolation_forest", "lof", "pyod_copod"] = body.algorithm  # type: ignore[assignment]
+    try:
+        fitted = fit_anomaly(X, algorithm=algo, contamination=body.contamination, seed=body.seed)
+        scores = np.asarray(fitted["scores"], dtype=float)
+        flags = np.asarray(fitted["is_outlier"], dtype=int)
+        hist = anomaly_score_hist(scores, threshold=fitted["threshold"], is_outlier=flags)
+        return {
+            **hist,
+            "algorithm": fitted["algorithm"],
+            "contamination": fitted["contamination"],
+            "n_outliers": fitted["n_outliers"],
+            "seed": body.seed,
+        }
     except Exception as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
