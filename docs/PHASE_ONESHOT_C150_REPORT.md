@@ -23,4 +23,4 @@
 - [x] Import allowlist green.
 - [x] Rule 70: defusedxml + calamine already pinned in `ml-core.txt`.
 
-**Ship commit:** *(fill after commit)*
+**Ship commit:** `91cc26a`
