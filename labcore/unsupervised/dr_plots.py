@@ -116,6 +116,99 @@ def pca_cumulative_variance(
     }
 
 
+def pca_biplot(
+    X: np.ndarray,
+    *,
+    feature_names: list[str] | None = None,
+    pc_x: int = 1,
+    pc_y: int = 2,
+    seed: int = 42,
+    loading_threshold: float = 0.4,
+) -> dict[str, Any]:
+    """DR.P.BIPLOT — PCA scores on PC_i × PC_j with loading arrows (|loading| > threshold highlighted)."""
+    import plotly.graph_objects as go
+
+    X = np.asarray(X, dtype=float)
+    n_features = X.shape[1]
+    if pc_x == pc_y:
+        raise ValueError("pc_x and pc_y must differ")
+    if not (1 <= pc_x <= n_features and 1 <= pc_y <= n_features):
+        raise ValueError("pc_x and pc_y must be within [1, n_features]")
+
+    names = feature_names or [f"f{j}" for j in range(n_features)]
+    if len(names) != n_features:
+        raise ValueError("feature_names length must match n_features")
+
+    Xs = StandardScaler().fit_transform(X)
+    n_comp = min(Xs.shape[1], max(1, Xs.shape[0] - 1))
+    model = PCA(n_components=n_comp, random_state=seed)
+    scores = model.fit_transform(Xs)
+    ev = np.asarray(model.explained_variance_, dtype=float)
+    loadings = (model.components_.T * np.sqrt(ev)).astype(float)
+    ix, iy = pc_x - 1, pc_y - 1
+
+    sx = scores[:, ix]
+    sy = scores[:, iy]
+    lx = loadings[:, ix]
+    ly = loadings[:, iy]
+    arrow_scale = float(np.max(np.abs(np.c_[sx, sy]))) / max(float(np.max(np.abs(np.c_[lx, ly]))), 1e-12)
+    lx_plot = (lx * arrow_scale).tolist()
+    ly_plot = (ly * arrow_scale).tolist()
+    strong = [abs(lx[j]) > loading_threshold or abs(ly[j]) > loading_threshold for j in range(n_features)]
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=sx.tolist(),
+            y=sy.tolist(),
+            mode="markers",
+            name="scores",
+            opacity=0.65,
+        )
+    )
+    for j in range(n_features):
+        color = "#c9a227" if strong[j] else "rgba(120,120,120,0.75)"
+        width = 2.5 if strong[j] else 1.25
+        fig.add_trace(
+            go.Scatter(
+                x=[0.0, lx_plot[j]],
+                y=[0.0, ly_plot[j]],
+                mode="lines+markers+text",
+                text=["", names[j]],
+                textposition="top center",
+                line=dict(color=color, width=width),
+                marker=dict(size=[0, 6]),
+                showlegend=False,
+                hoverinfo="skip",
+            )
+        )
+    evr = np.asarray(model.explained_variance_ratio_, dtype=float)
+    fig.update_layout(
+        title=f"Biplot PC{pc_x} × PC{pc_y} ({evr[ix] * 100:.1f}% / {evr[iy] * 100:.1f}% var)",
+        xaxis_title=f"PC{pc_x}",
+        yaxis_title=f"PC{pc_y}",
+        height=480,
+    )
+    loading_mat = loadings.tolist()
+    return {
+        "id": "DR.P.BIPLOT",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "pc_x": pc_x,
+            "pc_y": pc_y,
+            "explained_variance_ratio_pc_x": float(evr[ix]),
+            "explained_variance_ratio_pc_y": float(evr[iy]),
+            "loadings": [[float(v) for v in row] for row in loading_mat],
+            "feature": names,
+            "strong_loading_indices": [j for j, flag in enumerate(strong) if flag],
+            "arrow_scale": arrow_scale,
+            "loading_threshold": loading_threshold,
+        },
+        "seed": seed,
+    }
+
+
 def shepard_diagram(
     X: np.ndarray,
     embedding: np.ndarray,

@@ -9,7 +9,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from labcore.unsupervised import fit_anomaly, fit_clustering, fit_dr
 from labcore.unsupervised.anomaly_plots import anomaly_ranked_bar
 from labcore.unsupervised.cluster_plots import kmeans_k_sweep, silhouette_knife
-from labcore.unsupervised.dr_plots import pca_cumulative_variance, pca_scree, shepard_diagram
+from labcore.unsupervised.dr_plots import (
+    pca_biplot,
+    pca_cumulative_variance,
+    pca_scree,
+    shepard_diagram,
+)
 from pydantic import BaseModel, Field
 
 from backend.app.security import AuthUser, require_write_role
@@ -27,6 +32,8 @@ class UnsupBody(BaseModel):
     k_min: int = 2
     k_max: int = 8
     top_n: int = Field(default=20, ge=1, le=500)
+    pc_x: int = Field(default=1, ge=1, le=32)
+    pc_y: int = Field(default=2, ge=1, le=32)
 
 
 def _frame(rows: list[dict[str, Any]]) -> pd.DataFrame:
@@ -148,6 +155,27 @@ def unsupervised_scree(
     X = _frame(body.rows)
     try:
         return pca_scree(X.to_numpy(dtype=float), seed=body.seed)
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/api/v1/unsupervised/dr/biplot")
+def unsupervised_biplot(
+    body: UnsupBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """DR.P.BIPLOT — PCA scores + loading arrows on PC_x × PC_y (seed 42)."""
+    _ = user
+    df = _frame(body.rows)
+    cols = [str(c) for c in df.columns]
+    try:
+        return pca_biplot(
+            df.to_numpy(dtype=float),
+            feature_names=cols,
+            pc_x=body.pc_x,
+            pc_y=body.pc_y,
+            seed=body.seed,
+        )
     except Exception as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
