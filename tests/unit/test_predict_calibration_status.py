@@ -19,3 +19,10 @@ def test_calibration_status_from_pipeline_flag() -> None:
 
     assert calibration_status_label({}, _P()) == "calibrated"
     assert calibration_status_label({}, object()) == "uncalibrated"
+
+
+def test_calibration_status_detects_calibrated_classifier_name() -> None:
+    class CalibratedClassifierCV:  # noqa: N801 — mimic sklearn class name
+        pass
+
+    assert calibration_status_label({}, CalibratedClassifierCV()) == "calibrated"
