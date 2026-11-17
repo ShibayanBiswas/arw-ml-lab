@@ -24,4 +24,4 @@
 - [x] Import allowlist green.
 - [x] Rule 70: stdlib + pathlib only in contract module.
 
-**Ship commit:** *(set after commit)*
+**Ship commit:** `4361def`
