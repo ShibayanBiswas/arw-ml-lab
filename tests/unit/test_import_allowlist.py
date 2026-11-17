@@ -35,6 +35,7 @@ IMPORT_TO_PACKAGE = {
     "PyALE": "pyale",
     "interpret": "interpret",
     "feature_engine": "feature-engine",
+    "opentelemetry": "opentelemetry-api",
 }
 
 
