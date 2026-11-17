@@ -22,4 +22,4 @@
 - [x] Import allowlist green.
 - [x] Rule 70: sklearn `TargetEncoder` / `compile_recipe` only.
 
-**Ship commit:** _(pending)_
+**Ship commit:** `4621bf5`
