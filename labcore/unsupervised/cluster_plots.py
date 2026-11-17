@@ -6,8 +6,94 @@ from typing import Any
 
 import numpy as np
 from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score
+from sklearn.metrics import silhouette_samples, silhouette_score
 from sklearn.preprocessing import StandardScaler
+
+
+def silhouette_knife(
+    X: np.ndarray,
+    *,
+    n_clusters: int = 3,
+    seed: int = 42,
+) -> dict[str, Any]:
+    """Per-sample silhouettes grouped by cluster with overall mean (knife plot)."""
+    import plotly.graph_objects as go
+
+    Xs = StandardScaler().fit_transform(np.asarray(X, dtype=float))
+    n_rows = Xs.shape[0]
+    if n_rows < n_clusters or n_clusters < 2:
+        raise ValueError("need n_clusters ≥ 2 and at least n_clusters rows")
+    km = KMeans(n_clusters=n_clusters, random_state=seed, n_init=10).fit(Xs)
+    labels = np.asarray(km.labels_, dtype=int)
+    sil = silhouette_samples(Xs, labels)
+    if len(np.unique(labels)) < 2:
+        raise ValueError("KMeans produced a single cluster")
+    overall = float(silhouette_score(Xs, labels))
+
+    fig = go.Figure()
+    y_cursor = 0
+    cluster_means: dict[str, float] = {}
+    cluster_sizes: dict[str, int] = {}
+    order: list[int] = []
+    y_labels: list[int] = []
+    sil_ordered: list[float] = []
+    cluster_by_y: list[int] = []
+
+    for cluster_id in sorted(int(c) for c in np.unique(labels)):
+        idx = np.where(labels == cluster_id)[0]
+        sort_idx = idx[np.argsort(sil[idx], kind="stable")]
+        mean_c = float(np.mean(sil[idx]))
+        cluster_means[str(cluster_id)] = mean_c
+        cluster_sizes[str(cluster_id)] = int(len(idx))
+        fig.add_trace(
+            go.Bar(
+                x=sil[sort_idx].tolist(),
+                y=[y_cursor + i for i in range(len(sort_idx))],
+                orientation="h",
+                name=f"cluster {cluster_id}",
+                marker_line_width=0,
+                hovertemplate="cluster=%{customdata}<br>silhouette=%{x:.3f}<extra></extra>",
+                customdata=[cluster_id] * len(sort_idx),
+                showlegend=True,
+            )
+        )
+        order.extend(sort_idx.tolist())
+        for i, row in enumerate(sort_idx):
+            y_labels.append(y_cursor + i)
+            sil_ordered.append(float(sil[row]))
+            cluster_by_y.append(cluster_id)
+        y_cursor += len(sort_idx) + 10
+
+    fig.add_vline(
+        x=overall,
+        line_dash="dash",
+        line_color="#222",
+        annotation_text=f"mean={overall:.3f}",
+        annotation_position="top",
+    )
+    fig.update_layout(
+        title=f"Silhouette knife (k={n_clusters}, mean={overall:.3f})",
+        xaxis_title="Silhouette coefficient",
+        yaxis_title="Sample (grouped by cluster)",
+        barmode="overlay",
+        height=max(360, min(700, 40 * len(order) + 120)),
+        yaxis=dict(showticklabels=False),
+    )
+    return {
+        "id": "CLU.P.SILHOUETTE",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "n_clusters": n_clusters,
+            "overall_silhouette": overall,
+            "cluster_mean_silhouette": cluster_means,
+            "cluster_sizes": cluster_sizes,
+            "silhouette_by_sample": sil_ordered,
+            "cluster_by_sample": cluster_by_y,
+            "sample_order": order,
+        },
+        "seed": seed,
+    }
 
 
 def kmeans_k_sweep(

@@ -7,7 +7,7 @@ from typing import Any, Literal
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException
 from labcore.unsupervised import fit_anomaly, fit_clustering, fit_dr
-from labcore.unsupervised.cluster_plots import kmeans_k_sweep
+from labcore.unsupervised.cluster_plots import kmeans_k_sweep, silhouette_knife
 from labcore.unsupervised.dr_plots import pca_scree, shepard_diagram
 from pydantic import BaseModel, Field
 
@@ -73,6 +73,24 @@ def unsupervised_anomaly(
     algo: Literal["isolation_forest", "lof", "pyod_copod"] = body.algorithm  # type: ignore[assignment]
     try:
         return fit_anomaly(X, algorithm=algo, contamination=body.contamination, seed=body.seed)
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/api/v1/unsupervised/clustering/silhouette")
+def unsupervised_silhouette_knife(
+    body: UnsupBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """CLU.P.SILHOUETTE — per-sample silhouette knife plot (seed 42)."""
+    _ = user
+    X = _frame(body.rows)
+    try:
+        return silhouette_knife(
+            X.to_numpy(dtype=float),
+            n_clusters=body.n_clusters,
+            seed=body.seed,
+        )
     except Exception as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
