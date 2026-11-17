@@ -24,4 +24,4 @@
 - [x] Import allowlist green.
 - [x] Rule 70: `sentry_sdk` already in `backend/requirements/api.txt`.
 
-**Ship commit:** `cf5617d`
+**Ship commit:** `676e0c1`
