@@ -554,3 +554,139 @@ def plot_regression_pvalue_heatmap(
             "significant_pairs": sign_array(holm_df, alpha=alpha).tolist(),
         },
     }
+
+
+def plot_regression_validation_curve(
+    estimator: Any,
+    X: np.ndarray,
+    y: np.ndarray,
+    *,
+    param_name: str,
+    param_range: list[Any],
+    cv: int = 3,
+    seed: int = 42,
+    scoring: str = "neg_mean_squared_error",
+) -> dict[str, Any]:
+    """REE.P.VALIDATION — sklearn ``validation_curve`` → Plotly (tuning diagnostic)."""
+    import plotly.graph_objects as go
+    from sklearn.model_selection import KFold, validation_curve
+
+    X = np.asarray(X)
+    y = np.asarray(y, dtype=float)
+    cv_splitter = KFold(n_splits=cv, shuffle=True, random_state=seed)
+    train_scores, val_scores = validation_curve(
+        estimator,
+        X,
+        y,
+        param_name=param_name,
+        param_range=param_range,
+        cv=cv_splitter,
+        scoring=scoring,
+        n_jobs=1,
+    )
+    train_mean = np.mean(train_scores, axis=1)
+    train_std = np.std(train_scores, axis=1, ddof=1)
+    val_mean = np.mean(val_scores, axis=1)
+    val_std = np.std(val_scores, axis=1, ddof=1)
+    x = [str(p) for p in param_range]
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=x,
+            y=train_mean,
+            error_y={"array": train_std},
+            mode="lines+markers",
+            name="train",
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=x,
+            y=val_mean,
+            error_y={"array": val_std},
+            mode="lines+markers",
+            name="cv",
+        )
+    )
+    fig.update_layout(
+        title=f"Validation curve ({param_name})",
+        xaxis_title=param_name,
+        yaxis_title=scoring,
+        height=400,
+    )
+    return {
+        "id": "REE.P.VALIDATION",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "param_name": param_name,
+            "param_range": x,
+            "scoring": scoring,
+            "seed": seed,
+            "cv": cv,
+            "train_mean": train_mean.tolist(),
+            "val_mean": val_mean.tolist(),
+        },
+    }
+
+
+def plot_regression_learning_curve(
+    estimator: Any,
+    X: np.ndarray,
+    y: np.ndarray,
+    *,
+    cv: int = 3,
+    seed: int = 42,
+    scoring: str = "r2",
+) -> dict[str, Any]:
+    """REE.P.LEARNING — sklearn ``learning_curve`` → Plotly (regression, default R²)."""
+    import plotly.graph_objects as go
+    from sklearn.model_selection import learning_curve
+
+    train_sizes, train_scores, val_scores = learning_curve(
+        estimator,
+        X,
+        y,
+        cv=cv,
+        scoring=scoring,
+        random_state=seed,
+        shuffle=True,
+        n_jobs=1,
+        train_sizes=np.linspace(0.3, 1.0, 5),
+    )
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=train_sizes,
+            y=np.mean(train_scores, axis=1),
+            error_y={"array": np.std(train_scores, axis=1, ddof=1)},
+            mode="lines+markers",
+            name="train",
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=train_sizes,
+            y=np.mean(val_scores, axis=1),
+            error_y={"array": np.std(val_scores, axis=1, ddof=1)},
+            mode="lines+markers",
+            name="cv",
+        )
+    )
+    fig.update_layout(
+        title="Learning curve",
+        xaxis_title="Train size",
+        yaxis_title=scoring,
+        height=400,
+    )
+    return {
+        "id": "REE.P.LEARNING",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "scoring": scoring,
+            "train_sizes": train_sizes.tolist(),
+            "train_mean": np.mean(train_scores, axis=1).tolist(),
+            "val_mean": np.mean(val_scores, axis=1).tolist(),
+        },
+    }
