@@ -1,7 +1,8 @@
 """lab-beat hourly maintenance — ARCHITECTURE §39 / §46.2 OPS.
 
-Phase 8.1: safe no-op stubs so Render cron does not crash.
-Phase 8.2: heartbeats reaper, prediction retention, storage lifecycle.
+Heartbeats reaper (OPS-03), prediction retention (OPS-07 / ST-OPS-07), and
+storage lifecycle hooks (OPS-06). Uses Postgres when ``DATABASE_URL`` is
+reachable; otherwise falls back to in-memory stores for local dev/tests.
 """
 
 from __future__ import annotations
@@ -9,20 +10,97 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
+import time
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("lab.maintenance")
 
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
-STALE_SECONDS = 10 * 60  # 10 minutes without progress → failed
-PREDICTION_RETENTION_SECONDS = 30 * 24 * 3600  # 30 days (§46 OPS-06)
+STALE_SECONDS = 10 * 60  # 10 minutes without heartbeat → failed (§46.2 OPS-03)
+PREDICTION_RETENTION_SECONDS = 30 * 24 * 3600  # 30 days (§46 OPS-06 / §45.8)
+PREDICTION_RESULTS_CAP = 1000
+MAINTENANCE_SEED = 42
+
+_REAPER_SQL = """
+UPDATE public.jobs
+SET status = 'failed',
+    error = coalesce(
+        nullif(trim(error), ''),
+        '[maintenance] stale heartbeat (no progress for 10 minutes)'
+    ),
+    finished_at = coalesce(finished_at, now())
+WHERE status IN ('queued', 'running')
+  AND (
+    (heartbeat_at IS NOT NULL AND heartbeat_at < now() - make_interval(secs => %s))
+    OR (
+      heartbeat_at IS NULL
+      AND coalesce(started_at, created_at) < now() - make_interval(secs => %s)
+    )
+  )
+RETURNING id::text;
+"""
+
+_RETENTION_SQL = """
+DELETE FROM public.prediction_jobs
+WHERE expires_at < now()
+RETURNING id::text;
+"""
+
+_TRIM_PREDICTION_RESULTS_SQL = """
+DELETE FROM public.prediction_results
+WHERE id IN (
+  SELECT id FROM (
+    SELECT id,
+           row_number() OVER (PARTITION BY prediction_job_id ORDER BY id) AS rn
+    FROM public.prediction_results
+  ) ranked
+  WHERE rn > %s
+)
+RETURNING id;
+"""
 
 
-def reaper_stale_heartbeats() -> dict[str, int]:
-    """Mark queued/running jobs older than 10 min without progress as failed."""
-    import time
+def _connect_postgres():
+    """Return a psycopg connection or None when the database is unavailable."""
+    try:
+        import psycopg
 
+        from backend.app.settings import get_settings
+
+        conn = psycopg.connect(get_settings().database_url, connect_timeout=5)
+        conn.autocommit = True
+        return conn
+    except Exception as exc:  # noqa: BLE001 — maintenance must not crash on connect errors
+        log.warning("postgres maintenance skipped: %s", exc)
+        return None
+
+
+@contextmanager
+def _postgres() -> Iterator[object | None]:
+    conn = _connect_postgres()
+    try:
+        yield conn
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+def reaper_stale_heartbeats_postgres(conn: object) -> dict[str, int | str]:
+    with conn.cursor() as cur:  # type: ignore[attr-defined]
+        cur.execute(_REAPER_SQL, (STALE_SECONDS, STALE_SECONDS))
+        marked = len(cur.fetchall())
+    log.info("reaper_stale_heartbeats_postgres: marked_failed=%s", marked)
+    return {"marked_failed": marked, "backend": "postgres"}
+
+
+def reaper_stale_heartbeats_memory() -> dict[str, int | str]:
+    """Mark queued/running in-memory demo jobs with stale heartbeats as failed."""
     from backend.app.jobs_store import JOB_STORE
 
     now = time.time()
@@ -30,22 +108,36 @@ def reaper_stale_heartbeats() -> dict[str, int]:
     for job_id, rec in list(getattr(JOB_STORE, "_jobs", {}).items()):
         if rec.status not in ("queued", "running"):
             continue
-        age = now - float(rec.created_at)
-        if age >= STALE_SECONDS and float(rec.progress) < 1.0:
+        last = getattr(rec, "heartbeat_at", None)
+        stale_for = now - float(last) if last is not None else now - float(rec.created_at)
+        if stale_for >= STALE_SECONDS and float(rec.progress) < 1.0:
             JOB_STORE.update(
                 job_id,
                 status="error",
-                error=f"stale heartbeat after {int(age)}s",
+                error=f"stale heartbeat after {int(stale_for)}s",
             )
             marked += 1
-    log.info("reaper_stale_heartbeats: marked_failed=%s", marked)
-    return {"marked_failed": marked}
+    log.info("reaper_stale_heartbeats_memory: marked_failed=%s", marked)
+    return {"marked_failed": marked, "backend": "memory"}
 
 
-def retention_expired_predictions() -> dict[str, int]:
-    """Delete in-memory MODEL_STORE entries older than retention (when stamped)."""
-    import time
+def reaper_stale_heartbeats() -> dict[str, int | str]:
+    with _postgres() as conn:
+        if conn is not None:
+            return reaper_stale_heartbeats_postgres(conn)
+    return reaper_stale_heartbeats_memory()
 
+
+def retention_expired_predictions_postgres(conn: object) -> dict[str, int | str]:
+    with conn.cursor() as cur:  # type: ignore[attr-defined]
+        cur.execute(_RETENTION_SQL)
+        deleted = len(cur.fetchall())
+    log.info("retention_expired_predictions_postgres: deleted=%s", deleted)
+    return {"deleted": deleted, "backend": "postgres"}
+
+
+def retention_expired_predictions_memory() -> dict[str, int | str]:
+    """Purge aged in-memory model entries (local predict demo only)."""
     from backend.app.model_store import MODEL_STORE
 
     now = time.time()
@@ -59,12 +151,27 @@ def retention_expired_predictions() -> dict[str, int]:
             if now - float(created) > PREDICTION_RETENTION_SECONDS:
                 store.pop(mid, None)
                 deleted += 1
-    log.info("retention_expired_predictions: deleted=%s", deleted)
-    return {"deleted": deleted}
+    log.info("retention_expired_predictions_memory: deleted=%s", deleted)
+    return {"deleted": deleted, "backend": "memory"}
 
 
-def storage_lifecycle() -> dict[str, int]:
-    """Count artefacts under local scratch (hosted storage sweep in 8.2-cont)."""
+def retention_expired_predictions() -> dict[str, int | str]:
+    with _postgres() as conn:
+        if conn is not None:
+            return retention_expired_predictions_postgres(conn)
+    return retention_expired_predictions_memory()
+
+
+def storage_lifecycle_postgres(conn: object) -> dict[str, int | str]:
+    with conn.cursor() as cur:  # type: ignore[attr-defined]
+        cur.execute(_TRIM_PREDICTION_RESULTS_SQL, (PREDICTION_RESULTS_CAP,))
+        trimmed = len(cur.fetchall())
+    log.info("storage_lifecycle_postgres: prediction_results_trimmed=%s", trimmed)
+    return {"prediction_results_trimmed": trimmed, "backend": "postgres"}
+
+
+def storage_lifecycle_scratch() -> int:
+    """Count artefact scratch files (hosted Storage purge is worker-side)."""
     from pathlib import Path
 
     scratch = Path("tmp") / "artefacts"
@@ -73,8 +180,24 @@ def storage_lifecycle() -> dict[str, int]:
         for p in scratch.rglob("*"):
             if p.is_file():
                 touched += 1
-    log.info("storage_lifecycle: touched=%s", touched)
-    return {"touched": touched}
+    return touched
+
+
+def storage_lifecycle() -> dict[str, int | str]:
+    trimmed = 0
+    backend = "scratch"
+    with _postgres() as conn:
+        if conn is not None:
+            stats = storage_lifecycle_postgres(conn)
+            trimmed = int(stats["prediction_results_trimmed"])
+            backend = str(stats["backend"])
+    touched = storage_lifecycle_scratch()
+    log.info("storage_lifecycle: prediction_results_trimmed=%s scratch_files=%s", trimmed, touched)
+    return {
+        "prediction_results_trimmed": trimmed,
+        "scratch_files": touched,
+        "backend": backend,
+    }
 
 
 def run_all() -> dict[str, object]:
@@ -84,13 +207,13 @@ def run_all() -> dict[str, object]:
         "reaper": reaper_stale_heartbeats(),
         "predictions": retention_expired_predictions(),
         "storage": storage_lifecycle(),
-        "seed": 42,
+        "seed": MAINTENANCE_SEED,
     }
     log.info("maintenance complete: %s", result)
     return result
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="ARW ML Lab maintenance (lab-beat)")
     parser.add_argument("--all", action="store_true", help="Run all maintenance tasks")
     parser.add_argument("--reaper", action="store_true", help="Stale-heartbeat reaper only")

@@ -22,6 +22,7 @@ class JobRecord:
     events: list[dict[str, Any]] = field(default_factory=list)
     idempotency_key: str | None = None
     created_at: float = field(default_factory=time.time)
+    heartbeat_at: float | None = None
 
 
 class JobStore:
@@ -73,6 +74,8 @@ class JobStore:
                 rec.error = error
             if event is not None:
                 rec.events.append(event)
+            if status == "running" or (progress is not None and progress > 0):
+                rec.heartbeat_at = time.time()
             return rec
 
 

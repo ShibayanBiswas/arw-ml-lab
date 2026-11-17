@@ -157,7 +157,7 @@ In those cases, upgrade the tier, add a second worker-train VPS, or move workers
 - Live path: private GitHub `arw-ml-lab`, Supabase Pro, Render Blueprint (`render.yaml`), Vercel Root Directory `frontend`.
 - TradingLab git submodule **not** added in 8.1 (remains Phase 5; CI `submodules: recursive` is a no-op without `.gitmodules`).
 - §39.13 sample flow “EDA → Quick train → leaderboard → explain → predict” is **deferred** until those stages exist (Phase 2+). Phase 8.1 smoke is `GET /healthz` plus optional DS1 EDA via `scripts/smoke_hosted.sh` when workers and secrets are ready.
-- `lab-beat` runs `python -m backend.worker.maintenance --all` with Phase 8.1 no-op stubs; real reaper/retention in Phase 8.2.
+- `lab-beat` runs `python -m backend.worker.maintenance --all`; oneshot-c101 wired Postgres reaper/retention (OPS-03/07) with in-memory fallback; worker heartbeat emit still 8.2.
 - Default branch renamed to `main` to match CI/deploy triggers.
 - Secrets only in Render / Vercel / GitHub Environment `production` dashboards — never in the repo or chat.
 - **Branch protection:** GitHub Free on a **private** repo returns HTTP 403 for classic protection and rulesets (“Upgrade to GitHub Pro”). Documented in DEPLOY; enable after Pro or org-owned repo.

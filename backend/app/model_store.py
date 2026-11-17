@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
 from typing import Any
 from uuid import uuid4
@@ -17,6 +18,7 @@ class StoredModel:
     feature_contract: dict[str, Any]
     pipeline: Any
     meta: dict[str, Any] = field(default_factory=dict)
+    created_at: float = field(default_factory=time.time)
 
 
 class ModelStore:
