@@ -24,6 +24,8 @@ const ANOMALY_PLOTS: { id: AnomalyCataloguePlot; label: string; artefact: string
   { id: "score-hist", label: "Score histogram", artefact: "ANO.P.SCORE_HIST" },
   { id: "ranked", label: "Top-N ranked", artefact: "ANO.P.RANKED" },
   { id: "embed", label: "PCA embed", artefact: "ANO.P.EMBED" },
+  { id: "pareto", label: "Pareto rank curve", artefact: "ANO.P.PARETO" },
+  { id: "pairwise", label: "Pairwise scatter", artefact: "ANO.P.PAIRWISE" },
 ];
 
 const CLUSTERING_PLOTS: { id: ClusteringCataloguePlot; label: string; artefact: string }[] = [

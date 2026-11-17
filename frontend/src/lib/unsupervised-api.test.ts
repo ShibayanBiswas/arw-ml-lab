@@ -12,6 +12,8 @@ describe("unsupervisedAnomalyPlotPath", () => {
     );
     expect(unsupervisedAnomalyPlotPath("ranked")).toBe("/api/v1/unsupervised/anomaly/ranked");
     expect(unsupervisedAnomalyPlotPath("embed")).toBe("/api/v1/unsupervised/anomaly/embed");
+    expect(unsupervisedAnomalyPlotPath("pareto")).toBe("/api/v1/unsupervised/anomaly/pareto");
+    expect(unsupervisedAnomalyPlotPath("pairwise")).toBe("/api/v1/unsupervised/anomaly/pairwise");
   });
 });
 

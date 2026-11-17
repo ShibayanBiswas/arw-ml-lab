@@ -363,7 +363,12 @@ export type UnsupervisedRunBody = {
   top_n?: number;
 };
 
-export type AnomalyCataloguePlot = "score-hist" | "ranked" | "embed";
+export type AnomalyCataloguePlot =
+  | "score-hist"
+  | "ranked"
+  | "embed"
+  | "pareto"
+  | "pairwise";
 
 export type ClusteringCataloguePlot =
   | "elbow"
