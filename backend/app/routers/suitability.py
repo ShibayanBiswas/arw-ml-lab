@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from labcore.suitability import (
     plot_daily_volatility,
     plot_holding_period_distribution,
+    plot_min_ffd,
     plot_price_cusum,
     plot_sample_barriers,
     plot_uniqueness_concurrency,
@@ -33,6 +34,7 @@ class SuitabilityBody(BaseModel):
     sl_mult: float = Field(default=1.0, gt=0.0, le=10.0)
     n_samples: int = Field(default=3, ge=1, le=6)
     cusum_mult: float = Field(default=1.0, gt=0.0, le=5.0)
+    d_step: float = Field(default=0.05, gt=0.01, le=0.25)
 
 
 def _load_suitability_frame(
@@ -177,5 +179,19 @@ def suitability_holding_plot(
             cusum_mult=None,
             seed=42,
         )
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/api/v1/suitability/plots/min-ffd")
+def suitability_min_ffd_plot(
+    body: SuitabilityBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """FS.P.MIN_FFD — ADF statistic vs fractional-difference order (seed 42 metadata)."""
+    _ = user
+    df, _time_col = _load_suitability_frame(body)
+    try:
+        return plot_min_ffd(df, price_col=body.price_col, d_step=body.d_step, seed=42)
     except Exception as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc

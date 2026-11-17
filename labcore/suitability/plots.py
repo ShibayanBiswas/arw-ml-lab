@@ -727,3 +727,87 @@ def plot_uniqueness_concurrency(
             "median_concurrency": float(prof["median_concurrency"]),
         },
     }
+
+
+def plot_min_ffd(
+    df: pd.DataFrame,
+    *,
+    price_col: str | None = None,
+    d_step: float = 0.05,
+    seed: int = 42,
+) -> dict[str, Any]:
+    """FS.P.MIN_FFD — ADF statistic and correlation vs fractional-difference order d."""
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+
+    from labcore.finance.ffd import scan_min_ffd
+
+    _ = seed
+    col = price_col or _detect_price_col(df)
+    if col is None:
+        raise ValueError("no price column detected for min-FFD plot")
+    px = pd.to_numeric(df[col], errors="coerce").dropna()
+    if len(px) < 50:
+        raise ValueError("need ≥50 prices for min-FFD scan")
+    log_px = np.log(px.clip(lower=1e-12).to_numpy(dtype=float))
+    scan = scan_min_ffd(log_px, d_step=d_step)
+    ds = [r["d"] for r in scan["rows"]]
+    adf_stats = [r["adf_statistic"] for r in scan["rows"]]
+    corrs = [r["corr_with_original"] for r in scan["rows"]]
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    fig.add_trace(
+        go.Scatter(
+            x=ds,
+            y=adf_stats,
+            mode="lines+markers",
+            name="ADF statistic",
+            hovertemplate="d=%{x:.2f}<br>ADF t=%{y:.3f}<extra></extra>",
+        ),
+        secondary_y=False,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=ds,
+            y=corrs,
+            mode="lines+markers",
+            name="corr(log price, FFD)",
+            line=dict(dash="dot"),
+            hovertemplate="d=%{x:.2f}<br>ρ=%{y:.3f}<extra></extra>",
+        ),
+        secondary_y=True,
+    )
+    if scan["d_star"] is not None:
+        fig.add_vline(
+            x=float(scan["d_star"]),
+            line_dash="dash",
+            line_color="#c9a227",
+            annotation_text=f"d*={scan['d_star']:.2f}",
+            annotation_position="top",
+        )
+    fig.update_xaxes(title_text="fractional order d")
+    fig.update_yaxes(title_text="ADF statistic (lower → more stationary)", secondary_y=False)
+    fig.update_yaxes(title_text="correlation with log price", secondary_y=True, range=[0, 1.05])
+    title = "Minimum fractional d for stationarity (ADF 95%)"
+    if scan["d_star"] is not None:
+        title += f" — d* = {scan['d_star']:.2f}"
+    fig.update_layout(
+        title=title,
+        height=440,
+        legend=dict(orientation="h", yanchor="bottom", y=1.02),
+    )
+
+    return {
+        "id": "FS.P.MIN_FFD",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "price_col": col,
+            "n_obs": int(len(log_px)),
+            "d_step": d_step,
+            "d_star": scan["d_star"],
+            "adf_alpha": scan["adf_alpha"],
+            "thresh": scan["thresh"],
+            "seed": seed,
+            "scan": scan["rows"],
+        },
+    }

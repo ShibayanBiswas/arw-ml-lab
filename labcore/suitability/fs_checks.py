@@ -1002,11 +1002,17 @@ def check_fs15_stationarity(df: pd.DataFrame, price_col: str | None) -> FSResult
     adf_ret = adfuller(rets, maxlag=10, autolag="AIC", result_object=True)
     p_price = float(adf_price.pvalue)
     p_ret = float(adf_ret.pvalue)
-    # Spec: d* via TradingLab FFD deferred; report ADF evidence only
+    from labcore.finance.ffd import scan_min_ffd
+
+    try:
+        ffd = scan_min_ffd(log_px.to_numpy(dtype=float), d_step=0.05)
+        d_star = ffd["d_star"]
+    except ValueError:
+        d_star = None
     details = {
         "adf_log_price_pvalue": p_price,
         "adf_returns_pvalue": p_ret,
-        "ffd_d_star": "deferred (TradingLab)",
+        "ffd_d_star": d_star,
     }
     if p_ret >= 0.05:
         return FSResult(
