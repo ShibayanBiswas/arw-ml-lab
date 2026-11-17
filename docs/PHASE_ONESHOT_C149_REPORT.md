@@ -23,4 +23,4 @@
 - [x] Import allowlist green.
 - [x] Rule 70: stdlib only in new module.
 
-**Ship commit:** *(fill after commit)*
+**Ship commit:** `81e5476`

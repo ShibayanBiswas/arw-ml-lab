@@ -16,11 +16,14 @@ from typing import Any, Literal
 import numpy as np
 import pandas as pd
 
+from labcore.security.formula_escape import FORMULA_TRIGGER_PREFIXES, escape_formula_export_cell
+
 Severity = Literal["block", "warn", "info", "sanitise", "deferred"]
 
 _BOOL_TRUE = {"true", "1", "yes", "y", "t"}
 _BOOL_FALSE = {"false", "0", "no", "n", "f"}
-_FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
+
+_FORMULA_PREFIXES = FORMULA_TRIGGER_PREFIXES
 
 DEFAULT_MAX_BYTES = 50 * 1024 * 1024  # 50 MB
 DEFAULT_MAX_ROWS = 1_000_000
@@ -228,9 +231,8 @@ def _sanitise_formula_cell(val: Any) -> tuple[Any, bool]:
     """PV15 — treat formula-like cells as text (prefix with ')."""
     if not isinstance(val, str):
         return val, False
-    if val and val[0] in _FORMULA_PREFIXES:
-        return "'" + val, True
-    return val, False
+    escaped = escape_formula_export_cell(val)
+    return escaped, escaped != val
 
 
 def _row_ood_scores(

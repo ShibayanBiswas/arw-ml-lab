@@ -9,6 +9,8 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
+from labcore.security.formula_escape import escape_formula_export_cell
+
 _AUDIT_DEMO_ACTIONS: tuple[tuple[str, str, str], ...] = (
     ("decision.approve", "decision", "VD3"),
     ("prediction.batch", "prediction_job", "PJ-demo"),
@@ -91,23 +93,21 @@ def normalize_audit_row(raw: dict[str, Any]) -> dict[str, Any]:
 
 
 def audit_rows_to_csv(rows: list[dict[str, Any]]) -> str:
-    """SEC-11 admin audit export — formula-safe CSV (leading quote on risky cells)."""
+    """SEC-11 admin audit export — formula-safe CSV (SEC-04 on every column)."""
     buf = io.StringIO()
     writer = csv.writer(buf, lineterminator="\n")
     writer.writerow(CSV_COLUMNS)
     for row in rows:
         detail_json = json.dumps(row.get("detail") or {}, sort_keys=True)
-        if detail_json and detail_json[0] in "=+-@\t\r":
-            detail_json = "'" + detail_json
         writer.writerow(
             [
-                row.get("id"),
-                row.get("created_at"),
-                row.get("user_id"),
-                row.get("action"),
-                row.get("entity") or "",
-                row.get("entity_id") or "",
-                detail_json,
+                escape_formula_export_cell(row.get("id")),
+                escape_formula_export_cell(row.get("created_at")),
+                escape_formula_export_cell(row.get("user_id")),
+                escape_formula_export_cell(row.get("action")),
+                escape_formula_export_cell(row.get("entity") or ""),
+                escape_formula_export_cell(row.get("entity_id") or ""),
+                escape_formula_export_cell(detail_json),
             ]
         )
     return buf.getvalue()

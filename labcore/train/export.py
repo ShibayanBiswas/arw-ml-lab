@@ -6,12 +6,7 @@ import csv
 import io
 from typing import Any
 
-
-def _safe_cell(value: Any) -> str:
-    s = "" if value is None else str(value)
-    if s and s[0] in ("=", "+", "-", "@", "\t", "\r"):
-        return "'" + s
-    return s
+from labcore.security.formula_escape import escape_formula_export_cell as _safe_cell
 
 
 def leaderboard_to_csv(rows: list[dict[str, Any]]) -> str:

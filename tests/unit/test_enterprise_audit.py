@@ -16,7 +16,8 @@ def test_demo_audit_rows_seed_42_stable() -> None:
 
 def test_audit_csv_escapes_formula_cells() -> None:
     rows = demo_audit_rows(WS, seed=42, count=1)
+    rows[0]["action"] = "=1+1"
     rows[0]["detail"] = {"note": "=1+1"}
     csv_text = audit_rows_to_csv(rows)
-    assert "'=" in csv_text or '"=1+1"' in csv_text or "=1+1" in csv_text
-    assert "id,created_at" in csv_text.splitlines()[0]
+    assert "'=1+1" in csv_text
+    assert csv_text.splitlines()[0] == "id,created_at,user_id,action,entity,entity_id,detail_json"
