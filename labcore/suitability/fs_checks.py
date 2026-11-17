@@ -1,8 +1,9 @@
 """FS financial labelling suitability (ARCHITECTURE §37).
 
-Implemented without TradingLab: FS1–FS15, FS19–FS20.
-FS16–FS18 stay DEFERRED until vendor/tradinglab structural/trend/meta adapters.
-FS7/FS9–FS13 use AFML-equivalent thin formulas until the submodule lands.
+Implemented: FS1–FS20. FS16–FS18 use thin AFML/statsmodels/scipy/ruptures
+equivalents (`labcore.finance.sadf`, `trendscan`, MA-cross primary); TradingLab
+parity contract tests remain deferred until ``vendor/tradinglab`` lands.
+FS7/FS9–FS13 likewise use AFML-equivalent thin formulas.
 """
 
 from __future__ import annotations
@@ -1111,13 +1112,153 @@ def check_fs20_leakage(df: pd.DataFrame) -> FSResult:
     return FSResult("FS20", "PASS", "no obvious future-dated feature names")
 
 
+def _method_verdict(
+    checks: list[FSResult],
+    *,
+    required: set[str],
+    caution: set[str] | None = None,
+) -> dict[str, Any]:
+    by = {c.code: c for c in checks}
+    failed = [c for c in required if by.get(c) and by[c].status == "FAIL"]
+    warned = [
+        c
+        for c in (caution or set()) | required
+        if by.get(c) and by[c].status == "WARN"
+    ]
+    if failed:
+        status = "NOT_SUITABLE"
+    elif warned:
+        status = "SUITABLE_WITH_CAUTIONS"
+    else:
+        status = "SUITABLE"
+    return {"status": status, "failed": failed, "warned": warned}
+
+
+def check_fs16_structural_breaks(
+    df: pd.DataFrame,
+    price_col: str | None = None,
+) -> FSResult:
+    """FS16 — SADF peak + optional ruptures change-points (informational)."""
+    from labcore.finance.sadf import compute_sadf_series
+
+    col = price_col or _detect_price_col(df)
+    if col is None:
+        return FSResult("FS16", "INFO", "no price column for structural-break scan")
+    raw = pd.to_numeric(df[col], errors="coerce").dropna()
+    if len(raw) < 40:
+        return FSResult("FS16", "INFO", "series too short for SADF", {"n": int(len(raw))})
+    log_px = np.log(raw.clip(lower=1e-12).to_numpy(dtype=float))
+    # Suitability is interactive: SADF on a trailing window; ruptures on a subsample.
+    tail = log_px[-min(len(log_px), 250) :]
+    try:
+        sadf = compute_sadf_series(
+            tail,
+            min_window=30,
+            max_lookback=min(40, len(tail) - 5),
+            end_step=max(1, len(tail) // 25),
+        )
+        peak = float(sadf["peak_sadf"])
+        peak_end = sadf["peak_end"]
+    except Exception as exc:  # noqa: BLE001 — informational lane
+        return FSResult("FS16", "INFO", f"SADF unavailable: {exc}")
+    n_breaks = 0
+    try:
+        import ruptures as rpt
+
+        sample = log_px[:: max(1, len(log_px) // 400)]
+        if len(sample) >= 20:
+            algo = rpt.Pelt(model="rbf").fit(sample.reshape(-1, 1))
+            bkps = algo.predict(pen=5)
+            n_breaks = max(0, len(bkps) - 1)
+        else:
+            n_breaks = 0
+    except Exception:
+        n_breaks = -1
+    return FSResult(
+        "FS16",
+        "INFO",
+        f"SADF peak={peak:.2f}; ruptures breaks={n_breaks}",
+        {
+            "peak_sadf": peak,
+            "peak_end": peak_end,
+            "n_breaks": n_breaks,
+            "sadf_window": int(len(tail)),
+            "library": "statsmodels+ruptures",
+        },
+    )
+
+
+def check_fs17_trend_scanning(
+    df: pd.DataFrame,
+    price_col: str | None = None,
+) -> FSResult:
+    """FS17 — share of trend-scan |t| > 2 over L ∈ [5, 20]."""
+    from labcore.finance.trendscan import compute_trendscan_series
+
+    col = price_col or _detect_price_col(df)
+    if col is None:
+        return FSResult("FS17", "FAIL", "no price column for trend-scanning")
+    raw = pd.to_numeric(df[col], errors="coerce").dropna()
+    if len(raw) < 30:
+        return FSResult("FS17", "FAIL", "need ≥30 prices for trend-scan", {"n": int(len(raw))})
+    # Trailing window keeps FS17 interactive on multi-year samples.
+    window = raw.iloc[-min(len(raw), 400) :]
+    log_px = np.log(window.clip(lower=1e-12).to_numpy(dtype=float))
+    try:
+        scan = compute_trendscan_series(log_px, l_min=5, l_max=20, step=2)
+    except Exception as exc:  # noqa: BLE001
+        return FSResult("FS17", "FAIL", f"trend-scan failed: {exc}")
+    share = float(scan["share_abs_t_gt_2"])
+    details = {
+        "share_abs_t_gt_2": share,
+        "peak_t_value": scan["peak_t_value"],
+        "n_origins": len(scan["origins"]),
+    }
+    if share >= 0.20:
+        return FSResult("FS17", "PASS", f"share |t|>2 = {share:.1%} (≥20%)", details)
+    if share >= 0.05:
+        return FSResult("FS17", "WARN", f"share |t|>2 = {share:.1%} (5–20%)", details)
+    return FSResult("FS17", "FAIL", f"share |t|>2 = {share:.1%} (<5%)", details)
+
+
+def check_fs18_meta_labelling(
+    df: pd.DataFrame,
+    price_col: str | None = None,
+    *,
+    fast: int = 10,
+    slow: int = 30,
+) -> FSResult:
+    """FS18 — primary rule (MA cross) yields ≥100 signals (thin stand-in)."""
+    col = price_col or _detect_price_col(df)
+    if col is None:
+        return FSResult("FS18", "FAIL", "no price column for meta-labelling primary")
+    px = pd.to_numeric(df[col], errors="coerce").dropna()
+    if len(px) < slow + 5:
+        return FSResult(
+            "FS18",
+            "FAIL",
+            f"need ≥{slow + 5} prices for MA({fast}/{slow}) primary",
+            {"n": int(len(px))},
+        )
+    ma_fast = px.rolling(fast).mean()
+    ma_slow = px.rolling(slow).mean()
+    cross = ((ma_fast > ma_slow) != (ma_fast.shift(1) > ma_slow.shift(1))).fillna(False)
+    n_signals = int(cross.sum())
+    details = {"n_signals": n_signals, "fast": fast, "slow": slow, "rule": "ma_cross"}
+    if n_signals >= 100:
+        return FSResult("FS18", "PASS", f"MA cross signals={n_signals} (≥100)", details)
+    if n_signals > 0:
+        return FSResult("FS18", "WARN", f"MA cross signals={n_signals} (<100)", details)
+    return FSResult("FS18", "FAIL", "MA cross produced no signals", details)
+
+
 def run_suitability(
     df: pd.DataFrame,
     *,
     time_col: str | None = None,
     asset: str | None = None,
 ) -> dict[str, Any]:
-    """Run implemented FS checks; TradingLab-only codes stay DEFERRED."""
+    """Run FS1–FS20 suitability checks (thin AFML where TradingLab absent)."""
     price = _detect_price_col(df)
     checks = [
         check_fs1_time_index(df, time_col),
@@ -1136,14 +1277,9 @@ def run_suitability(
     ]
     checks.append(check_fs14_return_acf(df, price))
     checks.append(check_fs15_stationarity(df, price))
-    for code in ("FS16", "FS17", "FS18"):
-        checks.append(
-            FSResult(
-                code,
-                "DEFERRED",
-                "requires TradingLab structural/trend/meta adapters",
-            )
-        )
+    checks.append(check_fs16_structural_breaks(df, price))
+    checks.append(check_fs17_trend_scanning(df, price))
+    checks.append(check_fs18_meta_labelling(df, price))
     checks.append(check_fs19_fixed_horizon(df, price))
     checks.append(check_fs20_leakage(df))
 
@@ -1175,16 +1311,16 @@ def run_suitability(
             "failed": fh_fail,
             "warned": warned,
         },
-        "trend_scanning": {
-            "status": "DEFERRED",
-            "failed": [],
-            "warned": [],
-        },
-        "meta_labeling": {
-            "status": "DEFERRED",
-            "failed": [],
-            "warned": [],
-        },
+        "trend_scanning": _method_verdict(
+            checks,
+            required={"FS1", "FS2", "FS6", "FS17", "FS20"},
+            caution={"FS5"},
+        ),
+        "meta_labeling": _method_verdict(
+            checks,
+            required={"FS1", "FS2", "FS3", "FS6", "FS7", "FS9", "FS10", "FS18", "FS20"},
+            caution={"FS4", "FS5", "FS8", "FS11", "FS12"},
+        ),
     }
     recommendations: list[str] = []
     if "FS4" in warned:

@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Current phase | Contabo v2.3 (blocked on host secrets) + One-shot CLE/REE → 8.2 |
-| Last completed step | oneshot-c189 **OPS.OPTUNA.RESUME**; oneshot-c188 **OPS.FOLD.UPSERT**; oneshot-c187 tune soft-limit |
-| Last green commit | 28bfcbc |
-| Open failures | Contabo host/SSH/.env; Supabase migrate secrets; NVIDIA_API_KEY; Deploy cannot smoke without LAB_API_URL; Actions billing; TradingLab submodule |
-| Next action | Shibayan: Contabo + Supabase + NVIDIA secrets + TradingLab submodule + Actions billing (Blocked). Agent: remaining 8.2 offline until unblock |
+| Last completed step | oneshot-c190 **FS16–FS18 thin**; oneshot-c189 **OPS.OPTUNA.RESUME**; oneshot-c188 **OPS.FOLD.UPSERT** |
+| Last green commit | (pending c190) |
+| Open failures | Contabo host/SSH/.env; Supabase migrate secrets; NVIDIA_API_KEY; Deploy cannot smoke without LAB_API_URL; Actions billing; TradingLab parity (submodule) |
+| Next action | Shibayan: Contabo + Supabase + NVIDIA + Actions billing (Blocked). Agent: TradingLab parity when submodule present; hosted prove when unblocked |
 
 ## Blocked — needs Shibayan
 
@@ -18,7 +18,7 @@
 | Supabase server env for VPS | Local `.env` needs `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWKS_URL`, `DATABASE_URL`, `DATABASE_URL_SESSION`, S3 keys |
 | `SUPABASE_ACCESS_TOKEN` | `gh secret set SUPABASE_ACCESS_TOKEN --env production --repo ShibayanBiswas/arw-ml-lab` (stdin) |
 | `SUPABASE_DB_PASSWORD` | `gh secret set SUPABASE_DB_PASSWORD --env production --repo ShibayanBiswas/arw-ml-lab` (stdin) |
-| TradingLab submodule | `vendor/tradinglab` for FS16–18 + AFML parity |
+| TradingLab submodule | `vendor/tradinglab` for **parity** tests vs thin FS16–18 (SADF/trendscan/MA-cross already online) |
 | GitHub Actions billing | CI/Deploy jobs die in ~2s: account payments failed or spending limit. Fix https://github.com/settings/billing then re-run Actions |
 
 ## Contabo move checklist (agent)
