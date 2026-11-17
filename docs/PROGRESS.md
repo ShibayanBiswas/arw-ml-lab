@@ -4,7 +4,7 @@
 |---|---|
 | Current phase | Contabo v2.3 (blocked on host secrets) + One-shot CLE/REE → 8.2 |
 | Last completed step | oneshot-c190 **FS16–FS18 thin**; oneshot-c189 **OPS.OPTUNA.RESUME**; oneshot-c188 **OPS.FOLD.UPSERT** |
-| Last green commit | (pending c190) |
+| Last green commit | 1692720 |
 | Open failures | Contabo host/SSH/.env; Supabase migrate secrets; NVIDIA_API_KEY; Deploy cannot smoke without LAB_API_URL; Actions billing; TradingLab parity (submodule) |
 | Next action | Shibayan: Contabo + Supabase + NVIDIA + Actions billing (Blocked). Agent: TradingLab parity when submodule present; hosted prove when unblocked |
 
