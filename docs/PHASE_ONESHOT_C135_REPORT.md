@@ -37,4 +37,4 @@ tests\unit\test_import_allowlist.py .                                    [100%]
 - [x] scipy + plotly only for ranking/rendering (rule 70).
 - [x] Import allowlist green; ANO pareto regression green.
 
-**Ship commit:** _(pending)_
+**Ship commit:** `fc2a30f`

@@ -4,7 +4,7 @@
 |---|---|
 | Current phase | Contabo v2.3 (blocked on host secrets) + One-shot CLE/REE → 8.2 |
 | Last completed step | oneshot-c135 ANO.P.PAIRWISE |
-| Last green commit | _(pending c135 push)_ |
+| Last green commit | fc2a30f |
 | Open failures | Contabo host/SSH/.env; Supabase migrate secrets; NVIDIA_API_KEY; Deploy cannot smoke without LAB_API_URL |
 | Next action | Shibayan: Contabo + Supabase + NVIDIA secrets (Blocked). Agent: wire **ANO.P.PARETO** in anomaly WB; `DR.P.SHEPARD` in DR WB; remaining CLU.P.* (k-sweep, clustermap) in FE |
 
