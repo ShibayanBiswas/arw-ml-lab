@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { unsupervisedAnomalyPlotPath, unsupervisedClusteringPlotPath } from "./api";
+import {
+  unsupervisedAnomalyPlotPath,
+  unsupervisedClusteringPlotPath,
+  unsupervisedDrPlotPath,
+} from "./api";
 
 describe("unsupervisedAnomalyPlotPath", () => {
   it("maps catalogue plot slugs to lab-api routes", () => {
@@ -22,6 +26,18 @@ describe("unsupervisedClusteringPlotPath", () => {
     expect(unsupervisedClusteringPlotPath("gap")).toBe("/api/v1/unsupervised/clustering/gap");
     expect(unsupervisedClusteringPlotPath("dendrogram")).toBe(
       "/api/v1/unsupervised/clustering/dendrogram"
+    );
+  });
+});
+
+describe("unsupervisedDrPlotPath", () => {
+  it("maps DR catalogue slugs to lab-api dr routes", () => {
+    expect(unsupervisedDrPlotPath("scree")).toBe("/api/v1/unsupervised/dr/scree");
+    expect(unsupervisedDrPlotPath("cumvar")).toBe("/api/v1/unsupervised/dr/cumvar");
+    expect(unsupervisedDrPlotPath("biplot")).toBe("/api/v1/unsupervised/dr/biplot");
+    expect(unsupervisedDrPlotPath("loadings")).toBe("/api/v1/unsupervised/dr/loadings");
+    expect(unsupervisedDrPlotPath("correlation-circle")).toBe(
+      "/api/v1/unsupervised/dr/correlation-circle"
     );
   });
 });

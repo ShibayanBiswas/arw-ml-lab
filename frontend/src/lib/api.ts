@@ -373,12 +373,23 @@ export type ClusteringCataloguePlot =
   | "gap"
   | "dendrogram";
 
+export type DrCataloguePlot =
+  | "scree"
+  | "cumvar"
+  | "biplot"
+  | "loadings"
+  | "correlation-circle";
+
 export function unsupervisedAnomalyPlotPath(plot: AnomalyCataloguePlot): string {
   return `/api/v1/unsupervised/anomaly/${plot}`;
 }
 
 export function unsupervisedClusteringPlotPath(plot: ClusteringCataloguePlot): string {
   return `/api/v1/unsupervised/clustering/${plot}`;
+}
+
+export function unsupervisedDrPlotPath(plot: DrCataloguePlot): string {
+  return `/api/v1/unsupervised/dr/${plot}`;
 }
 
 export async function runUnsupervised(
@@ -425,6 +436,19 @@ export async function runUnsupervisedClusteringPlot(
   if (!res.ok) {
     const detail = await res.text();
     throw new Error(`clustering plot ${plot}: ${res.status} ${detail}`);
+  }
+  return (await res.json()) as Record<string, unknown>;
+}
+
+export async function runUnsupervisedDrPlot(plot: DrCataloguePlot, body: UnsupervisedRunBody) {
+  const res = await fetch(`${labApiBase()}${unsupervisedDrPlotPath(plot)}`, {
+    method: "POST",
+    headers: { ...labAuthHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ ...body, seed: body.seed ?? 42 }),
+  });
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(`dr plot ${plot}: ${res.status} ${detail}`);
   }
   return (await res.json()) as Record<string, unknown>;
 }
