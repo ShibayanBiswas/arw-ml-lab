@@ -41,6 +41,8 @@ class Settings(BaseSettings):
     otel_enabled: bool = Field(default=False, alias="OTEL_ENABLED")
     otel_exporter_otlp_endpoint: str = Field(default="", alias="OTEL_EXPORTER_OTLP_ENDPOINT")
     otel_service_name: str = Field(default="lab-api", alias="OTEL_SERVICE_NAME")
+    # Optuna RDB URL for resumable studies (§39.3); empty → in-memory
+    optuna_storage_url: str = Field(default="", alias="OPTUNA_STORAGE_URL")
 
 
 @lru_cache

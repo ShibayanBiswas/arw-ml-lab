@@ -12,6 +12,7 @@ from labcore.train.tune import run_optuna_tune
 from backend.app.dataset_store import DATASET_STORE
 from backend.app.experiment_store import EXPERIMENT_STORE
 from backend.app.jobs_store import JOB_STORE
+from backend.app.settings import get_settings
 from backend.worker.celery_app import celery_app
 
 
@@ -38,6 +39,9 @@ def run_tune_task(self, job_id: str, experiment_id: str, body: dict[str, Any]) -
             step="tune",
             event={"type": "progress", "pct": 0.3, "step": "tune"},
         )
+        settings = get_settings()
+        storage = body.get("storage") or (settings.optuna_storage_url or None)
+        study_name = body.get("study_name") or f"exp-{experiment_id}"
         result = run_optuna_tune(
             df,
             target=body["target"],
@@ -49,6 +53,8 @@ def run_tune_task(self, job_id: str, experiment_id: str, body: dict[str, Any]) -
             recipe=RecipeSpec(seed=42),
             fixed_params=body.get("fixed_params"),
             n_trials=body.get("n_trials"),
+            storage=storage,
+            study_name=study_name,
         )
         EXPERIMENT_STORE.update(
             experiment_id,
