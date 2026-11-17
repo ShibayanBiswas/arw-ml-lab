@@ -25,4 +25,4 @@
 - [x] Import allowlist green.
 - [x] Rule 70: stdlib + in-repo reads only; no new third-party deps.
 
-**Ship commit:** `(pending)`
+**Ship commit:** `78f68ef`
