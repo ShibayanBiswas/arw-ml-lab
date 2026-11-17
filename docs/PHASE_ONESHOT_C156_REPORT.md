@@ -20,3 +20,5 @@
 - [x] Contract reads real migrations and `maintenance.py`; no fabricated purge metrics.
 - [x] Import allowlist green.
 - [x] Rule 70: stdlib-only in new `labcore` module.
+
+**Ship commit:** `03e4dae`
