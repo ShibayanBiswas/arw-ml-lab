@@ -954,3 +954,65 @@ def plot_cm_multilabel(
         "plotly": fig.to_plotly_json(),
         "numbers": {"matrices": mcm.tolist(), "labels": names},
     }
+
+
+def plot_multilabel_bars(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    *,
+    label_names: list[str] | None = None,
+) -> dict[str, Any]:
+    """CLE.P.MULTILABEL_BARS — per-label F1 bars + label-cardinality histogram."""
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+    from sklearn.metrics import f1_score
+
+    yt = np.asarray(y_true)
+    yp = np.asarray(y_pred)
+    n_labels = yt.shape[1]
+    names = label_names or [f"L{i}" for i in range(n_labels)]
+    f1 = f1_score(yt, yp, average=None, zero_division=np.nan)
+    support = yt.sum(axis=0).astype(int)
+    cardinality = yt.sum(axis=1).astype(int)
+    card_vals, card_counts = np.unique(cardinality, return_counts=True)
+    fig = make_subplots(
+        rows=2,
+        cols=1,
+        row_heights=[0.55, 0.45],
+        subplot_titles=("Per-label F1", "Label cardinality (true)"),
+        vertical_spacing=0.12,
+    )
+    fig.add_trace(
+        go.Bar(x=names, y=f1, name="F1", showlegend=False),
+        row=1,
+        col=1,
+    )
+    fig.add_trace(
+        go.Histogram(
+            x=cardinality,
+            xbins=dict(start=float(card_vals.min()) - 0.5, end=float(card_vals.max()) + 1.5, size=1),
+            name="count",
+            showlegend=False,
+        ),
+        row=2,
+        col=1,
+    )
+    fig.update_yaxes(title_text="F1", row=1, col=1)
+    fig.update_xaxes(title_text="Labels", row=1, col=1)
+    fig.update_xaxes(title_text="Labels per sample", row=2, col=1)
+    fig.update_yaxes(title_text="Samples", row=2, col=1)
+    fig.update_layout(title="Multilabel metrics", height=520)
+    label_density = float(yt.mean())
+    return {
+        "id": "CLE.P.MULTILABEL_BARS",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "per_label_f1": {n: float(v) for n, v in zip(names, f1, strict=True)},
+            "support": {n: int(v) for n, v in zip(names, support, strict=True)},
+            "label_density": label_density,
+            "cardinality_hist": {
+                str(int(k)): int(c) for k, c in zip(card_vals, card_counts, strict=True)
+            },
+        },
+    }

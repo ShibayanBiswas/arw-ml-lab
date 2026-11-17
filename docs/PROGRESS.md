@@ -4,7 +4,7 @@
 |---|---|
 | Current phase | Contabo v2.3 move → then One-shot remainder → 8.2 |
 | Last completed step | docs: Contabo DOC_EDITS + ADR-0017 applied |
-| Last green commit | ebd29b1 (oneshot-c64; Deploy Contabo not yet proven) |
+| Last green commit | (pending push: oneshot-c65 CLE.P.MULTILABEL_BARS) |
 | Open failures | Contabo host/SSH/.env secrets missing; Supabase migrate secrets; NVIDIA_API_KEY |
 | Next action | Shibayan: fill Contabo + AI secrets (see Blocked). Agent: prune → infra → workflow; resume when host reachable |
 
@@ -46,6 +46,6 @@
 Kept: phase plans + reports, `docs/adr/ADR-contabo.md` (referenced by ARCHITECTURE/DEPLOY_CONTABO), all FLOWCHART diagrams 01–21, `GAP_AUDIT`, `FINAL_REPORT`, contracts.
 
 ## One-shot commits (16 Nov 2026)
-A deploy gate → B.1–B.3 → C.1–C.64 (CLE/REE/F* in progress)
+A deploy gate → B.1–B.3 → C.1–C.65 (CLE/REE/F* in progress)
 
 See docs/FINAL_REPORT.md for the full table.
