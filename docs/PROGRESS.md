@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Current phase | Contabo v2.3 (blocked on host secrets) + One-shot CLE/REE → 8.2 |
-| Last completed step | oneshot-c73 REE.P.RESID_FITTED |
-| Last green commit | 9a196b1 |
+| Last completed step | oneshot-c75 REE.P.SCALE_LOCATION |
+| Last green commit | (pending push — c75) |
 | Open failures | Contabo host/SSH/.env; Supabase migrate secrets; NVIDIA_API_KEY; Deploy cannot smoke without LAB_API_URL |
 | Next action | Shibayan: Contabo + Supabase + NVIDIA secrets (Blocked). Agent: continue §42 REE / one-shot remainder |
 
@@ -19,6 +19,7 @@
 | `SUPABASE_ACCESS_TOKEN` | `gh secret set SUPABASE_ACCESS_TOKEN --env production --repo ShibayanBiswas/arw-ml-lab` (stdin) |
 | `SUPABASE_DB_PASSWORD` | `gh secret set SUPABASE_DB_PASSWORD --env production --repo ShibayanBiswas/arw-ml-lab` (stdin) |
 | TradingLab submodule | `vendor/tradinglab` for FS16–18 + AFML parity |
+| GitHub Actions billing | CI/Deploy jobs die in ~2s: account payments failed or spending limit. Fix https://github.com/settings/billing then re-run Actions |
 
 ## Contabo move checklist (agent)
 

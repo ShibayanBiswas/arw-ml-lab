@@ -78,19 +78,96 @@ def plot_residual_hist(resid: np.ndarray) -> dict[str, Any]:
     return {"id": "REE.P.RESID_HIST", "kind": "plot", "plotly": fig.to_plotly_json()}
 
 
-def plot_qq(resid: np.ndarray) -> dict[str, Any]:
+def plot_qq(resid: np.ndarray, *, alpha: float = 0.05) -> dict[str, Any]:
+    """REE.P.QQ — residual normal Q-Q with 95% order-statistic envelope.
+
+    Quantiles from ``statsmodels.graphics.gofplots.ProbPlot``; simultaneous
+ 95% bounds use ``scipy.stats.beta`` on order-statistic ranks (David &
+    Nagaraja, 2003, order statistics).
+    """
     import plotly.graph_objects as go
     from scipy import stats
+    from statsmodels.graphics.gofplots import ProbPlot
 
-    (osm, osr), (slope, intercept, _r) = stats.probplot(resid, dist="norm")
+    resid = np.asarray(resid, dtype=float)
+    resid = resid[np.isfinite(resid)]
+    if len(resid) < 2:
+        fig = go.Figure()
+        fig.update_layout(title="Normal Q-Q (insufficient data)", height=400)
+        return {
+            "id": "REE.P.QQ",
+            "kind": "plot",
+            "plotly": fig.to_plotly_json(),
+            "numbers": {"status": "not computed", "n": int(len(resid))},
+        }
+
+    pp = ProbPlot(resid, dist=stats.norm, fit=False)
+    theoretical = np.asarray(pp.theoretical_quantiles, dtype=float)
+    sample = np.asarray(pp.sample_quantiles, dtype=float)
+    n = int(pp.nobs)
+    mu = float(np.mean(resid))
+    sd = float(np.std(resid, ddof=1)) or 1.0
+    ranks = np.arange(1, n + 1, dtype=float)
+    lo_p = stats.beta.ppf(alpha / 2, ranks, n - ranks + 1)
+    hi_p = stats.beta.ppf(1.0 - alpha / 2, ranks, n - ranks + 1)
+    env_lo = mu + sd * stats.norm.ppf(lo_p)
+    env_hi = mu + sd * stats.norm.ppf(hi_p)
+    ref_y = theoretical * sd + mu
+
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=osm, y=osr, mode="markers", name="sample"))
-    fit_y = slope * np.asarray(osm) + intercept
-    fig.add_trace(go.Scatter(x=osm, y=fit_y, mode="lines", name="fit"))
-    fig.update_layout(
-        title="Normal Q-Q", xaxis_title="Theoretical", yaxis_title="Sample", height=400
+    fig.add_trace(
+        go.Scatter(
+            x=theoretical,
+            y=env_hi,
+            mode="lines",
+            line={"width": 0},
+            showlegend=False,
+            hoverinfo="skip",
+        )
     )
-    return {"id": "REE.P.QQ", "kind": "plot", "plotly": fig.to_plotly_json()}
+    fig.add_trace(
+        go.Scatter(
+            x=theoretical,
+            y=env_lo,
+            mode="lines",
+            name="95% envelope",
+            fill="tonexty",
+            fillcolor="rgba(100, 116, 139, 0.15)",
+            line={"width": 0},
+        )
+    )
+    fig.add_trace(go.Scatter(x=theoretical, y=sample, mode="markers", name="sample"))
+    fig.add_trace(
+        go.Scatter(
+            x=theoretical,
+            y=ref_y,
+            mode="lines",
+            name="reference",
+            line={"dash": "dash"},
+        )
+    )
+    fig.update_layout(
+        title="Normal Q-Q",
+        xaxis_title="Theoretical quantiles",
+        yaxis_title="Sample quantiles",
+        height=400,
+    )
+    return {
+        "id": "REE.P.QQ",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "alpha": alpha,
+            "n": n,
+            "mu": mu,
+            "sd": sd,
+            "theoretical_quantiles": theoretical.tolist(),
+            "sample_quantiles": sample.tolist(),
+            "envelope_lo": env_lo.tolist(),
+            "envelope_hi": env_hi.tolist(),
+            "reference_y": ref_y.tolist(),
+        },
+    }
 
 
 def plot_cooks_distance(cooks: np.ndarray) -> dict[str, Any]:
@@ -227,22 +304,48 @@ def plot_cum_error(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, Any]:
     return {"id": "REE.P.CUM_ERROR", "kind": "plot", "plotly": fig.to_plotly_json()}
 
 
-def plot_scale_location(y_pred: np.ndarray, resid: np.ndarray) -> dict[str, Any]:
-    """REE.P.SCALE_LOCATION — √|standardised residual| vs fitted."""
+def plot_scale_location(
+    y_pred: np.ndarray, resid: np.ndarray, *, frac: float = 2.0 / 3.0
+) -> dict[str, Any]:
+    """REE.P.SCALE_LOCATION — √|standardised residual| vs fitted with LOWESS."""
     import plotly.graph_objects as go
+    from statsmodels.nonparametric.smoothers_lowess import lowess
 
+    y_pred = np.asarray(y_pred, dtype=float)
     resid = np.asarray(resid, dtype=float)
     sd = float(np.nanstd(resid, ddof=1)) or 1.0
     stud = resid / sd
-    y = np.sqrt(np.abs(stud))
-    fig = go.Figure(go.Scatter(x=y_pred, y=y, mode="markers", opacity=0.55))
+    scale = np.sqrt(np.abs(stud))
+    fig = go.Figure(
+        go.Scatter(x=y_pred, y=scale, mode="markers", name="√|stud. resid|", opacity=0.55)
+    )
+    lowess_x: list[float] = []
+    lowess_y: list[float] = []
+    if len(y_pred) >= 3 and np.any(np.isfinite(y_pred) & np.isfinite(scale)):
+        sm = lowess(scale, y_pred, frac=frac, return_sorted=True)
+        lowess_x = [float(v) for v in sm[:, 0]]
+        lowess_y = [float(v) for v in sm[:, 1]]
+        fig.add_trace(
+            go.Scatter(
+                x=lowess_x,
+                y=lowess_y,
+                mode="lines",
+                name="LOWESS",
+                line={"width": 2},
+            )
+        )
     fig.update_layout(
         title="Scale-location",
         xaxis_title="Fitted",
         yaxis_title="√|standardised residual|",
         height=400,
     )
-    return {"id": "REE.P.SCALE_LOCATION", "kind": "plot", "plotly": fig.to_plotly_json()}
+    return {
+        "id": "REE.P.SCALE_LOCATION",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {"frac": frac, "residual_sd": sd, "lowess_x": lowess_x, "lowess_y": lowess_y},
+    }
 
 
 def plot_target_pred_density(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, Any]:
