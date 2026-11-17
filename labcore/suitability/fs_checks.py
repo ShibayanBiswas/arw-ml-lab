@@ -302,23 +302,23 @@ def check_fs9_event_count(df: pd.DataFrame, price_col: str | None) -> FSResult:
     return FSResult("FS9", "FAIL", f"{events} CUSUM events (<100)", details)
 
 
-def check_fs10_class_balance(df: pd.DataFrame, price_col: str | None) -> FSResult:
-    """FS10 — class balance after trial fixed-horizon ±1σ labels (AFML thin).
-
-    For each bar i, look ahead min(5, n-i-1) bars; label +1 if cum log-return
-    ≥ +σ_i, −1 if ≤ −σ_i, else 0 (vertical barrier). Minority share among
-    {−1,+1} (ignoring 0): ≥15% PASS, 5–15% WARN, else FAIL.
-    """
-    if price_col is None or price_col not in df.columns:
-        return FSResult("FS10", "FAIL", "no price column for trial labels")
+def compute_trial_tb_label_balance(
+    df: pd.DataFrame,
+    price_col: str,
+    *,
+    horizon: int = 5,
+    vol_span: int = 100,
+) -> dict[str, Any]:
+    """Trial triple-barrier labels (±1σ, vertical ``horizon`` bars) for FS10 / FS.P.LABEL_BALANCE."""
+    if price_col not in df.columns:
+        return {"ok": False, "reason": "no price column"}
     px = pd.to_numeric(df[price_col], errors="coerce").dropna()
     if len(px) < 60:
-        return FSResult("FS10", "FAIL", "too few bars for trial labels", {"n": len(px)})
+        return {"ok": False, "reason": "too few bars", "n": int(len(px))}
     log_p = np.log(px.to_numpy(dtype=float))
     rets = np.diff(log_p)
-    vol = pd.Series(rets).ewm(span=100, min_periods=30).std().to_numpy()
+    vol = pd.Series(rets).ewm(span=vol_span, min_periods=30).std().to_numpy()
     labels: list[int] = []
-    horizon = 5
     for i in range(len(rets) - 1):
         sigma = vol[i]
         if not np.isfinite(sigma) or sigma <= 0:
@@ -333,18 +333,100 @@ def check_fs10_class_balance(df: pd.DataFrame, price_col: str | None) -> FSResul
             labels.append(-1)
         else:
             labels.append(0)
-    signed = [x for x in labels if x != 0]
-    details: dict[str, Any] = {
-        "n_labels": len(labels),
-        "n_signed": len(signed),
-        "pos": int(sum(1 for x in signed if x > 0)),
-        "neg": int(sum(1 for x in signed if x < 0)),
-        "zero_share": float(labels.count(0) / max(len(labels), 1)),
+    n_labels = len(labels)
+    if n_labels == 0:
+        return {"ok": False, "reason": "no trial labels"}
+    counts = {
+        -1: int(sum(1 for x in labels if x < 0)),
+        0: int(sum(1 for x in labels if x == 0)),
+        1: int(sum(1 for x in labels if x > 0)),
     }
-    if len(signed) < 20:
+    shares = {k: float(v) / n_labels for k, v in counts.items()}
+    signed_n = counts[-1] + counts[1]
+    minority_signed = (
+        float(min(counts[-1], counts[1]) / signed_n) if signed_n > 0 else None
+    )
+    return {
+        "ok": True,
+        "method": "triple_barrier",
+        "horizon": horizon,
+        "vol_span": vol_span,
+        "n_labels": n_labels,
+        "counts": counts,
+        "shares": shares,
+        "minority_signed_share": minority_signed,
+        "vertical_barrier_share": shares[0],
+    }
+
+
+def compute_fixed_horizon_label_balance(
+    df: pd.DataFrame,
+    price_col: str,
+    *,
+    horizon: int = 5,
+    tau_sigma_mult: float = 0.5,
+) -> dict[str, Any]:
+    """Fixed-horizon sign labels with dead-zone τ = ``tau_sigma_mult`` × σ (FS19 trial)."""
+    if price_col not in df.columns:
+        return {"ok": False, "reason": "no price column"}
+    px = pd.to_numeric(df[price_col], errors="coerce").dropna()
+    n = len(px)
+    if horizon > n / 10:
+        return {"ok": False, "reason": "horizon too large", "n": n, "horizon": horizon}
+    rets = px.pct_change(horizon, fill_method=None).dropna()
+    if len(rets) < 30:
+        return {"ok": False, "reason": "too few forward returns", "n_fwd": int(len(rets))}
+    sigma = float(rets.std())
+    tau = tau_sigma_mult * sigma if sigma > 0 else 0.0
+    labeled = np.where(np.abs(rets.to_numpy()) >= tau, np.sign(rets.to_numpy()), 0).astype(int)
+    vals, cnts = np.unique(labeled, return_counts=True)
+    counts = {-1: 0, 0: 0, 1: 0}
+    for v, c in zip(vals, cnts, strict=True):
+        counts[int(v)] = int(c)
+    n_labels = int(len(labeled))
+    shares = {k: float(v) / n_labels for k, v in counts.items()}
+    side_shares = [shares[k] for k in (-1, 1) if counts[k] > 0]
+    minority_signed = float(min(side_shares)) if side_shares else None
+    return {
+        "ok": True,
+        "method": "fixed_horizon",
+        "horizon": horizon,
+        "tau": tau,
+        "n_labels": n_labels,
+        "counts": counts,
+        "shares": shares,
+        "minority_signed_share": minority_signed,
+        "vertical_barrier_share": shares[0],
+    }
+
+
+def check_fs10_class_balance(df: pd.DataFrame, price_col: str | None) -> FSResult:
+    """FS10 — class balance after trial fixed-horizon ±1σ labels (AFML thin).
+
+    For each bar i, look ahead min(5, n-i-1) bars; label +1 if cum log-return
+    ≥ +σ_i, −1 if ≤ −σ_i, else 0 (vertical barrier). Minority share among
+    {−1,+1} (ignoring 0): ≥15% PASS, 5–15% WARN, else FAIL.
+    """
+    if price_col is None or price_col not in df.columns:
+        return FSResult("FS10", "FAIL", "no price column for trial labels")
+    bal = compute_trial_tb_label_balance(df, price_col)
+    if not bal.get("ok"):
+        reason = str(bal.get("reason", "trial labels failed"))
+        return FSResult("FS10", "FAIL", reason, {k: v for k, v in bal.items() if k != "ok"})
+    counts = bal["counts"]
+    n_labels = int(bal["n_labels"])
+    n_signed = counts[-1] + counts[1]
+    details: dict[str, Any] = {
+        "n_labels": n_labels,
+        "n_signed": n_signed,
+        "pos": counts[1],
+        "neg": counts[-1],
+        "zero_share": float(bal["shares"][0]),
+    }
+    if n_signed < 20:
         return FSResult("FS10", "FAIL", "too few signed trial labels", details)
-    minority = min(details["pos"], details["neg"]) / len(signed)
-    details["minority_share"] = float(minority)
+    minority = float(bal["minority_signed_share"])
+    details["minority_share"] = minority
     if minority >= 0.15:
         return FSResult("FS10", "PASS", f"minority={minority:.1%} after ±1σ trial", details)
     if minority >= 0.05:
@@ -519,26 +601,17 @@ def check_fs19_fixed_horizon(
     """
     if price_col is None or price_col not in df.columns:
         return FSResult("FS19", "FAIL", "no price series for fixed-horizon trial")
-    px = pd.to_numeric(df[price_col], errors="coerce").dropna()
-    n = len(px)
-    if horizon > n / 10:
-        return FSResult(
-            "FS19",
-            "FAIL",
-            f"horizon h={horizon} > n/10 ({n / 10:.1f})",
-            {"n": n, "horizon": horizon},
-        )
-    rets = px.pct_change(horizon, fill_method=None).dropna()
-    if len(rets) < 30:
-        return FSResult("FS19", "FAIL", "too few forward returns", {"n_fwd": len(rets)})
-    sigma = float(rets.std())
-    tau = 0.5 * sigma if sigma > 0 else 0.0
-    labeled = np.where(np.abs(rets.to_numpy()) >= tau, np.sign(rets.to_numpy()), 0)
-    vals, counts = np.unique(labeled, return_counts=True)
-    shares = {int(v): float(c) / len(labeled) for v, c in zip(vals, counts, strict=True)}
-    side_shares = [shares[k] for k in (-1, 1) if k in shares]
-    minority = float(min(side_shares)) if side_shares else 0.0
-    details = {"horizon": horizon, "tau": tau, "shares": shares, "minority": minority}
+    bal = compute_fixed_horizon_label_balance(df, price_col, horizon=horizon)
+    if not bal.get("ok"):
+        reason = str(bal.get("reason", "fixed-horizon trial failed"))
+        return FSResult("FS19", "FAIL", reason, {k: v for k, v in bal.items() if k != "ok"})
+    minority = float(bal["minority_signed_share"] or 0.0)
+    details = {
+        "horizon": horizon,
+        "tau": bal["tau"],
+        "shares": bal["shares"],
+        "minority": minority,
+    }
     if minority >= 0.15:
         return FSResult("FS19", "PASS", f"minority={minority:.1%} at h={horizon}", details)
     if minority >= 0.05:
