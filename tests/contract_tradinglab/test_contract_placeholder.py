@@ -15,6 +15,8 @@ def test_inlab_purged_kfold_smoke() -> None:
     assert len(folds) == 4
 
 
-@pytest.mark.skip(reason="vendor/tradinglab not present — AFML parity deferred")
+@pytest.mark.skip(
+    reason="vendor/tradinglab missing — thin FS16–18 online; TradingLab parity only"
+)
 def test_tradinglab_purged_parity() -> None:
-    raise AssertionError("pending TradingLab vendor")
+    raise AssertionError("pending TradingLab vendor submodule")
