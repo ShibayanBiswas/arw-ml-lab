@@ -7,6 +7,7 @@ from typing import Any, Literal
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException
 from labcore.unsupervised import fit_anomaly, fit_clustering, fit_dr
+from labcore.unsupervised.anomaly_plots import anomaly_ranked_bar
 from labcore.unsupervised.cluster_plots import kmeans_k_sweep, silhouette_knife
 from labcore.unsupervised.dr_plots import pca_scree, shepard_diagram
 from pydantic import BaseModel, Field
@@ -25,6 +26,7 @@ class UnsupBody(BaseModel):
     seed: int = 42
     k_min: int = 2
     k_max: int = 8
+    top_n: int = Field(default=20, ge=1, le=500)
 
 
 def _frame(rows: list[dict[str, Any]]) -> pd.DataFrame:
@@ -73,6 +75,28 @@ def unsupervised_anomaly(
     algo: Literal["isolation_forest", "lof", "pyod_copod"] = body.algorithm  # type: ignore[assignment]
     try:
         return fit_anomaly(X, algorithm=algo, contamination=body.contamination, seed=body.seed)
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/api/v1/unsupervised/anomaly/ranked")
+def unsupervised_anomaly_ranked(
+    body: UnsupBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """ANO.P.RANKED — bar chart of top-N anomaly scores (seed 42)."""
+    _ = user
+    X = _frame(body.rows)
+    algo: Literal["isolation_forest", "lof", "pyod_copod"] = body.algorithm  # type: ignore[assignment]
+    try:
+        fitted = fit_anomaly(X, algorithm=algo, contamination=body.contamination, seed=body.seed)
+        ranked = anomaly_ranked_bar(fitted["scores"], top_n=body.top_n)
+        return {
+            **ranked,
+            "algorithm": fitted["algorithm"],
+            "contamination": fitted["contamination"],
+            "seed": body.seed,
+        }
     except Exception as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
