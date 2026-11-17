@@ -81,7 +81,10 @@ def _connect_postgres():
 
         from backend.app.settings import get_settings
 
-        conn = psycopg.connect(get_settings().database_url, connect_timeout=5)
+        settings = get_settings()
+        # Prefer session/direct URL for long maintenance transactions (§39)
+        dsn = settings.database_url_session or settings.database_url
+        conn = psycopg.connect(dsn, connect_timeout=5)
         conn.autocommit = True
         return conn
     except Exception as exc:  # noqa: BLE001 — maintenance must not crash on connect errors
