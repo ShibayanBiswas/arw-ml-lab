@@ -1,7 +1,8 @@
 """Prediction upload validation — PV01–PV16 (ARCHITECTURE §45.3).
 
-Implemented: PV01–PV09, PV10 (contract-stat OOD), PV11 (PSI/KS when ``reference_df``), PV14–PV16.
-Deferred until sequential/TS suites: PV12–PV13.
+Implemented: PV01–PV09, PV10 (contract-stat OOD), PV11 (PSI/KS when ``reference_df``),
+PV13 (HorizonGuard when series meta + h_request), PV14–PV16.
+Deferred: PV12 (sequential history).
 """
 
 from __future__ import annotations
@@ -255,6 +256,7 @@ def validate_predict_frame(
     source_bytes: int | None = None,
     csv_meta: dict[str, Any] | None = None,
     reference_df: pd.DataFrame | None = None,
+    h_request: int | None = None,
 ) -> ValidationReport:
     """Run PV checks; return coerced frame aligned to required feature names."""
     report = ValidationReport(ok=True)
@@ -458,12 +460,56 @@ def validate_predict_frame(
             )
         )
 
-    # Deferred: sequential / TS
-    for code, msg in (
-        ("PV12", "sequential history checks not computed yet"),
-        ("PV13", "TS horizon checks not computed yet"),
-    ):
-        report.deferred.append(PVIssue(code=code, severity="deferred", message=msg))
+    # PV13 — HorizonGuard when h_request + series length/freq are known (oneshot-c245)
+    series_meta = contract.get("timeseries") or contract.get("series") or {}
+    n_series = int(series_meta.get("n") or series_meta.get("n_obs") or 0)
+    freq = str(series_meta.get("freq") or series_meta.get("frequency") or "")
+    h_req = h_request if h_request is not None else series_meta.get("h_request")
+    if h_req is not None and n_series > 0 and freq:
+        try:
+            from labcore.integrity.horizon_guard_policy import (
+                horizon_reject_reasons,
+                horizon_request_allowed,
+            )
+
+            h_req_i = int(h_req)
+            allowed = horizon_request_allowed(n_series, freq, h_req_i)
+            if not allowed:
+                reasons = horizon_reject_reasons(n_series, freq, h_req_i)
+                report.blocking.append(
+                    PVIssue(
+                        code="PV13",
+                        severity="block",
+                        message=f"forecast horizon h={h_req_i} exceeds HorizonGuard",
+                        details={"reasons": reasons, "n": n_series, "freq": freq},
+                    )
+                )
+            else:
+                report.info.append(
+                    PVIssue(
+                        code="PV13",
+                        severity="info",
+                        message=f"forecast horizon h={h_req_i} within HorizonGuard",
+                        details={"n": n_series, "freq": freq},
+                    )
+                )
+        except Exception as exc:  # noqa: BLE001
+            report.warnings.append(
+                PVIssue(
+                    code="PV13",
+                    severity="warn",
+                    message=f"TS horizon check failed: {type(exc).__name__}",
+                )
+            )
+    else:
+        report.deferred.append(
+            PVIssue(code="PV13", severity="deferred", message="TS horizon checks not computed yet")
+        )
+
+    # Deferred: sequential
+    report.deferred.append(
+        PVIssue(code="PV12", severity="deferred", message="sequential history checks not computed yet")
+    )
 
     if report.blocking:
         report.ok = False
