@@ -591,3 +591,282 @@ def hierarchical_dendrogram(
         },
         "seed": seed,
     }
+
+
+def optics_reachability(
+    X: np.ndarray,
+    *,
+    min_samples: int | None = None,
+    max_eps: float = np.inf,
+    metric: str = "euclidean",
+    cluster_method: str = "xi",
+    xi: float = 0.05,
+    seed: int = 42,
+) -> dict[str, Any]:
+    """OPTICS reachability diagram (valleys = density clusters; sklearn.cluster.OPTICS)."""
+    import plotly.graph_objects as go
+    from sklearn.cluster import OPTICS
+
+    Xs = StandardScaler().fit_transform(np.asarray(X, dtype=float))
+    n_rows, n_features = Xs.shape
+    if n_rows < 2:
+        raise ValueError("need at least 2 rows for OPTICS")
+    ms = int(min_samples) if min_samples is not None else max(5, 2 * n_features)
+
+    optics = OPTICS(
+        min_samples=ms,
+        max_eps=max_eps,
+        metric=metric,
+        cluster_method=cluster_method,
+        xi=xi,
+        n_jobs=1,
+    ).fit(Xs)
+    ordering = np.asarray(optics.ordering_, dtype=int)
+    reach = np.asarray(optics.reachability_, dtype=float)[ordering]
+    labels_ord = np.asarray(optics.labels_, dtype=int)[ordering]
+
+    finite = reach[np.isfinite(reach)]
+    if finite.size == 0:
+        raise ValueError("OPTICS produced no finite reachability values")
+    cap = float(np.max(finite))
+    reach_plot = np.where(np.isfinite(reach), reach, cap * 1.05)
+
+    x_idx = list(range(len(reach_plot)))
+    n_clusters = len({int(lab) for lab in optics.labels_ if int(lab) >= 0})
+    n_noise = int(np.sum(optics.labels_ == -1))
+
+    cluster_ids = sorted({int(lab) for lab in labels_ord if int(lab) >= 0})
+    palette = (
+        "#1f77b4",
+        "#ff7f0e",
+        "#2ca02c",
+        "#d62728",
+        "#9467bd",
+        "#8c564b",
+        "#e377c2",
+        "#7f7f7f",
+        "#bcbd22",
+        "#17becf",
+    )
+
+    fig = go.Figure()
+    if not cluster_ids:
+        fig.add_trace(
+            go.Scatter(
+                x=x_idx,
+                y=reach_plot.tolist(),
+                mode="lines",
+                line={"color": "#636363", "width": 1.5},
+                name="reachability",
+            )
+        )
+    else:
+        for ci, cid in enumerate(cluster_ids):
+            mask = labels_ord == cid
+            fig.add_trace(
+                go.Scatter(
+                    x=np.arange(len(reach_plot))[mask].tolist(),
+                    y=reach_plot[mask].tolist(),
+                    mode="lines",
+                    line={"color": palette[ci % len(palette)], "width": 2},
+                    name=f"cluster {cid}",
+                )
+            )
+        noise_mask = labels_ord == -1
+        if np.any(noise_mask):
+            fig.add_trace(
+                go.Scatter(
+                    x=np.arange(len(reach_plot))[noise_mask].tolist(),
+                    y=reach_plot[noise_mask].tolist(),
+                    mode="lines",
+                    line={"color": "#aaaaaa", "width": 1},
+                    name="noise",
+                )
+            )
+
+    title = f"OPTICS reachability (min_samples={ms}, clusters={n_clusters}, noise={n_noise})"
+    fig.update_layout(
+        title=title,
+        xaxis_title="Points (OPTICS ordering)",
+        yaxis_title="Reachability distance",
+        height=420,
+    )
+    return {
+        "id": "CLU.P.REACHABILITY",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "n_rows": n_rows,
+            "min_samples": ms,
+            "max_eps": None if not np.isfinite(max_eps) else float(max_eps),
+            "metric": metric,
+            "cluster_method": cluster_method,
+            "xi": float(xi),
+            "n_clusters": n_clusters,
+            "n_noise": n_noise,
+            "ordering": ordering.tolist(),
+            "reachability_ordered": reach.tolist(),
+            "labels_ordered": labels_ord.tolist(),
+            "reachability_cap_plot": cap,
+        },
+        "seed": seed,
+    }
+
+
+def _dendro_icoord_to_ticks(icoord: list[float]) -> list[float]:
+    """Map scipy dendrogram icoord (5·i spacing) to 0-based heatmap tick positions."""
+    return [(float(x) - 5.0) / 5.0 for x in icoord]
+
+
+def correlation_clustermap(
+    X: np.ndarray,
+    *,
+    feature_names: list[str] | None = None,
+    linkage_method: str = "average",
+    max_features: int = 50,
+    seed: int = 42,
+) -> dict[str, Any]:
+    """Feature×feature Pearson r heatmap with hierarchy leaf order + dendrograms."""
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+    from scipy.cluster import hierarchy
+    from scipy.spatial.distance import squareform
+
+    X = np.asarray(X, dtype=float)
+    n_rows, n_features = X.shape
+    if n_rows < 2:
+        raise ValueError("need at least 2 rows for correlation clustermap")
+    if n_features < 2:
+        raise ValueError("need at least 2 features for correlation clustermap")
+    names = feature_names or [f"f{j}" for j in range(n_features)]
+    if len(names) != n_features:
+        raise ValueError("feature_names length must match n_features")
+
+    Xs = StandardScaler().fit_transform(X)
+    selected: list[int] | None = None
+    if n_features > max_features:
+        variances = np.var(Xs, axis=0)
+        selected = sorted(
+            int(i) for i in np.argsort(-variances, kind="stable")[:max_features]
+        )
+        Xs = Xs[:, selected]
+        names = [names[i] for i in selected]
+        n_features = len(names)
+
+    corr = np.corrcoef(Xs.T)
+    if not np.all(np.isfinite(corr)):
+        raise ValueError("correlation matrix has NaNs (constant or invalid columns)")
+    corr = np.clip(corr, -1.0, 1.0)
+    dist_sq = np.clip(2.0 * (1.0 - corr), 0.0, None)
+    condensed = squareform(dist_sq, checks=False)
+    z_link = hierarchy.linkage(condensed, method=linkage_method)
+    coph_corr, _ = hierarchy.cophenet(z_link, np.sqrt(condensed))
+    leaves = hierarchy.leaves_list(z_link).astype(int)
+    order_labels = [names[i] for i in leaves]
+    z_ordered = corr[np.ix_(leaves, leaves)]
+
+    ddata = hierarchy.dendrogram(z_link, no_plot=True)
+    tick_pos = list(range(n_features))
+
+    fig = make_subplots(
+        rows=2,
+        cols=2,
+        column_widths=[0.14, 0.86],
+        row_heights=[0.22, 0.78],
+        specs=[
+            [{"type": "scatter"}, {"type": "scatter"}],
+            [{"type": "scatter"}, {"type": "heatmap"}],
+        ],
+        horizontal_spacing=0.02,
+        vertical_spacing=0.03,
+    )
+    for icoord, dcoord in zip(ddata["icoord"], ddata["dcoord"], strict=True):
+        x_top = _dendro_icoord_to_ticks(icoord)
+        fig.add_trace(
+            go.Scatter(
+                x=x_top,
+                y=dcoord,
+                mode="lines",
+                line={"color": "#636363", "width": 1.2},
+                showlegend=False,
+                hoverinfo="skip",
+            ),
+            row=1,
+            col=2,
+        )
+        fig.add_trace(
+            go.Scatter(
+                x=dcoord,
+                y=x_top,
+                mode="lines",
+                line={"color": "#636363", "width": 1.2},
+                showlegend=False,
+                hoverinfo="skip",
+            ),
+            row=2,
+            col=1,
+        )
+    text = [[f"{z_ordered[j, i]:.2f}" for i in range(n_features)] for j in range(n_features)]
+    fig.add_trace(
+        go.Heatmap(
+            z=z_ordered.tolist(),
+            x=tick_pos,
+            y=tick_pos,
+            zmin=-1.0,
+            zmax=1.0,
+            zmid=0.0,
+            colorscale="RdBu",
+            text=text,
+            hovertemplate="%{y}, %{x}<br>r=%{z:.3f}<extra></extra>",
+            colorbar=dict(len=0.55, y=0.4, title="r"),
+        ),
+        row=2,
+        col=2,
+    )
+    xlab = dict(tickmode="array", tickvals=tick_pos, ticktext=order_labels, tickangle=-45)
+    ylab = dict(tickmode="array", tickvals=tick_pos, ticktext=order_labels, autorange="reversed")
+    fig.update_xaxes(**xlab, row=2, col=2)
+    fig.update_yaxes(**ylab, row=2, col=2)
+    fig.update_xaxes(
+        range=[-0.5, n_features - 0.5],
+        showticklabels=False,
+        showgrid=False,
+        zeroline=False,
+        row=1,
+        col=2,
+    )
+    fig.update_yaxes(showticklabels=False, showgrid=False, zeroline=False, row=1, col=2)
+    fig.update_xaxes(showticklabels=False, showgrid=False, zeroline=False, row=2, col=1)
+    fig.update_yaxes(
+        range=[-0.5, n_features - 0.5],
+        showticklabels=False,
+        showgrid=False,
+        zeroline=False,
+        row=2,
+        col=1,
+    )
+    fig.update_layout(
+        title=(
+            f"Correlation clustermap ({linkage_method}, "
+            f"cophenetic r={coph_corr:.3f}, n={n_features})"
+        ),
+        height=max(420, 36 * n_features + 200),
+        showlegend=False,
+    )
+    return {
+        "id": "CLU.P.CLUSTERMAP",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "n_rows": n_rows,
+            "n_features": n_features,
+            "feature_order": order_labels,
+            "leaf_indices": leaves.tolist(),
+            "linkage_method": linkage_method,
+            "cophenetic_correlation": float(coph_corr),
+            "correlation": [[float(v) for v in row] for row in z_ordered.tolist()],
+            "selected_feature_indices": selected,
+            "n_dendro_segments": len(ddata["icoord"]),
+        },
+        "seed": seed,
+    }

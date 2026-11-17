@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from math import inf
 from typing import Any, Literal
 
 import pandas as pd
@@ -9,12 +10,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from labcore.unsupervised import fit_anomaly, fit_clustering, fit_dr
 from labcore.unsupervised.anomaly_plots import anomaly_ranked_bar
 from labcore.unsupervised.cluster_plots import (
+    correlation_clustermap,
     hierarchical_dendrogram,
     kmeans_calinski_harabasz,
     kmeans_davies_bouldin,
     kmeans_elbow,
     kmeans_gap_statistic,
     kmeans_k_sweep,
+    optics_reachability,
     silhouette_knife,
 )
 from labcore.unsupervised.dr_plots import (
@@ -45,10 +48,15 @@ class UnsupBody(BaseModel):
     linkage_method: str = "ward"
     truncate_p: int = Field(default=30, ge=2, le=500)
     dendro_max_rows: int = Field(default=2000, ge=3, le=5000)
+    clustermap_max_features: int = Field(default=50, ge=2, le=200)
     top_n: int = Field(default=20, ge=1, le=500)
     pc_x: int = Field(default=1, ge=1, le=32)
     pc_y: int = Field(default=2, ge=1, le=32)
     max_pcs: int = Field(default=0, ge=0, le=32)
+    min_samples: int = Field(default=0, ge=0, le=500)
+    max_eps: float = Field(default=0.0, ge=0.0)
+    cluster_method: str = "xi"
+    xi: float = Field(default=0.05, gt=0.0, lt=1.0)
 
 
 def _frame(rows: list[dict[str, Any]]) -> pd.DataFrame:
@@ -232,6 +240,53 @@ def unsupervised_dendrogram(
             linkage_method=body.linkage_method,
             truncate_p=body.truncate_p,
             max_rows=body.dendro_max_rows,
+            seed=body.seed,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/api/v1/unsupervised/clustering/clustermap")
+def unsupervised_clustermap(
+    body: UnsupBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """CLU.P.CLUSTERMAP — feature correlation heatmap + dendrograms (seed 42)."""
+    _ = user
+    df = _frame(body.rows)
+    cols = [str(c) for c in df.columns]
+    link = body.linkage_method
+    if link not in {"average", "complete", "single", "weighted"}:
+        link = "average"
+    try:
+        return correlation_clustermap(
+            df.to_numpy(dtype=float),
+            feature_names=cols,
+            linkage_method=link,
+            max_features=body.clustermap_max_features,
+            seed=body.seed,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/api/v1/unsupervised/clustering/reachability")
+def unsupervised_optics_reachability(
+    body: UnsupBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """CLU.P.REACHABILITY — OPTICS reachability valleys (seed 42 metadata)."""
+    _ = user
+    X = _frame(body.rows)
+    ms = None if body.min_samples < 1 else body.min_samples
+    max_eps = inf if body.max_eps <= 0.0 else body.max_eps
+    try:
+        return optics_reachability(
+            X.to_numpy(dtype=float),
+            min_samples=ms,
+            max_eps=float(max_eps),
+            cluster_method=body.cluster_method,
+            xi=body.xi,
             seed=body.seed,
         )
     except Exception as exc:
