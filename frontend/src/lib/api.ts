@@ -584,3 +584,27 @@ export async function tsAnalysis(body: { sample_id?: string; m?: number }) {
   if (!res.ok) throw new Error(`analysis: ${res.status}`);
   return (await res.json()) as Record<string, unknown>;
 }
+
+export type MonitoringKsBody = {
+  reference: number[][];
+  current: number[][];
+  feature_names?: string[];
+  alpha?: number;
+};
+
+export function monitoringKsDriftPath(): string {
+  return "/api/v1/monitoring/drift/ks";
+}
+
+export async function runMonitoringKsDrift(body: MonitoringKsBody) {
+  const res = await fetch(`${labApiBase()}${monitoringKsDriftPath()}`, {
+    method: "POST",
+    headers: { ...labAuthHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(`monitoring ks: ${res.status} ${detail}`);
+  }
+  return (await res.json()) as Record<string, unknown>;
+}

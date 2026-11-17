@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BatchPredictPanel } from "@/components/predict/BatchPredictPanel";
 import { CustomPredictForm } from "@/components/predict/CustomPredictForm";
+import { MonitoringDriftPanel } from "@/components/predict/MonitoringDriftPanel";
 import {
   getExperiment,
   getJob,
@@ -150,10 +151,11 @@ export function PredictWorkbench({ mode }: { mode: Mode }) {
         </div>
       ) : null}
 
-      {!modelId && effectiveMode !== "chooser" ? (
+      {!modelId && effectiveMode !== "chooser" && effectiveMode !== "monitoring" ? (
         <p className="text-sm text-[var(--muted)]">Train or select a model to continue.</p>
       ) : null}
 
+      {effectiveMode === "monitoring" ? <MonitoringDriftPanel /> : null}
       {modelId && effectiveMode === "batch" ? <BatchPredictPanel modelId={modelId} /> : null}
       {modelId && effectiveMode === "custom" ? <CustomPredictForm modelId={modelId} /> : null}
     </div>
