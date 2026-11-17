@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Current phase | Contabo v2.3 (blocked on host secrets) + One-shot CLE/REE → 8.2 |
-| Last completed step | oneshot-c235 DEPLOY_CONTABO §8 scp list; c234 Vercel e2e |
-| Last green commit | 28f1e64 |
+| Last completed step | oneshot-c236 Blocked inventory refresh; tip 904a240 |
+| Last green commit | 904a240 (c236 pending) |
 | Open failures | Contabo host/SSH/.env; Supabase migrate secrets; NVIDIA_API_KEY; Deploy cannot smoke without LAB_API_URL; Actions billing; TradingLab parity (submodule) |
 | Next action | Shibayan: Contabo + Supabase + NVIDIA + Actions billing (Blocked). Agent: continue 8.2 offline gaps; TradingLab parity when submodule present |
 
@@ -12,8 +12,8 @@
 
 | Item | Exact action |
 |---|---|
-| Contabo VPS + SSH | Put in local `.env`: `CONTABO_HOST=<ip>`, `CONTABO_SSH_KEY_PATH=<private key that can log in as root or deploy>`, optional `CONTABO_BOOTSTRAP_USER=root`, `CONTABO_DEPLOY_USER=deploy`, `LAB_API_HOSTNAME=` (empty → sslip.io), `ACME_EMAIL=<you@domain>` |
-| CI deploy key | Already created at `~/.ssh/arw_ci_deploy` and set as `CONTABO_SSH_KEY` / `CONTABO_USER=deploy` in GitHub `production`. After bootstrap, agent will set `CONTABO_KNOWN_HOSTS` + `LAB_API_URL` |
+| Contabo VPS + SSH | Put in local `.env`: `CONTABO_HOST=<ip>`, `CONTABO_SSH_KEY_PATH=<private key that can log in as root or deploy>`, optional `CONTABO_BOOTSTRAP_USER=root`, `CONTABO_DEPLOY_USER=deploy`, `LAB_API_HOSTNAME=` (empty → sslip.io), `ACME_EMAIL=<you@domain>` — then agent runs bootstrap and `gh secret set CONTABO_HOST` / `CONTABO_KNOWN_HOSTS` |
+| CI deploy key | Present in GitHub `production`: `CONTABO_SSH_KEY`, `CONTABO_USER`. Still missing env secrets: `CONTABO_HOST`, `CONTABO_KNOWN_HOSTS`, `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`. After bootstrap set `LAB_API_URL` variable |
 | `NVIDIA_API_KEY` | Add to local `.env` (copied **only** to `/opt/arw-ml-lab/.env` on the VPS; never Vercel/GitHub) |
 | Supabase server env for VPS | Local `.env` needs `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWKS_URL`, `DATABASE_URL`, `DATABASE_URL_SESSION`, S3 keys |
 | `SUPABASE_ACCESS_TOKEN` | `gh secret set SUPABASE_ACCESS_TOKEN --env production --repo ShibayanBiswas/arw-ml-lab` (stdin) |
