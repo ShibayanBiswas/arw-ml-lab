@@ -5,10 +5,11 @@ from __future__ import annotations
 from math import inf
 from typing import Any, Literal
 
+import numpy as np
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException
 from labcore.unsupervised import fit_anomaly, fit_clustering, fit_dr
-from labcore.unsupervised.anomaly_plots import anomaly_ranked_bar
+from labcore.unsupervised.anomaly_plots import anomaly_embedding_scatter, anomaly_ranked_bar
 from labcore.unsupervised.cluster_plots import (
     correlation_clustermap,
     hierarchical_dendrogram,
@@ -126,6 +127,35 @@ def unsupervised_anomaly_ranked(
             "algorithm": fitted["algorithm"],
             "contamination": fitted["contamination"],
             "seed": body.seed,
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/api/v1/unsupervised/anomaly/embed")
+def unsupervised_anomaly_embed(
+    body: UnsupBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """ANO.P.EMBED — PCA 2D scatter with flagged anomalies highlighted (seed 42)."""
+    _ = user
+    X = _frame(body.rows)
+    algo: Literal["isolation_forest", "lof", "pyod_copod"] = body.algorithm  # type: ignore[assignment]
+    try:
+        fitted = fit_anomaly(X, algorithm=algo, contamination=body.contamination, seed=body.seed)
+        scores = np.asarray(fitted["scores"], dtype=float)
+        flags = np.asarray(fitted["is_outlier"], dtype=int)
+        embed = anomaly_embedding_scatter(
+            X.to_numpy(dtype=float),
+            scores,
+            flags,
+            seed=body.seed,
+        )
+        return {
+            **embed,
+            "algorithm": fitted["algorithm"],
+            "contamination": fitted["contamination"],
+            "threshold": fitted["threshold"],
         }
     except Exception as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
