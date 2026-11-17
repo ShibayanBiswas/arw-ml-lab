@@ -6,7 +6,7 @@
 | Last completed step | oneshot-c162 **OPS.STORAGE.BACKUP** (ST-OPS-06 / OPS-13 Storage mirror offline) |
 | Last green commit | 4361def |
 | Open failures | Contabo host/SSH/.env; Supabase migrate secrets; NVIDIA_API_KEY; Deploy cannot smoke without LAB_API_URL |
-| Next action | Shibayan: Contabo + Supabase + NVIDIA secrets (Blocked). Agent: ST-ML-02 remainder / Chunk C / Phase 7 per FINAL_REPORT |
+| Next action | Shibayan: Contabo + Supabase + NVIDIA secrets (Blocked). Agent: ST-ML-02 remainder / ST-ML-05 / Chunk C / Phase 7 per FINAL_REPORT |
 
 ## Blocked — needs Shibayan
 
