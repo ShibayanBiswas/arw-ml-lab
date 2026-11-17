@@ -1388,3 +1388,85 @@ def plot_coef_forest(
             "ci_upper": [float(v) for v in ci_high],
         },
     }
+
+
+def plot_pred_actual_folds(
+    fold_preds: list[dict[str, np.ndarray]],
+) -> dict[str, Any]:
+    """REE.P.PRED_ACTUAL_FOLDS — per-fold predicted vs actual (CV small multiples)."""
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+    from sklearn.metrics import PredictionErrorDisplay
+
+    from labcore.eval.regression.metrics import compute_ree_metrics
+
+    if not fold_preds:
+        raise ValueError("fold_preds must be non-empty")
+
+    n = len(fold_preds)
+    cols = min(3, n)
+    rows = int(np.ceil(n / cols))
+    titles: list[str] = []
+    per_fold: list[dict[str, Any]] = []
+
+    for i, fp in enumerate(fold_preds):
+        y_true = np.asarray(fp["y_true"], dtype=float)
+        y_pred = np.asarray(fp["y_pred"], dtype=float)
+        disp = PredictionErrorDisplay.from_predictions(y_true, y_pred)
+        yt = np.asarray(disp.y_true, dtype=float)
+        yp = np.asarray(disp.y_pred, dtype=float)
+        met = compute_ree_metrics(yt, yp)
+        r2 = met["REE.M.01"]
+        rmse = met["REE.M.02"]
+        titles.append(f"fold {i} (R²={r2:.3f}, RMSE={rmse:.3f})")
+        per_fold.append(
+            {
+                "fold": i,
+                "n": int(yt.size),
+                "r2": r2,
+                "rmse": rmse,
+                "y_true": yt.tolist(),
+                "y_pred": yp.tolist(),
+            }
+        )
+
+    fig = make_subplots(rows=rows, cols=cols, subplot_titles=titles)
+    for i, block in enumerate(per_fold):
+        yt = np.asarray(block["y_true"], dtype=float)
+        yp = np.asarray(block["y_pred"], dtype=float)
+        lo = float(min(np.min(yt), np.min(yp)))
+        hi = float(max(np.max(yt), np.max(yp)))
+        r, c = divmod(i, cols)
+        fig.add_trace(
+            go.Scatter(
+                x=yt,
+                y=yp,
+                mode="markers",
+                name=f"fold {i}",
+                opacity=0.65,
+                showlegend=False,
+            ),
+            row=r + 1,
+            col=c + 1,
+        )
+        fig.add_trace(
+            go.Scatter(
+                x=[lo, hi],
+                y=[lo, hi],
+                mode="lines",
+                line={"dash": "dash", "color": "gray"},
+                showlegend=False,
+            ),
+            row=r + 1,
+            col=c + 1,
+        )
+
+    fig.update_xaxes(title_text="Actual")
+    fig.update_yaxes(title_text="Predicted")
+    fig.update_layout(title="Predicted vs actual by CV fold", height=320 * rows)
+    return {
+        "id": "REE.P.PRED_ACTUAL_FOLDS",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {"n_folds": n, "per_fold": per_fold},
+    }
