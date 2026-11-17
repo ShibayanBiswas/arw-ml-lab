@@ -9,9 +9,8 @@
 ## Tests
 ```
 .\.venv\Scripts\python.exe -m pytest tests\unit\test_ops_egress_allowlist.py tests\unit\test_import_allowlist.py -v --tb=short
-============================== N passed in X.XXs ==============================
+============================== 8 passed in 0.50s ==============================
 ```
-*(paste real output after run)*
 
 ## Notes
 - Closes **ST-OPS-08** (Medium) offline; compose/networkPolicy enforcement stays Phase 8.2.
