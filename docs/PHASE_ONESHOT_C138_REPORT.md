@@ -32,4 +32,4 @@ cd frontend && pnpm exec vitest run src/lib/unsupervised-api.test.ts
 - [x] Seed 42 on unsupervised request body.
 - [x] Import allowlist + vitest green.
 
-**Ship commit:** `496daca`
+**Ship commit:** `0f4a100`
