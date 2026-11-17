@@ -24,4 +24,4 @@
 - [x] Import allowlist green.
 - [x] Rule 70: openpyxl write + `escape_formula_export_cell` only; no custom XLSX/XML.
 
-**Ship commit:** _(pending)_
+**Ship commit:** `6f33282`
