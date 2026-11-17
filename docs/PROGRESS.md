@@ -19,7 +19,7 @@
 | `SUPABASE_ACCESS_TOKEN` | `gh secret set SUPABASE_ACCESS_TOKEN --env production --repo ShibayanBiswas/arw-ml-lab` (stdin) |
 | `SUPABASE_DB_PASSWORD` | `gh secret set SUPABASE_DB_PASSWORD --env production --repo ShibayanBiswas/arw-ml-lab` (stdin) |
 | TradingLab submodule | `vendor/tradinglab` for **parity** tests vs thin FS16–18 (SADF/trendscan/MA-cross already online) |
-| GitHub Actions billing | CI/Deploy jobs die in ~2s: account payments failed or spending limit. Fix https://github.com/settings/billing then re-run Actions |
+| GitHub Actions billing | CI/Deploy jobs die in ~2–4s (e.g. run `44082239122` failed). Account payments failed or spending limit. Fix https://github.com/settings/billing then re-run Actions |
 
 ## Contabo move checklist (agent)
 
