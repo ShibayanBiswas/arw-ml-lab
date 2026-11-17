@@ -1,7 +1,7 @@
 # ARW ML Lab — One-shot finish report (interim)
 
 **Date:** 17 Nov 2026 (IST)
-**Tip:** see `docs/PROGRESS.md` (oneshot through ~c249; Contabo still blocked)
+**Tip:** see `docs/PROGRESS.md` (oneshot through ~c250; Contabo still blocked)
 **Frontend:** https://arw-ml-lab.vercel.app → READY
 **Backend target:** Contabo VPS — **not live** (`docs/DEPLOY_CONTABO.md`, ADR-0017)
 
@@ -19,4 +19,4 @@ Then agent resumes: SSH bootstrap → server `.env` → Deploy green → DS1 EDA
 
 ## Offline one-shot (continued)
 
-Catalogue, FE workbenches, Phase 7 reports/admin/load/ZAP, and STRESS/8.2 contracts through oneshot ~c249 (FS16–FS18 thin, Optuna/pooler, Celery recycle, REFIT/HUMILITY, hold-out audit_log, AUTH_BYPASS, backup+scp, Actions Node bump, egress nft, NVIDIA 8s + resilient_chat, PV11–PV13/PV16 predict guards, batch conformal columns, prediction narrative, OOF conformal qhat, Vercel e2e smoke) while Contabo stayed blocked. Full Contabo prove and TradingLab **parity** remain open.
+Catalogue, FE workbenches, Phase 7 reports/admin/load/ZAP, and STRESS/8.2 contracts through oneshot ~c250 (FS16–FS18 thin, Optuna/pooler, Celery recycle, REFIT/HUMILITY, hold-out audit_log, AUTH_BYPASS, backup+scp, Actions Node bump, egress nft, NVIDIA 8s + resilient_chat, PV11–PV13/PV16 predict guards, batch conformal columns, prediction narrative, OOF conformal qhat, Vercel e2e smoke) while Contabo stayed blocked. Full Contabo prove and TradingLab **parity** remain open.
