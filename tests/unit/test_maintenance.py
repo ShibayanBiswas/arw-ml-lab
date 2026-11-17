@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import time
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -77,8 +78,60 @@ def test_reaper_falls_back_to_memory(_mock_conn: MagicMock) -> None:
 
 @pytest.mark.parametrize(
     "sql_attr",
-    ["_REAPER_SQL", "_RETENTION_SQL", "_TRIM_PREDICTION_RESULTS_SQL"],
+    [
+        "_REAPER_SQL",
+        "_RETENTION_SQL",
+        "_TRIM_PREDICTION_RESULTS_SQL",
+        "_EXPIRED_PREDICTION_PATHS_SQL",
+    ],
 )
 def test_maintenance_sql_mentions_public_tables(sql_attr: str) -> None:
     sql = getattr(m, sql_attr)
     assert "public." in sql
+
+
+def test_normalize_prediction_storage_key_strips_bucket() -> None:
+    assert m.normalize_prediction_storage_key("predictions/ws/job/input.csv") == "ws/job/input.csv"
+    assert m.normalize_prediction_storage_key("/ws/job/output.csv") == "ws/job/output.csv"
+    assert m.normalize_prediction_storage_key(None) is None
+
+
+def test_collect_prediction_storage_keys_dedupes() -> None:
+    rows = [
+        ("predictions/a/j/in.csv", "predictions/a/j/out.csv"),
+        ("predictions/a/j/in.csv", None),
+    ]
+    keys = m.collect_prediction_storage_keys(rows)
+    assert keys == ["a/j/in.csv", "a/j/out.csv"]
+
+
+def test_retention_postgres_purges_storage_before_delete() -> None:
+    mock_cur = MagicMock()
+    mock_cur.fetchall.side_effect = [
+        [("predictions/w/x/in.csv", "predictions/w/x/out.csv")],
+        [("jid",)],
+    ]
+    mock_conn = MagicMock()
+    mock_conn.cursor.return_value.__enter__.return_value = mock_cur
+
+    with patch.object(m, "purge_prediction_storage", return_value={"storage_removed": 2}) as purge:
+        stats = m.retention_expired_predictions_postgres(mock_conn)
+
+    assert stats["deleted"] == 1
+    assert stats["storage_removed"] == 2
+    purge.assert_called_once_with(["w/x/in.csv", "w/x/out.csv"])
+    assert mock_cur.execute.call_count == 2
+
+
+def test_purge_prediction_storage_local_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from backend.app import storage as st
+
+    monkeypatch.setattr(st, "LOCAL_ROOT", tmp_path)
+    key = "ws/pj/input.csv"
+    (tmp_path / "ws" / "pj").mkdir(parents=True)
+    (tmp_path / key).write_bytes(b"x")
+    stats = m.purge_prediction_storage([key])
+    assert stats["storage_removed"] == 1
+    assert not (tmp_path / key).exists()

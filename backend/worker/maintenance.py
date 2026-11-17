@@ -22,6 +22,8 @@ log = logging.getLogger("lab.maintenance")
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+PREDICTIONS_BUCKET = "predictions"
+
 STALE_SECONDS = 10 * 60  # 10 minutes without heartbeat → failed (§46.2 OPS-03)
 PREDICTION_RETENTION_SECONDS = 30 * 24 * 3600  # 30 days (§46 OPS-06 / §45.8)
 PREDICTION_RESULTS_CAP = 1000
@@ -44,6 +46,12 @@ WHERE status IN ('queued', 'running')
     )
   )
 RETURNING id::text;
+"""
+
+_EXPIRED_PREDICTION_PATHS_SQL = """
+SELECT input_path, output_path
+FROM public.prediction_jobs
+WHERE expires_at < now();
 """
 
 _RETENTION_SQL = """
@@ -128,12 +136,104 @@ def reaper_stale_heartbeats() -> dict[str, int | str]:
     return reaper_stale_heartbeats_memory()
 
 
+def normalize_prediction_storage_key(path: str | None) -> str | None:
+    """Strip bucket prefix so keys work with ``storage.from_('predictions')``."""
+    if path is None:
+        return None
+    raw = str(path).strip()
+    if not raw:
+        return None
+    p = raw.lstrip("/")
+    prefix = f"{PREDICTIONS_BUCKET}/"
+    if p.startswith(prefix):
+        p = p[len(prefix) :]
+    return p
+
+
+def collect_prediction_storage_keys(
+    rows: list[tuple[str | None, str | None]],
+) -> list[str]:
+    keys: list[str] = []
+    seen: set[str] = set()
+    for input_path, output_path in rows:
+        for raw in (input_path, output_path):
+            key = normalize_prediction_storage_key(raw)
+            if key is not None and key not in seen:
+                seen.add(key)
+                keys.append(key)
+    return keys
+
+
+def purge_prediction_storage_local(keys: list[str]) -> int:
+    """Remove dev copies under ``.cache/uploads`` when present."""
+    from backend.app.storage import LOCAL_ROOT
+
+    removed = 0
+    for key in keys:
+        path = LOCAL_ROOT / key
+        if path.is_file():
+            path.unlink(missing_ok=True)
+            removed += 1
+    return removed
+
+
+def purge_prediction_storage_supabase(keys: list[str]) -> int:
+    """Delete objects from the hosted ``predictions`` bucket (service role)."""
+    try:
+        from supabase import create_client
+
+        from backend.app.settings import get_settings
+
+        settings = get_settings()
+        if not settings.supabase_service_role_key or "127.0.0.1" in settings.supabase_url:
+            return 0
+        client = create_client(settings.supabase_url, settings.supabase_service_role_key)
+        # Supabase client accepts up to ~100 keys per remove call; batch conservatively.
+        removed = 0
+        chunk = 50
+        for i in range(0, len(keys), chunk):
+            batch = keys[i : i + chunk]
+            resp = client.storage.from_(PREDICTIONS_BUCKET).remove(batch)
+            if isinstance(resp, list):
+                removed += len(resp)
+            else:
+                removed += len(batch)
+        return removed
+    except Exception as exc:  # noqa: BLE001 — retention must continue if Storage is down
+        log.warning("prediction storage purge skipped: %s", exc)
+        return 0
+
+
+def purge_prediction_storage(keys: list[str]) -> dict[str, int | str]:
+    if not keys:
+        return {"storage_removed": 0, "storage_backend": "none"}
+    supa = purge_prediction_storage_supabase(keys)
+    local = purge_prediction_storage_local(keys)
+    removed = max(supa, local) if supa or local else 0
+    backend = "supabase" if supa else "local" if local else "none"
+    log.info(
+        "purge_prediction_storage: keys=%s removed=%s backend=%s",
+        len(keys),
+        removed,
+        backend,
+    )
+    return {"storage_removed": removed, "storage_backend": backend, "storage_keys": len(keys)}
+
+
 def retention_expired_predictions_postgres(conn: object) -> dict[str, int | str]:
     with conn.cursor() as cur:  # type: ignore[attr-defined]
+        cur.execute(_EXPIRED_PREDICTION_PATHS_SQL)
+        path_rows = cur.fetchall()
+        keys = collect_prediction_storage_keys(path_rows)
+        storage_stats = purge_prediction_storage(keys)
         cur.execute(_RETENTION_SQL)
         deleted = len(cur.fetchall())
     log.info("retention_expired_predictions_postgres: deleted=%s", deleted)
-    return {"deleted": deleted, "backend": "postgres"}
+    return {
+        "deleted": deleted,
+        "backend": "postgres",
+        **storage_stats,
+    }
 
 
 def retention_expired_predictions_memory() -> dict[str, int | str]:

@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Current phase | Contabo v2.3 (blocked on host secrets) + One-shot CLE/REE → 8.2 |
-| Last completed step | oneshot-c109 DR.P.LOADINGS PCA loadings heatmap |
-| Last green commit | 9b6b080 |
+| Last completed step | oneshot-c110 ST-OPS-07 prediction Storage purge on expired jobs |
+| Last green commit | (pending c110 push) |
 | Open failures | Contabo host/SSH/.env; Supabase migrate secrets; NVIDIA_API_KEY; Deploy cannot smoke without LAB_API_URL |
 | Next action | Shibayan: Contabo + Supabase + NVIDIA secrets (Blocked). Agent: DR correlation circle, FS.P.VOL, remaining CLU·DR plots |
 
