@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Current phase | Contabo v2.3 (blocked on host secrets) + One-shot CLE/REE → 8.2 |
-| Last completed step | oneshot-c165 **MI.PREPROCESS.FIT** (ST-ML-02 / MI-01 offline); oneshot-c164 **MI.DUPLICATE.GROUP** |
-| Last green commit | b637cb3 |
+| Last completed step | oneshot-c167 **MI.TS.TARGET_TRANSFORM** (ST-ML-02 / MI-05 offline); oneshot-c165 **MI.PREPROCESS.FIT** (MI-01) |
+| Last green commit | _(pending c167)_ |
 | Open failures | Contabo host/SSH/.env; Supabase migrate secrets; NVIDIA_API_KEY; Deploy cannot smoke without LAB_API_URL |
 | Next action | Shibayan: Contabo + Supabase + NVIDIA secrets (Blocked). Agent: ST-ML-02 remainder (MI-02/04…) / ST-UX-02 / Chunk C / Phase 7 per FINAL_REPORT |
 
