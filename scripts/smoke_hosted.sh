@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Hosted smoke: healthz → load DS1 sample → run EDA (AUTH_TEST_BYPASS staging only).
-# Usage: LAB_API_URL=https://lab-api.onrender.com bash scripts/smoke_hosted.sh
+# Usage (Contabo v2.3): LAB_API_URL=https://<LAB_API_HOSTNAME> bash scripts/smoke_hosted.sh
+# Legacy Render: LAB_API_URL=https://lab-api.onrender.com bash scripts/smoke_hosted.sh
 set -euo pipefail
 
 API="${LAB_API_URL:?LAB_API_URL required}"
