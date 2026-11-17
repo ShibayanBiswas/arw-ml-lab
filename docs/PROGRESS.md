@@ -4,7 +4,7 @@
 |---|---|
 | Current phase | Contabo v2.3 (blocked on host secrets) + One-shot CLE/REE → 8.2 |
 | Last completed step | oneshot-c129 FE.WB.UNSUP_ANOM |
-| Last green commit | 19afb03 |
+| Last green commit | cdc6c66 |
 | Open failures | Contabo host/SSH/.env; Supabase migrate secrets; NVIDIA_API_KEY; Deploy cannot smoke without LAB_API_URL |
 | Next action | Shibayan: Contabo + Supabase + NVIDIA secrets (Blocked). Agent: commit c128 ANO.P.PARETO if still local; pareto button in workbench; ANO pairwise scatter; `FS.P.SADF` / `FS.P.TRENDSCAN`; DR catalogue gaps |
 
