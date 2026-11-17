@@ -1016,3 +1016,114 @@ def plot_multilabel_bars(
             },
         },
     }
+
+
+def plot_conformal(
+    y_true: np.ndarray,
+    prediction_sets: np.ndarray,
+    *,
+    class_labels: list[Any] | None = None,
+    confidence_level: float | None = None,
+) -> dict[str, Any]:
+    """CLE.P.CONFORMAL — set-size histogram + per-class coverage (MAPIE set format)."""
+    import plotly.graph_objects as go
+    from mapie.metrics.classification import (
+        classification_coverage_score,
+        classification_mean_width_score,
+    )
+    from plotly.subplots import make_subplots
+
+    yt = np.asarray(y_true).ravel()
+    ps = np.asarray(prediction_sets, dtype=bool)
+    if ps.ndim == 3 and ps.shape[-1] == 1:
+        ps = ps[..., 0]
+    if ps.ndim != 2 or len(yt) != ps.shape[0]:
+        raise ValueError("prediction_sets must be (n_samples, n_classes) matching y_true length")
+    n_classes = ps.shape[1]
+    labels = class_labels or [str(i) for i in range(n_classes)]
+    if len(labels) != n_classes:
+        raise ValueError("class_labels length must match prediction_sets columns")
+    label_to_idx = {lbl: i for i, lbl in enumerate(labels)}
+    try:
+        true_idx = np.array([label_to_idx[v] for v in yt])
+    except KeyError as exc:
+        raise ValueError(f"true label not in class_labels: {exc.args[0]}") from exc
+
+    set_sizes = ps.sum(axis=1).astype(int)
+    overall_cov = float(np.asarray(classification_coverage_score(yt, ps)).ravel()[0])
+    mean_width = float(classification_mean_width_score(ps))
+
+    per_class_cov: dict[str, float | None] = {}
+    for j, name in enumerate(labels):
+        mask = true_idx == j
+        if not np.any(mask):
+            per_class_cov[name] = None
+        else:
+            per_class_cov[name] = float(np.mean(ps[mask, j]))
+
+    size_vals, size_counts = np.unique(set_sizes, return_counts=True)
+    fig = make_subplots(
+        rows=2,
+        cols=1,
+        row_heights=[0.45, 0.55],
+        subplot_titles=("Prediction set size", "Coverage by true class"),
+        vertical_spacing=0.12,
+    )
+    fig.add_trace(
+        go.Histogram(
+            x=set_sizes,
+            xbins=dict(
+                start=float(size_vals.min()) - 0.5,
+                end=float(size_vals.max()) + 1.5,
+                size=1,
+            ),
+            name="count",
+            showlegend=False,
+        ),
+        row=1,
+        col=1,
+    )
+    cov_y = [per_class_cov[n] for n in labels]
+    fig.add_trace(
+        go.Bar(
+            x=list(labels),
+            y=cov_y,
+            name="coverage",
+            showlegend=False,
+        ),
+        row=2,
+        col=1,
+    )
+    if confidence_level is not None:
+        fig.add_hline(
+            y=confidence_level,
+            line_dash="dash",
+            line_color="gray",
+            annotation_text=f"target {confidence_level:.0%}",
+            row=2,
+            col=1,
+        )
+    fig.update_xaxes(title_text="Set size (# classes)", row=1, col=1)
+    fig.update_yaxes(title_text="Samples", row=1, col=1)
+    fig.update_xaxes(title_text="True class", row=2, col=1)
+    fig.update_yaxes(title_text="Empirical coverage", range=[0, 1.05], row=2, col=1)
+    title = "Conformal prediction sets"
+    if confidence_level is not None:
+        title += f" ({confidence_level:.0%} nominal)"
+    fig.update_layout(title=title, height=520)
+
+    return {
+        "id": "CLE.P.CONFORMAL",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "overall_coverage": overall_cov,
+            "mean_set_size": mean_width,
+            "set_size_hist": {
+                str(int(k)): int(c) for k, c in zip(size_vals, size_counts, strict=True)
+            },
+            "coverage_per_class": per_class_cov,
+            "confidence_level": confidence_level,
+            "n_samples": int(len(yt)),
+        },
+    }
