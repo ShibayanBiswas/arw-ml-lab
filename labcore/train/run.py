@@ -328,6 +328,12 @@ def run_supervised_cv(
                     task=config.task,
                 )
             }
+            # Persist OOF-tuned threshold on the feature contract for Prediction Studio (§45.4)
+            thr_block = (eval_payload["classification"] or {}).get("threshold") or {}
+            chosen = thr_block.get("chosen") if isinstance(thr_block, dict) else None
+            if isinstance(chosen, dict) and chosen.get("t_star") is not None:
+                feature_contract["pred_threshold"] = float(chosen["t_star"])
+                feature_contract.setdefault("calibration_status", "uncalibrated")
         champion_payload = {"algorithm_key": champ["algorithm_key"], "eval": eval_payload}
     else:
         if rows:
