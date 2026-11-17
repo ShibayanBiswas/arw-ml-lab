@@ -686,6 +686,103 @@ def plot_err_segment(
     }
 
 
+def _feature_bin_labels(
+    feature: np.ndarray,
+    *,
+    n_bins: int,
+    max_categories: int,
+) -> np.ndarray:
+    """Map feature values to bin indices for MetricFrame grouping."""
+    f = np.asarray(feature)
+    flat = f.reshape(-1)
+    if flat.dtype == object or flat.dtype.kind in {"U", "S"}:
+        uniq = np.unique(flat.astype(str))
+        if len(uniq) <= max_categories:
+            mapping = {u: i for i, u in enumerate(uniq)}
+            return np.array([mapping[str(v)] for v in flat], dtype=int)
+        _, inv = np.unique(flat, return_inverse=True)
+        counts = np.bincount(inv)
+        order = np.argsort(-counts)
+        keep = set(order[: max_categories - 1].tolist())
+        out = np.empty(len(flat), dtype=int)
+        for i, v in enumerate(flat):
+            idx = int(inv[i])
+            out[i] = idx if idx in keep else max_categories - 1
+        return out
+
+    x = flat.astype(float)
+    n_uniq = len(np.unique(x[np.isfinite(x)]))
+    if n_uniq <= max_categories:
+        uniq = np.unique(x[np.isfinite(x)])
+        mapping = {float(u): i for i, u in enumerate(uniq)}
+        labels = np.full(len(flat), -1, dtype=int)
+        for i, v in enumerate(x):
+            if np.isfinite(v) and v in mapping:
+                labels[i] = mapping[float(v)]
+        if (labels < 0).any():
+            labels[labels < 0] = max(len(uniq), 1)
+        return labels
+
+    try:
+        edges = np.quantile(x[np.isfinite(x)], np.linspace(0, 1, n_bins + 1))
+        edges = np.unique(edges)
+        if len(edges) < 3:
+            raise ValueError("too few unique bins")
+        return np.digitize(x, edges[1:-1], right=True)
+    except Exception:
+        return np.zeros(len(flat), dtype=int)
+
+
+def plot_err_feature_bin(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    feature: np.ndarray,
+    *,
+    feature_name: str = "feature",
+    n_bins: int = 10,
+    max_categories: int = 20,
+) -> dict[str, Any]:
+    """REE.P.ERR_FEATURE_BIN — MAE by feature bin via fairlearn MetricFrame."""
+    import plotly.graph_objects as go
+    from fairlearn.metrics import MetricFrame
+    from sklearn.metrics import mean_absolute_error
+
+    yt = np.asarray(y_true, dtype=float)
+    yp = np.asarray(y_pred, dtype=float)
+    labels = _feature_bin_labels(feature, n_bins=n_bins, max_categories=max_categories)
+
+    mf = MetricFrame(
+        metrics=mean_absolute_error,
+        y_true=yt,
+        y_pred=yp,
+        sensitive_features=labels,
+    )
+    by = mf.by_group
+    xs = [str(i) for i in by.index.tolist()]
+    mae_vals = [float(v) for v in by.tolist()]
+    overall_mae = float(mf.overall)
+    fig = go.Figure()
+    fig.add_trace(go.Bar(name="MAE", x=xs, y=mae_vals))
+    fig.add_hline(y=overall_mae, line_dash="dash", annotation_text="overall MAE")
+    fig.update_layout(
+        title=f"MAE by {feature_name} bin",
+        xaxis_title=f"{feature_name} bin",
+        yaxis_title="MAE",
+        height=360,
+        showlegend=False,
+    )
+    return {
+        "id": "REE.P.ERR_FEATURE_BIN",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "feature_name": feature_name,
+            "overall_mae": overall_mae,
+            "by_group": {str(k): float(v) for k, v in zip(by.index.tolist(), mae_vals, strict=True)},
+        },
+    }
+
+
 def plot_err_heatmap(
     y_true: np.ndarray,
     y_pred: np.ndarray,
