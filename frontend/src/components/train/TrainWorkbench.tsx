@@ -30,6 +30,7 @@ export function TrainWorkbench({ mode }: Props) {
   const [evalPayload, setEvalPayload] = useState<Record<string, unknown> | null>(null);
   const [championKey, setChampionKey] = useState<string | null>(null);
   const [tuneResult, setTuneResult] = useState<Record<string, unknown> | null>(null);
+  const [refitFull, setRefitFull] = useState(true);
 
   useEffect(() => {
     void listSamples()
@@ -81,6 +82,7 @@ export function TrainWorkbench({ mode }: Props) {
         task,
         algorithm_keys: [],
         tuning_preset: tuningPreset,
+        refit_full: refitFull,
       });
       setExpId(started.experiment_id);
       let tj = await getJob(started.job_id);
@@ -205,6 +207,18 @@ export function TrainWorkbench({ mode }: Props) {
               <option value="quick">Quick (20 trials)</option>
               <option value="balanced">Balanced (60 trials)</option>
             </select>
+          </label>
+          <label
+            className="flex items-center gap-2 text-sm"
+            data-artefact="TRAIN.REFIT.FULL"
+            title="ST-FEAT-02: refit champion on all non-test rows before registration"
+          >
+            <input
+              type="checkbox"
+              checked={refitFull}
+              onChange={(e) => setRefitFull(e.target.checked)}
+            />
+            Refit on full data before deploy (default on)
           </label>
           <button
             type="button"

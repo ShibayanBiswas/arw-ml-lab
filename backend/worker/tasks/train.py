@@ -41,6 +41,7 @@ def run_train_task(self, job_id: str, experiment_id: str, body: dict[str, Any]) 
             recipe=RecipeSpec(seed=42),
             cv_scheme=body.get("cv_scheme"),
             dataset_id=str(body.get("dataset_id") or body.get("sample_id") or "unknown"),
+            refit_full=bool(body.get("refit_full", True)),
         )
         JOB_STORE.update(
             job_id,

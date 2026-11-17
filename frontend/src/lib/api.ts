@@ -163,6 +163,7 @@ export async function startTrain(body: {
   algorithm_keys?: string[];
   cv_scheme?: string;
   tuning_preset?: string;
+  refit_full?: boolean;
 }) {
   const res = await fetch(`${labApiBase()}/api/v1/experiments/train`, {
     method: "POST",

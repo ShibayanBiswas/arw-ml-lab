@@ -40,6 +40,7 @@ class TrainConfig(BaseModel):
     cv_scheme: str | None = None  # None → task default; "nested" forces nested flag
     nested: bool | None = None  # None → MI-03 auto (n_train < 2000)
     dataset_id: str = "unknown"
+    refit_full: bool = True  # ST-FEAT-02 / TRAIN.REFIT.FULL — default ON
 
 
 def _metrics_reg(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, float]:
@@ -322,6 +323,7 @@ def run_supervised_cv(
     )
 
     from labcore.integrity.nested_cv_contract import build_nested_cv_manifest
+    from labcore.train.refit_full import RefitFullPolicy, prepare_for_deployment
 
     nested_cv = build_nested_cv_manifest(
         n_train=int(len(X_tr)),
@@ -330,6 +332,26 @@ def run_supervised_cv(
         nested_override=config.nested,
         seed=config.seed,
     )
+
+    refit_meta: dict[str, Any] | None = None
+    if champion_pipeline is not None:
+        X_pool = pd.concat([X_tr, X_te], axis=0).reset_index(drop=True)
+        y_pool = pd.concat([y_tr, y_te], axis=0).reset_index(drop=True)
+        train_idx = np.arange(len(X_tr), dtype=int)
+        test_idx = np.arange(len(X_tr), len(X_pool), dtype=int)
+        dep = prepare_for_deployment(
+            champion_pipeline,
+            X_pool,
+            y_pool,
+            train_idx=train_idx,
+            test_idx=test_idx,
+            policy=RefitFullPolicy(enabled=bool(config.refit_full)),
+        )
+        champion_pipeline = dep["estimator"]
+        refit_meta = {k: v for k, v in dep.items() if k != "estimator"}
+        if "fit_indices" in refit_meta:
+            # Keep result JSON small / serialisable
+            refit_meta["n_fit_indices"] = len(refit_meta.pop("fit_indices"))
 
     return {
         "leaderboard": rows,
@@ -348,4 +370,5 @@ def run_supervised_cv(
         "champion_pipeline": champion_pipeline,
         "holdout_reuse": holdout_reuse,
         "nested_cv": nested_cv,
+        "refit_full": refit_meta,
     }

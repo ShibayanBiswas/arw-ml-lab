@@ -28,6 +28,7 @@ class TrainBody(BaseModel):
     n_splits: int = 5
     cv_scheme: str | None = None
     tuning_preset: str | None = None
+    refit_full: bool = True  # ST-FEAT-02 — prepare-for-deployment (default ON)
 
 
 class TuneBody(BaseModel):
@@ -40,6 +41,7 @@ class TuneBody(BaseModel):
     name: str | None = None
     fixed_params: dict[str, Any] | None = None
     n_trials: int | None = None
+    refit_full: bool = True
 
 
 def _reject_gpu_or_hidden(algorithm_keys: list[str]) -> None:
