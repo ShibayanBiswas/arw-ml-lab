@@ -916,3 +916,112 @@ def plot_sadf(
             ],
         },
     }
+
+
+def plot_trendscan(
+    df: pd.DataFrame,
+    *,
+    price_col: str | None = None,
+    time_col: str | None = None,
+    l_min: int = 5,
+    l_max: int = 20,
+    step: int = 1,
+    seed: int = 42,
+) -> dict[str, Any]:
+    """FS.P.TRENDSCAN — max forward-window slope t-stat series (AFML trend-scan)."""
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+
+    from labcore.finance.trendscan import compute_trendscan_series
+
+    _ = seed
+    col = price_col or _detect_price_col(df)
+    if col is None:
+        raise ValueError("no price column detected for trend-scan plot")
+    raw = pd.to_numeric(df[col], errors="coerce")
+    mask = raw.notna()
+    if int(mask.sum()) < l_max + 5:
+        raise ValueError("need ≥ l_max+5 prices for trend-scan")
+    px = raw.loc[mask].astype(float)
+    work = df.loc[mask].reset_index(drop=True)
+    log_px = np.log(px.clip(lower=1e-12).to_numpy(dtype=float))
+    scan = compute_trendscan_series(log_px, l_min=l_min, l_max=l_max, step=step)
+    labels = _time_axis(work, time_col)
+    x = [labels[i] if i < len(labels) else str(i) for i in scan["origins"]]
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    fig.add_trace(
+        go.Scatter(
+            x=x,
+            y=scan["t_value"],
+            mode="lines",
+            name="t-value (best L)",
+            line=dict(color="#c9a227"),
+            hovertemplate="t=%{y:.2f}<extra></extra>",
+        ),
+        secondary_y=False,
+    )
+    fig.add_hline(y=2.0, line_dash="dot", line_color="#b83232", opacity=0.6)
+    fig.add_hline(y=-2.0, line_dash="dot", line_color="#b83232", opacity=0.6)
+    fig.add_trace(
+        go.Scatter(
+            x=labels,
+            y=log_px.tolist(),
+            mode="lines",
+            name="log price",
+            line=dict(color="#4a5568", width=1),
+            opacity=0.55,
+            hovertemplate="log px=%{y:.3f}<extra></extra>",
+        ),
+        secondary_y=True,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=[x[scan["peak_index"]]],
+            y=[scan["peak_t_value"]],
+            mode="markers",
+            name="peak |t|",
+            marker=dict(color="#b83232", size=9),
+            hovertemplate="t=%{y:.2f}<extra></extra>",
+        ),
+        secondary_y=False,
+    )
+    fig.update_xaxes(title_text="time")
+    fig.update_yaxes(title_text="slope t-stat", secondary_y=False)
+    fig.update_yaxes(title_text="log price", secondary_y=True)
+    share = scan["share_abs_t_gt_2"]
+    fig.update_layout(
+        title=(
+            f"Trend-scan t-values L∈[{l_min},{l_max}] "
+            f"(|t|>2 share {share:.1%}; peak {scan['peak_t_value']:.2f} "
+            f"at index {scan['peak_origin']}, L={scan['peak_length']})"
+        ),
+        height=460,
+        legend=dict(orientation="h", yanchor="bottom", y=1.02),
+    )
+    return {
+        "id": "FS.P.TRENDSCAN",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "price_col": col,
+            "n_obs": scan["n_obs"],
+            "l_min": l_min,
+            "l_max": l_max,
+            "step": step,
+            "peak_origin": scan["peak_origin"],
+            "peak_t_value": scan["peak_t_value"],
+            "peak_length": scan["peak_length"],
+            "share_abs_t_gt_2": share,
+            "seed": seed,
+            "series": [
+                {
+                    "origin": int(o),
+                    "t_value": float(t),
+                    "best_length": int(bl),
+                }
+                for o, t, bl in zip(
+                    scan["origins"], scan["t_value"], scan["best_length"], strict=True
+                )
+            ],
+        },
+    }

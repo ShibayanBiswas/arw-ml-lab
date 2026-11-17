@@ -13,6 +13,7 @@ from labcore.suitability import (
     plot_price_cusum,
     plot_sadf,
     plot_sample_barriers,
+    plot_trendscan,
     plot_uniqueness_concurrency,
     run_suitability,
 )
@@ -40,6 +41,9 @@ class SuitabilityBody(BaseModel):
     max_lookback: int = Field(default=60, ge=20, le=252)
     sadf_maxlag: int = Field(default=0, ge=0, le=10)
     sadf_end_step: int = Field(default=3, ge=1, le=10)
+    trendscan_l_min: int = Field(default=5, ge=3, le=30)
+    trendscan_l_max: int = Field(default=20, ge=5, le=60)
+    trendscan_step: int = Field(default=1, ge=1, le=10)
 
 
 def _load_suitability_frame(
@@ -221,6 +225,32 @@ def suitability_sadf_plot(
             max_lookback=body.max_lookback,
             maxlag=body.sadf_maxlag,
             end_step=body.sadf_end_step,
+            seed=42,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/api/v1/suitability/plots/trendscan")
+def suitability_trendscan_plot(
+    body: SuitabilityBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """FS.P.TRENDSCAN — trend-scan slope t-stat series (seed 42 metadata)."""
+    _ = user
+    df, time_col = _load_suitability_frame(body)
+    if body.trendscan_l_max < body.trendscan_l_min:
+        raise HTTPException(
+            status_code=422, detail="trendscan_l_max must be ≥ trendscan_l_min"
+        )
+    try:
+        return plot_trendscan(
+            df,
+            price_col=body.price_col,
+            time_col=time_col,
+            l_min=body.trendscan_l_min,
+            l_max=body.trendscan_l_max,
+            step=body.trendscan_step,
             seed=42,
         )
     except Exception as exc:

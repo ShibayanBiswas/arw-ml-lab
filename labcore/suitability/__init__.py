@@ -10,6 +10,7 @@ from labcore.suitability.plots import (
     plot_sadf,
     plot_sample_barriers,
     plot_suitability_grid,
+    plot_trendscan,
     plot_uniqueness_concurrency,
 )
 
@@ -22,6 +23,7 @@ __all__ = [
     "plot_price_cusum",
     "plot_sadf",
     "plot_sample_barriers",
+    "plot_trendscan",
     "plot_suitability_grid",
     "plot_uniqueness_concurrency",
     "run_suitability",
