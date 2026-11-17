@@ -4,7 +4,7 @@
 |---|---|
 | Current phase | Contabo v2.3 (blocked on host secrets) + One-shot CLE/REE → 8.2 |
 | Last completed step | oneshot-c88 `REE.P.ALPHA_CV` (c87 `REE.P.PRED_ACTUAL_FOLDS` on `0072dcc`) |
-| Last green commit | 7e4e4a3 |
+| Last green commit | 1faed96 |
 | Open failures | Contabo host/SSH/.env; Supabase migrate secrets; NVIDIA_API_KEY; Deploy cannot smoke without LAB_API_URL |
 | Next action | Shibayan: Contabo + Supabase + NVIDIA secrets (Blocked). Agent: `REE.P.PI_BAND` / `REE.P.BLAND_ALTMAN` or remaining §42 |
 
