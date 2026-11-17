@@ -300,11 +300,15 @@ export async function downloadModelTemplate(modelId: string, format: "csv" | "xl
   return res.blob();
 }
 
-export async function predictSingle(modelId: string, row: Record<string, unknown>) {
+export async function predictSingle(
+  modelId: string,
+  row: Record<string, unknown>,
+  humility: Record<string, unknown> | false | null = null
+) {
   const res = await fetch(`${labApiBase()}/api/v1/models/${modelId}/predict`, {
     method: "POST",
     headers: labAuthHeaders(),
-    body: JSON.stringify({ row }),
+    body: JSON.stringify({ row, humility }),
   });
   if (!res.ok) throw new Error(`predict: ${res.status}`);
   return (await res.json()) as {
@@ -312,6 +316,7 @@ export async function predictSingle(modelId: string, row: Record<string, unknown
     probabilities?: number[];
     n_rows: number;
     refit: boolean;
+    humility?: Record<string, unknown>;
   };
 }
 

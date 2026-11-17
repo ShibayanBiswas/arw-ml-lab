@@ -36,6 +36,8 @@ _BATCH_ASYNC_CAP = 1_000_000
 
 class PredictSingleBody(BaseModel):
     row: dict[str, Any]
+    # ST-FEAT-01: None → apply default HumilityPolicy; False disables; dict overrides
+    humility: dict[str, Any] | Literal[False] | None = None
 
 
 class PredictBatchBody(BaseModel):
@@ -123,6 +125,36 @@ def model_sample_row(model_id: str, user: AuthUser = Depends(require_write_role)
     }
 
 
+def _humility_opts_for_row(m: Any, row: dict[str, Any], humility: dict[str, Any] | None) -> dict[str, Any]:
+    """Merge client humility policy with PV10/PV OOR flags from validate (never refits)."""
+    opts: dict[str, Any] = dict(humility or {})
+    try:
+        report = validate_predict_frame(
+            pd.DataFrame([row]),
+            m.feature_contract,
+            required_names=m.feature_names,
+        )
+    except Exception:
+        return opts
+    ood_score = 0.0
+    for issue in list(report.warnings) + list(report.info):
+        if getattr(issue, "code", None) == "PV10":
+            details = getattr(issue, "details", None) or {}
+            if "max_score" in details:
+                ood_score = float(details["max_score"])
+    oor: list[str] = []
+    for issue in list(report.warnings) + list(getattr(report, "errors", []) or []):
+        details = getattr(issue, "details", None) or {}
+        if details.get("flag") == "out_of_range":
+            feat = details.get("feature") or getattr(issue, "column", None)
+            if feat:
+                oor.append(str(feat))
+    opts.setdefault("ood_score", ood_score)
+    if oor:
+        opts.setdefault("flag_out_of_range", oor)
+    return opts
+
+
 @router.post("/api/v1/models/{model_id}/predict")
 def predict_one(
     model_id: str,
@@ -133,7 +165,19 @@ def predict_one(
     _ = user
     m = _get_model(model_id)
     try:
-        return predict_single(m.pipeline, body.row, feature_names=m.feature_names)
+        humility_arg: dict[str, Any] | None
+        if body.humility is False:
+            humility_arg = None
+        else:
+            humility_arg = _humility_opts_for_row(
+                m, body.row, body.humility if isinstance(body.humility, dict) else None
+            )
+        return predict_single(
+            m.pipeline,
+            body.row,
+            feature_names=m.feature_names,
+            humility=humility_arg,
+        )
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
