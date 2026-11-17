@@ -70,7 +70,7 @@ Hosted `GET /healthz`: **not computed** (Contabo VPS not bootstrapped — `CONTA
 | Docs + ADR + prune + compose/Caddy/deploy.yml | **PASS** (in repo) |
 | SSH bootstrap + server `.env` | **BLOCKED** — no `CONTABO_HOST` / SSH path in local `.env` |
 | GHCR build + SSH deploy + `/healthz` 200 | **BLOCKED** — host + GitHub Actions billing |
-| DS1 EDA browser prove + SSE + Storage artefacts | **BLOCKED** — needs live `LAB_API_URL` |
+| DS1 EDA browser prove + SSE + Storage artefacts | **BLOCKED** — needs live Contabo `LAB_API_URL` (Vercel frontend e2e httpx smoke green oneshot-c234) |
 | Restore drill + external uptime | Offline contracts ready (`OPS.RESTORE.DRILL`, `OPS.UPTIME.EXTERNAL`, `scripts/backup_contabo.sh` + deploy scp); live cron/drill **not run** |
 
 ## Deviations / TODOs
