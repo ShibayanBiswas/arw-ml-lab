@@ -135,21 +135,23 @@ jobs:
           else
             echo "sha=${{ github.event.workflow_run.head_sha || github.sha }}" >> "$GITHUB_OUTPUT"
           fi
-      - name: Copy compose, Caddyfile, deploy.sh
+      - name: Copy compose, Caddyfile, deploy.sh, backup script
         env:
           CONTABO_HOST: ${{ secrets.CONTABO_HOST }}
           CONTABO_USER: ${{ secrets.CONTABO_USER }}
         run: |
           ssh -o StrictHostKeyChecking=yes "${CONTABO_USER}@${CONTABO_HOST}" \
-            'mkdir -p /opt/arw-ml-lab/infra/caddy /opt/arw-ml-lab/infra/contabo'
+            'mkdir -p /opt/arw-ml-lab/infra/caddy /opt/arw-ml-lab/infra/contabo /opt/arw-ml-lab/scripts /opt/arw-ml-lab/backups'
           scp -o StrictHostKeyChecking=yes docker-compose.prod.yml \
             "${CONTABO_USER}@${CONTABO_HOST}:/opt/arw-ml-lab/docker-compose.prod.yml"
           scp -o StrictHostKeyChecking=yes infra/caddy/Caddyfile \
             "${CONTABO_USER}@${CONTABO_HOST}:/opt/arw-ml-lab/infra/caddy/Caddyfile"
           scp -o StrictHostKeyChecking=yes infra/contabo/deploy.sh \
             "${CONTABO_USER}@${CONTABO_HOST}:/opt/arw-ml-lab/deploy.sh"
+          scp -o StrictHostKeyChecking=yes scripts/backup_contabo.sh \
+            "${CONTABO_USER}@${CONTABO_HOST}:/opt/arw-ml-lab/scripts/backup_contabo.sh"
           ssh -o StrictHostKeyChecking=yes "${CONTABO_USER}@${CONTABO_HOST}" \
-            'chmod 750 /opt/arw-ml-lab/deploy.sh'
+            'chmod 750 /opt/arw-ml-lab/deploy.sh /opt/arw-ml-lab/scripts/backup_contabo.sh'
       - name: GHCR login + deploy
         env:
           CONTABO_HOST: ${{ secrets.CONTABO_HOST }}

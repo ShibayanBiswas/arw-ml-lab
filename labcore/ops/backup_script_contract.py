@@ -20,6 +20,13 @@ def _repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
+def assert_deploy_doc_points_at_script() -> dict[str, str]:
+    text = (_repo_root() / "docs" / "DEPLOY_CONTABO.md").read_text(encoding="utf-8")
+    if "backup_contabo.sh" not in text:
+        raise AssertionError("DEPLOY_CONTABO §10 must name scripts/backup_contabo.sh")
+    return {"doc": "DEPLOY_CONTABO.md"}
+
+
 def assert_backup_script() -> dict[str, Any]:
     path = _repo_root() / "scripts" / "backup_contabo.sh"
     if not path.is_file():
@@ -30,9 +37,11 @@ def assert_backup_script() -> dict[str, Any]:
         raise AssertionError(f"backup script missing tokens: {missing}")
     if "REDIS_PASSWORD" not in text:
         raise AssertionError("backup script must use REDIS_PASSWORD from .env (not print it)")
+    doc = assert_deploy_doc_points_at_script()
     return {
         "id": ARTEFACT_ID,
         "seed": 42,
         "path": "scripts/backup_contabo.sh",
         "tokens": list(REQUIRED_TOKENS),
+        "doc": doc,
     }
