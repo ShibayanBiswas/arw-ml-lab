@@ -1947,3 +1947,108 @@ def plot_width_fitted(
             "lowess_y": smooth[:, 1].tolist(),
         },
     }
+
+
+def _pit_from_quantile_grid(
+    y_true: np.ndarray,
+    y_quantiles: np.ndarray,
+    quantile_levels: np.ndarray,
+) -> np.ndarray:
+    """Predictive CDF ordinates (PIT) by inverting a piecewise-linear quantile function."""
+    from scipy.interpolate import interp1d
+
+    yt = np.asarray(y_true, dtype=float).ravel()
+    yq = np.asarray(y_quantiles, dtype=float)
+    levels = np.asarray(quantile_levels, dtype=float).ravel()
+    if yq.ndim != 2 or yq.shape[1] != len(levels):
+        raise ValueError("y_quantiles must have shape (n, len(quantile_levels))")
+    if len(levels) < 2:
+        raise ValueError("need at least two quantile_levels")
+    if not np.all(levels[:-1] < levels[1:]):
+        raise ValueError("quantile_levels must be strictly increasing")
+    n = len(yt)
+    if yq.shape[0] != n:
+        raise ValueError("y_true and y_quantiles must have the same row count")
+    if n == 0:
+        return np.array([], dtype=float)
+
+    pit = np.empty(n, dtype=float)
+    for i in range(n):
+        q_row = yq[i, :]
+        order = np.argsort(q_row, kind="stable")
+        q_sorted = q_row[order]
+        tau_sorted = levels[order]
+        cdf = interp1d(
+            q_sorted,
+            tau_sorted,
+            bounds_error=False,
+            fill_value="extrapolate",
+            assume_sorted=True,
+        )
+        pit[i] = float(np.clip(cdf(float(yt[i])), 0.0, 1.0))
+    return pit
+
+
+def plot_pit(
+    y_true: np.ndarray,
+    y_quantiles: np.ndarray,
+    *,
+    quantile_levels: np.ndarray,
+    n_bins: int = 10,
+) -> dict[str, Any]:
+    """REE.P.PIT — probability integral transform histogram (quantile calibration)."""
+    import plotly.graph_objects as go
+    from scipy import stats
+
+    yt = np.asarray(y_true, dtype=float).ravel()
+    yq = np.asarray(y_quantiles, dtype=float)
+    levels = np.asarray(quantile_levels, dtype=float).ravel()
+    pit = _pit_from_quantile_grid(yt, yq, levels)
+    n = len(pit)
+    if n == 0:
+        raise ValueError("need at least one sample for PIT")
+
+    counts, edges = np.histogram(pit, bins=n_bins, range=(0.0, 1.0), density=True)
+    centers = 0.5 * (edges[:-1] + edges[1:])
+    bin_width = float(edges[1] - edges[0])
+
+    ks = stats.kstest(pit, stats.uniform(loc=0.0, scale=1.0).cdf)
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Bar(
+            x=centers,
+            y=counts,
+            width=bin_width * 0.92,
+            name="PIT density",
+            marker_color="#c9a227",
+        )
+    )
+    fig.add_hline(
+        y=1.0,
+        line_dash="dash",
+        line_color="gray",
+        annotation_text="Uniform (1)",
+    )
+    fig.update_layout(
+        title="PIT histogram (quantile calibration)",
+        xaxis_title="PIT",
+        yaxis_title="Density",
+        xaxis_range=[0, 1],
+        height=400,
+    )
+    return {
+        "id": "REE.P.PIT",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "n": n,
+            "n_bins": n_bins,
+            "quantile_levels": levels.tolist(),
+            "pit": pit.tolist(),
+            "hist_density": counts.tolist(),
+            "hist_bin_edges": edges.tolist(),
+            "ks_statistic": float(ks.statistic),
+            "ks_pvalue": float(ks.pvalue),
+        },
+    }
