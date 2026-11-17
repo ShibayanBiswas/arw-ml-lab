@@ -64,12 +64,40 @@ def _reject_gpu_or_hidden(algorithm_keys: list[str]) -> None:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
+def _dataset_shape(ds: Any) -> tuple[int, int]:
+    """Best-effort (n_rows, n_cols) for MI-09 memory guard."""
+    n_cols = len(ds.schema) if ds.schema else int(ds.meta.get("n_cols") or 0)
+    n_rows = int(ds.meta.get("n_rows") or ds.meta.get("rows") or 0)
+    if (n_rows <= 0 or n_cols <= 0) and ds.parquet_path:
+        try:
+            import pyarrow.parquet as pq
+
+            pf = pq.ParquetFile(ds.parquet_path)
+            n_rows = int(pf.metadata.num_rows) if n_rows <= 0 else n_rows
+            n_cols = int(pf.metadata.num_columns) if n_cols <= 0 else n_cols
+        except Exception:
+            pass
+    return max(n_rows, 0), max(n_cols, 0)
+
+
+def _reject_memory_overflow(ds: Any) -> None:
+    from labcore.ops.memory_enqueue import guard_train_enqueue
+
+    n_rows, n_cols = _dataset_shape(ds)
+    if n_rows <= 0 or n_cols <= 0:
+        return
+    decision = guard_train_enqueue(n_rows=n_rows, n_cols=n_cols)
+    if decision.get("refused"):
+        raise HTTPException(status_code=422, detail=decision["message"])
+
+
 @router.post("/api/v1/experiments/train")
 def start_train(body: TrainBody, user: AuthUser = Depends(require_write_role)) -> dict[str, str]:
     ds = DATASET_STORE.get(body.dataset_id)
     if ds is None:
         raise HTTPException(status_code=404, detail="dataset not found")
     _reject_gpu_or_hidden(body.algorithm_keys)
+    _reject_memory_overflow(ds)
     exp = EXPERIMENT_STORE.create(
         workspace_id=user.workspace_id or ds.workspace_id,
         dataset_id=body.dataset_id,
@@ -93,6 +121,7 @@ def start_tune(body: TuneBody, user: AuthUser = Depends(require_write_role)) -> 
     if ds is None:
         raise HTTPException(status_code=404, detail="dataset not found")
     _reject_gpu_or_hidden([body.algorithm_key])
+    _reject_memory_overflow(ds)
     exp = EXPERIMENT_STORE.create(
         workspace_id=user.workspace_id or ds.workspace_id,
         dataset_id=body.dataset_id,
