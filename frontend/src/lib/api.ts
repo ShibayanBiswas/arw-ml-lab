@@ -365,8 +365,20 @@ export type UnsupervisedRunBody = {
 
 export type AnomalyCataloguePlot = "score-hist" | "ranked" | "embed";
 
+export type ClusteringCataloguePlot =
+  | "elbow"
+  | "silhouette"
+  | "ch"
+  | "db"
+  | "gap"
+  | "dendrogram";
+
 export function unsupervisedAnomalyPlotPath(plot: AnomalyCataloguePlot): string {
   return `/api/v1/unsupervised/anomaly/${plot}`;
+}
+
+export function unsupervisedClusteringPlotPath(plot: ClusteringCataloguePlot): string {
+  return `/api/v1/unsupervised/clustering/${plot}`;
 }
 
 export async function runUnsupervised(
@@ -397,6 +409,22 @@ export async function runUnsupervisedAnomalyPlot(
   if (!res.ok) {
     const detail = await res.text();
     throw new Error(`anomaly plot ${plot}: ${res.status} ${detail}`);
+  }
+  return (await res.json()) as Record<string, unknown>;
+}
+
+export async function runUnsupervisedClusteringPlot(
+  plot: ClusteringCataloguePlot,
+  body: UnsupervisedRunBody
+) {
+  const res = await fetch(`${labApiBase()}${unsupervisedClusteringPlotPath(plot)}`, {
+    method: "POST",
+    headers: { ...labAuthHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ ...body, seed: body.seed ?? 42 }),
+  });
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(`clustering plot ${plot}: ${res.status} ${detail}`);
   }
   return (await res.json()) as Record<string, unknown>;
 }

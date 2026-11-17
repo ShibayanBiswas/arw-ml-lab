@@ -5,7 +5,9 @@ import { ArtefactPanel, type ArtefactView } from "@/components/eda/ArtefactPanel
 import {
   runUnsupervised,
   runUnsupervisedAnomalyPlot,
+  runUnsupervisedClusteringPlot,
   type AnomalyCataloguePlot,
+  type ClusteringCataloguePlot,
 } from "@/lib/api";
 
 type Mode = "home" | "setup" | "dr" | "clustering" | "anomaly" | "selection" | "profiles" | "compare";
@@ -20,6 +22,15 @@ const ANOMALY_PLOTS: { id: AnomalyCataloguePlot; label: string; artefact: string
   { id: "score-hist", label: "Score histogram", artefact: "ANO.P.SCORE_HIST" },
   { id: "ranked", label: "Top-N ranked", artefact: "ANO.P.RANKED" },
   { id: "embed", label: "PCA embed", artefact: "ANO.P.EMBED" },
+];
+
+const CLUSTERING_PLOTS: { id: ClusteringCataloguePlot; label: string; artefact: string }[] = [
+  { id: "elbow", label: "Elbow (knee)", artefact: "CLU.P.ELBOW" },
+  { id: "silhouette", label: "Silhouette knife", artefact: "CLU.P.SILHOUETTE" },
+  { id: "ch", label: "Calinski–Harabasz", artefact: "CLU.P.CH" },
+  { id: "db", label: "Davies–Bouldin", artefact: "CLU.P.DB" },
+  { id: "gap", label: "Gap statistic", artefact: "CLU.P.GAP" },
+  { id: "dendrogram", label: "Dendrogram", artefact: "CLU.P.DENDROGRAM" },
 ];
 
 export function UnsupervisedWorkbench({ mode }: { mode: Mode }) {
@@ -88,6 +99,32 @@ export function UnsupervisedWorkbench({ mode }: { mode: Mode }) {
     }
   }
 
+  async function runClusterPlot(plot: ClusteringCataloguePlot) {
+    setError(null);
+    setStatus(`Plot ${plot} (k=${runBody.n_clusters ?? 3})…`);
+    try {
+      const out = await runUnsupervisedClusteringPlot(plot, runBody);
+      const id = String(out.id ?? "");
+      setPlotArtefact({
+        id,
+        kind: "plot",
+        title: id || plot,
+        plotly: (out.plotly as Record<string, unknown> | undefined) ?? null,
+        numbers: (out.numbers as Record<string, unknown> | undefined) ?? undefined,
+      });
+      setResult({
+        id: out.id,
+        n_clusters: out.n_clusters ?? runBody.n_clusters,
+        seed: out.seed,
+        numbers: out.numbers,
+      });
+      setStatus("Plot ready");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+      setStatus("");
+    }
+  }
+
   const algos =
     family === "dr"
       ? ["pca", "svd", "tsne"]
@@ -101,7 +138,7 @@ export function UnsupervisedWorkbench({ mode }: { mode: Mode }) {
         <h1 className="font-display text-2xl text-[var(--ink)]">Unsupervised · {mode}</h1>
         <p className="mt-1 text-sm text-[var(--muted)]">
           Clustering, DR and anomaly via sklearn/pyod (seed 42). Demo uses a synthetic 40×3 matrix;
-          anomaly mode can render ANO catalogue plots from lab-api.
+          clustering and anomaly modes render catalogue plots from lab-api (CLU.P.* / ANO.P.*).
         </p>
       </header>
 
@@ -135,6 +172,19 @@ export function UnsupervisedWorkbench({ mode }: { mode: Mode }) {
                 className="border border-[var(--line)] px-3 py-1.5 text-sm"
                 title={p.artefact}
                 onClick={() => void runPlot(p.id)}
+              >
+                {p.label}
+              </button>
+            ))
+          : null}
+        {family === "clustering"
+          ? CLUSTERING_PLOTS.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className="border border-[var(--line)] px-3 py-1.5 text-sm"
+                title={p.artefact}
+                onClick={() => void runClusterPlot(p.id)}
               >
                 {p.label}
               </button>
