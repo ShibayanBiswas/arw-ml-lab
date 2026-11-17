@@ -5,6 +5,7 @@ from labcore.suitability.plots import (
     plot_daily_volatility,
     plot_label_balance,
     plot_price_cusum,
+    plot_holding_period_distribution,
     plot_sample_barriers,
     plot_suitability_grid,
 )
@@ -16,5 +17,6 @@ __all__ = [
     "plot_price_cusum",
     "plot_sample_barriers",
     "plot_suitability_grid",
+    "plot_uniqueness_concurrency",
     "run_suitability",
 ]

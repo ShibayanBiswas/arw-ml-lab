@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from labcore.suitability import (
     plot_daily_volatility,
     plot_price_cusum,
+    plot_holding_period_distribution,
     plot_sample_barriers,
     run_suitability,
 )
@@ -129,6 +130,27 @@ def suitability_barriers_plot(
             pt_mult=body.pt_mult,
             sl_mult=body.sl_mult,
             n_samples=body.n_samples,
+            seed=42,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/api/v1/suitability/plots/uniqueness")
+def suitability_uniqueness_plot(
+    body: SuitabilityBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """FS.P.UNIQUENESS — per-event ū histogram and concurrency over time (seed 42)."""
+    _ = user
+    df, time_col = _load_suitability_frame(body)
+    try:
+        return plot_uniqueness_concurrency(
+            df,
+            price_col=body.price_col,
+            time_col=time_col,
+            horizon=body.horizon,
+            vol_span=body.vol_span,
             seed=42,
         )
     except Exception as exc:

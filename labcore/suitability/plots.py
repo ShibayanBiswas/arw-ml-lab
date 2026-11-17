@@ -16,6 +16,7 @@ from labcore.suitability.fs_checks import (
     compute_daily_ewma_vol,
     compute_fixed_horizon_label_balance,
     compute_suitability_parameter_grid,
+    compute_trial_holding_profile,
     compute_trial_tb_label_balance,
     sample_trial_tb_events,
 )
@@ -537,5 +538,100 @@ def plot_sample_barriers(
             "n_events_total": int(sample["n_labels"]),
             "n_panels": n_rows,
             "sampled_events": numbers_events,
+        },
+    }
+
+
+def plot_holding_period_distribution(
+    df: pd.DataFrame,
+    *,
+    price_col: str | None = None,
+    horizon: int = 5,
+    vol_span: int = 100,
+    pt_mult: float = 1.0,
+    sl_mult: float = 1.0,
+    cusum_mult: float | None = None,
+    seed: int = 42,
+) -> dict[str, Any]:
+    """FS.P.HOLDING — histogram of triple-barrier holding periods (bars)."""
+    import plotly.graph_objects as go
+
+    col = price_col or _detect_price_col(df)
+    if col is None:
+        raise ValueError("no price column detected for holding-period plot")
+    prof = compute_trial_holding_profile(
+        df,
+        col,
+        horizon=horizon,
+        vol_span=vol_span,
+        pt_mult=pt_mult,
+        sl_mult=sl_mult,
+        cusum_mult=cusum_mult,
+    )
+    if not prof.get("ok"):
+        raise ValueError(prof.get("reason", "holding-period profile failed"))
+
+    colours = {"-1": "#c44e52", "0": "#6b7280", "1": "#2ca02c"}
+    labels = {"-1": "−1 (down)", "0": "0 (vertical)", "1": "+1 (up)"}
+    fig = go.Figure()
+    holdings = prof["holding_bars"]
+    nbins = min(50, max(8, int(np.sqrt(len(holdings))) + 2))
+    for key in ("-1", "0", "1"):
+        vals = prof["by_label"][key]
+        if not vals:
+            continue
+        fig.add_trace(
+            go.Histogram(
+                x=vals,
+                name=labels[key],
+                nbinsx=nbins,
+                marker_color=colours[key],
+                opacity=0.72,
+                hovertemplate="holding=%{x} bars<br>count=%{y}<extra></extra>",
+            )
+        )
+    fig.add_vline(
+        x=float(prof["mean_holding"]),
+        line_dash="dash",
+        line_color="#c9a227",
+        annotation_text=f"mean={prof['mean_holding']:.2f} bars",
+        annotation_position="top right",
+    )
+    fig.add_vline(
+        x=float(prof["median_holding"]),
+        line_dash="dot",
+        line_color="#1f2937",
+        annotation_text=f"median={prof['median_holding']:.0f} bars",
+        annotation_position="bottom right",
+    )
+    fig.update_layout(
+        title=(
+            f"Trial holding-period distribution (pt={pt_mult}×σ, sl={sl_mult}×σ, "
+            f"vertical={horizon} bars)"
+        ),
+        xaxis_title="holding period (bars)",
+        yaxis_title="events",
+        barmode="overlay",
+        height=420,
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0),
+    )
+    return {
+        "id": "FS.P.HOLDING",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "price_col": col,
+            "horizon": horizon,
+            "vol_span": vol_span,
+            "pt_mult": pt_mult,
+            "sl_mult": sl_mult,
+            "cusum_mult": cusum_mult,
+            "seed": seed,
+            "n_events": int(prof["n_events"]),
+            "mean_holding": float(prof["mean_holding"]),
+            "median_holding": float(prof["median_holding"]),
+            "min_holding": int(prof["min_holding"]),
+            "max_holding": int(prof["max_holding"]),
+            "by_label_counts": {k: len(prof["by_label"][k]) for k in ("-1", "0", "1")},
         },
     }

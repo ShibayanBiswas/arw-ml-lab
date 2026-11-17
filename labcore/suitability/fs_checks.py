@@ -808,21 +808,22 @@ def check_fs13_effective_sample_size(df: pd.DataFrame, price_col: str | None) ->
     return FSResult("FS13", "FAIL", f"n_eff={n_eff:.1f} (<50)", details)
 
 
-def check_fs12_average_uniqueness(df: pd.DataFrame, price_col: str | None) -> FSResult:
-    """FS12 — average uniqueness of trial label spans (AFML ch. 4 thin).
-
-    Build concurrent count c_t over trial ±1σ / 5-bar events; ū_i = mean(1/c_t)
-    over each event span; report mean ū. PASS ≥0.3, WARN 0.1–0.3, FAIL <0.1.
-    """
-    if price_col is None or price_col not in df.columns:
-        return FSResult("FS12", "FAIL", "no price column for uniqueness")
+def compute_trial_uniqueness_profile(
+    df: pd.DataFrame,
+    price_col: str,
+    *,
+    horizon: int = 5,
+    vol_span: int = 100,
+) -> dict[str, Any]:
+    """Trial ±1σ label spans: per-event ū_i and concurrency c_t (FS12 / FS.P.UNIQUENESS)."""
+    if price_col not in df.columns:
+        return {"ok": False, "reason": "no price column"}
     px = pd.to_numeric(df[price_col], errors="coerce").dropna()
     if len(px) < 60:
-        return FSResult("FS12", "FAIL", "too few bars for uniqueness", {"n": len(px)})
+        return {"ok": False, "reason": "too few bars", "n": int(len(px))}
     log_p = np.log(px.to_numpy(dtype=float))
     rets = np.diff(log_p)
-    vol = pd.Series(rets).ewm(span=100, min_periods=30).std().to_numpy()
-    horizon = 5
+    vol = pd.Series(rets).ewm(span=vol_span, min_periods=30).std().to_numpy()
     spans: list[tuple[int, int]] = []
     for i in range(len(rets) - 1):
         sigma = vol[i]
@@ -837,23 +838,101 @@ def check_fs12_average_uniqueness(df: pd.DataFrame, price_col: str | None) -> FS
                 break
         spans.append((i, t1))
     if len(spans) < 20:
-        return FSResult("FS12", "FAIL", "too few spans for uniqueness", {"n_spans": len(spans)})
+        return {"ok": False, "reason": "too few spans", "n_spans": len(spans)}
     n_t = max(t1 for _t0, t1 in spans) + 1
     concurrent = np.zeros(n_t, dtype=float)
     for t0, t1 in spans:
         concurrent[t0 : t1 + 1] += 1.0
-    uniques: list[float] = []
+    per_event: list[float] = []
     for t0, t1 in spans:
-        c = concurrent[t0 : t1 + 1]
-        c = np.maximum(c, 1.0)
-        uniques.append(float(np.mean(1.0 / c)))
-    mean_u = float(np.mean(uniques))
-    details = {"mean_uniqueness": mean_u, "n_spans": len(spans)}
+        c = np.maximum(concurrent[t0 : t1 + 1], 1.0)
+        per_event.append(float(np.mean(1.0 / c)))
+    mean_u = float(np.mean(per_event))
+    return {
+        "ok": True,
+        "price_col": price_col,
+        "horizon": horizon,
+        "vol_span": vol_span,
+        "n_spans": len(spans),
+        "mean_uniqueness": mean_u,
+        "per_event_uniqueness": per_event,
+        "concurrency": concurrent.tolist(),
+        "max_concurrency": float(np.max(concurrent)),
+        "median_concurrency": (
+            float(np.median(concurrent[concurrent > 0])) if np.any(concurrent > 0) else 0.0
+        ),
+    }
+
+
+def check_fs12_average_uniqueness(df: pd.DataFrame, price_col: str | None) -> FSResult:
+    """FS12 — average uniqueness of trial label spans (AFML ch. 4 thin).
+
+    Build concurrent count c_t over trial ±1σ / 5-bar events; ū_i = mean(1/c_t)
+    over each event span; report mean ū. PASS ≥0.3, WARN 0.1–0.3, FAIL <0.1.
+    """
+    if price_col is None or price_col not in df.columns:
+        return FSResult("FS12", "FAIL", "no price column for uniqueness")
+    prof = compute_trial_uniqueness_profile(df, price_col)
+    if not prof.get("ok"):
+        reason = prof.get("reason", "uniqueness failed")
+        return FSResult("FS12", "FAIL", reason, {k: v for k, v in prof.items() if k != "ok"})
+    mean_u = float(prof["mean_uniqueness"])
+    details = {"mean_uniqueness": mean_u, "n_spans": int(prof["n_spans"])}
     if mean_u >= 0.3:
         return FSResult("FS12", "PASS", f"mean ū={mean_u:.3f}", details)
     if mean_u >= 0.1:
         return FSResult("FS12", "WARN", f"mean ū={mean_u:.3f} (0.1–0.3)", details)
     return FSResult("FS12", "FAIL", f"mean ū={mean_u:.3f} (<0.1)", details)
+
+
+def compute_trial_holding_profile(
+    df: pd.DataFrame,
+    price_col: str,
+    *,
+    horizon: int = 5,
+    vol_span: int = 100,
+    pt_mult: float = 1.0,
+    sl_mult: float = 1.0,
+    cusum_mult: float | None = None,
+) -> dict[str, Any]:
+    """Trial triple-barrier holding periods in bars (FS.P.HOLDING / §37.8)."""
+    base = enumerate_trial_tb_events(
+        df,
+        price_col,
+        horizon=horizon,
+        vol_span=vol_span,
+        pt_mult=pt_mult,
+        sl_mult=sl_mult,
+        cusum_mult=cusum_mult,
+    )
+    if not base.get("ok"):
+        return {k: v for k, v in base.items()}
+    events = base["events"]
+    if len(events) < 20:
+        return {"ok": False, "reason": "too few events", "n_events": len(events)}
+    holdings: list[int] = []
+    by_label: dict[int, list[int]] = {-1: [], 0: [], 1: []}
+    for ev in events:
+        h = int(ev["t1"]) - int(ev["t0"])
+        holdings.append(h)
+        by_label[int(ev["label"])].append(h)
+    arr = np.array(holdings, dtype=float)
+    return {
+        "ok": True,
+        "price_col": price_col,
+        "horizon": horizon,
+        "vol_span": vol_span,
+        "pt_mult": pt_mult,
+        "sl_mult": sl_mult,
+        "cusum_mult": cusum_mult,
+        "n_events": len(holdings),
+        "holding_bars": holdings,
+        "by_label": {str(k): v for k, v in by_label.items()},
+        "mean_holding": float(np.mean(arr)),
+        "median_holding": float(np.median(arr)),
+        "min_holding": int(np.min(arr)),
+        "max_holding": int(np.max(arr)),
+    }
 
 
 def check_fs11_vertical_barrier_share(df: pd.DataFrame, price_col: str | None) -> FSResult:
