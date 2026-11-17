@@ -30,6 +30,7 @@ export function CustomPredictForm({ modelId }: Props) {
   const [shap, setShap] = useState<Record<string, unknown> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState("");
+  const [humilityAction, setHumilityAction] = useState<"warn" | "abstain" | "review">("warn");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const feats = useMemo(
@@ -67,7 +68,11 @@ export function CustomPredictForm({ modelId }: Props) {
         setStatus("Predicting…");
         setError(null);
         try {
-          const out = await predictSingle(modelId, values);
+          const out = await predictSingle(modelId, values, {
+            action_ood: humilityAction,
+            action_out_of_range: humilityAction,
+            action_wide_interval: humilityAction,
+          });
           setResult(out as Record<string, unknown>);
           setStatus("Live");
           try {
@@ -85,7 +90,7 @@ export function CustomPredictForm({ modelId }: Props) {
     return () => {
       if (timer.current) clearTimeout(timer.current);
     };
-  }, [values, modelId, featureNames.length]);
+  }, [values, modelId, featureNames.length, humilityAction]);
 
   function setField(name: string, v: unknown) {
     setValues((prev) => ({ ...prev, [name]: v }));
@@ -136,6 +141,20 @@ export function CustomPredictForm({ modelId }: Props) {
         >
           Fill random row
         </button>
+        <label className="flex items-center gap-2 text-sm" title="ST-FEAT-01 humility action">
+          Humility
+          <select
+            className="rounded border border-[var(--border)] bg-transparent px-2 py-1"
+            value={humilityAction}
+            onChange={(e) =>
+              setHumilityAction(e.target.value as "warn" | "abstain" | "review")
+            }
+          >
+            <option value="warn">warn</option>
+            <option value="review">review</option>
+            <option value="abstain">abstain</option>
+          </select>
+        </label>
         {status ? <span className="self-center text-sm text-[var(--muted)]">{status}</span> : null}
       </div>
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
