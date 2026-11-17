@@ -21,4 +21,4 @@
 - [x] Import allowlist green.
 - [x] Rule 70: existing recipe + intake helpers only.
 
-**Ship commit:** (set after commit)
+**Ship commit:** `70df6a3`
