@@ -68,7 +68,7 @@ def test_shuffled_target_near_chance():
 
 def test_fold_fit_spy():
     rng = np.random.default_rng(42)
-    n = 120
+    n = 250  # n_train≥200 after hold-out → MI-08 keeps stratified_kfold (4 fits)
     df = pd.DataFrame(
         {
             "x": rng.normal(size=n),
