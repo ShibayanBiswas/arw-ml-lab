@@ -19,7 +19,7 @@
 | `SUPABASE_ACCESS_TOKEN` | `gh secret set SUPABASE_ACCESS_TOKEN --env production --repo ShibayanBiswas/arw-ml-lab` (stdin) |
 | `SUPABASE_DB_PASSWORD` | `gh secret set SUPABASE_DB_PASSWORD --env production --repo ShibayanBiswas/arw-ml-lab` (stdin) |
 | TradingLab submodule | `vendor/tradinglab` for **parity** tests vs thin FS16–18 (SADF/trendscan/MA-cross already online) |
-| Vercel MCP / CLI team scope | Open authorize link from agent (team `shibayan-biswas-projects`) or run `vercel link` in `frontend/` so `NEXT_PUBLIC_LAB_API_URL` can be set after Contabo hostname exists |
+| Vercel MCP / CLI team scope | Approve: https://vercel.com/sso/session-requests/gi977x3MZbHDi41KWqHIvLdCURztMlhs (single-use, ~10 min) or `vercel link` in `frontend/` — needed before setting `NEXT_PUBLIC_LAB_API_URL` after Contabo hostname exists |
 | GitHub Actions billing | CI/Deploy still die in ~2–4s (e.g. `44087280966`). Fix https://github.com/settings/billing — add payment method and/or raise Actions budget / clear “Stop usage when budget limit is reached”, then re-run failed workflows |
 
 ## Contabo move checklist (agent)
