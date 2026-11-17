@@ -213,3 +213,103 @@ def anomaly_embedding_scatter(
         },
         "seed": seed,
     }
+
+
+def _rank_elbow(ranks: np.ndarray, scores: np.ndarray) -> int | None:
+    """Rank at maximum perpendicular distance from the rank–score chord (elbow heuristic)."""
+    n = len(scores)
+    if n < 3:
+        return None
+    x0, y0 = 1.0, float(scores[0])
+    x1, y1 = float(n), float(scores[-1])
+    dx, dy = x1 - x0, y1 - y0
+    denom = float(np.hypot(dx, dy))
+    if denom == 0:
+        return None
+    dist = np.abs(dy * ranks - dx * scores + x1 * y0 - y1 * x0) / denom
+    return int(ranks[int(np.argmax(dist))])
+
+
+def anomaly_pareto_rank(
+    scores: np.ndarray,
+    *,
+    threshold: float | None = None,
+    plot_id: str = "ANO.P.PARETO",
+) -> dict[str, Any]:
+    """Ranked score curve with cumulative score mass (Pareto / elbow view)."""
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+
+    s = np.asarray(scores, dtype=float)
+    n = len(s)
+    if n == 0:
+        raise ValueError("scores must be non-empty")
+    order = np.argsort(-s, kind="stable")
+    ranked = s[order]
+    ranks = np.arange(1, n + 1, dtype=float)
+    total = float(np.sum(np.clip(ranked, 0.0, None)))
+    if total > 0:
+        cum_pct = np.cumsum(np.clip(ranked, 0.0, None)) / total * 100.0
+    else:
+        cum_pct = np.linspace(100.0 / n, 100.0, n)
+
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    fig.add_trace(
+        go.Scatter(
+            x=ranks,
+            y=ranked,
+            mode="lines+markers",
+            name="score",
+            marker=dict(size=4),
+            hovertemplate="rank %{x}<br>score %{y:.4f}<br>index %{customdata}<extra></extra>",
+            customdata=order,
+        ),
+        secondary_y=False,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=ranks,
+            y=cum_pct,
+            mode="lines",
+            name="cumulative %",
+            line=dict(dash="dot", color="#c9a227"),
+            hovertemplate="rank %{x}<br>cumulative %{y:.1f}%<extra></extra>",
+        ),
+        secondary_y=True,
+    )
+    if threshold is not None:
+        fig.add_hline(y=float(threshold), line_dash="dash", line_color="#7f8c8d", secondary_y=False)
+    elbow_rank = _rank_elbow(ranks, ranked)
+    if elbow_rank is not None:
+        fig.add_vline(
+            x=float(elbow_rank),
+            line_dash="dot",
+            line_color="#c9a227",
+            annotation_text="elbow",
+        )
+    fig.update_xaxes(title_text="Rank (1 = most anomalous)")
+    fig.update_yaxes(title_text="Anomaly score", secondary_y=False)
+    fig.update_yaxes(title_text="Cumulative % of score mass", secondary_y=True, range=[0, 105])
+    fig.update_layout(title="Ranked anomaly scores (Pareto)", height=400)
+
+    elbow_idx = elbow_rank - 1 if elbow_rank is not None else None
+    return {
+        "id": plot_id,
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "n": n,
+            "rank": ranks.astype(int).tolist(),
+            "row_index": order.tolist(),
+            "score": [float(v) for v in ranked],
+            "cumulative_pct": [float(v) for v in cum_pct],
+            "elbow_rank": elbow_rank,
+            "elbow_score": float(ranked[elbow_idx]) if elbow_idx is not None else None,
+            "threshold": threshold,
+            "score_at_threshold_rank": (
+                int(np.argmax(ranked >= threshold) + 1)
+                if threshold is not None and np.any(ranked >= threshold)
+                else None
+            ),
+        },
+    }
