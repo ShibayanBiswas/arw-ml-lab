@@ -41,8 +41,8 @@ def assert_caddy_buffers_off_or_flush() -> dict[str, str]:
         raise AssertionError("Caddyfile must proxy to lab-api")
     if "flush_interval" not in caddy:
         raise AssertionError("Caddy reverse_proxy must set flush_interval for SSE")
-    if "event-stream" not in caddy and "notSse" not in caddy:
-        raise AssertionError("Caddy must skip gzip/zstd for SSE (event-stream)")
+    if "*/events*" not in caddy and "notSse" not in caddy:
+        raise AssertionError("Caddy must skip gzip/zstd for */events* SSE paths")
     return {"proxy": "lab-api", "flush_interval": True, "sse_no_encode": True}
 
 
