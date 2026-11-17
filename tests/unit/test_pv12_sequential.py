@@ -82,3 +82,14 @@ def test_pv12_ui_message_registered() -> None:
     assert "PV12" in IMPLEMENTED_PV_CODES
     msg = pv_message_for_code("PV12")
     assert "lookback" in msg["fix"].lower() or "time" in msg["fix"].lower()
+
+
+def test_pv12_stores_insufficient_history_rows_on_report() -> None:
+    df = pd.DataFrame(
+        {
+            "x1": [1.0, 2.0, 3.0, 4.0, 5.0],
+            "ts": pd.date_range("2024-01-01", periods=5, freq="D"),
+        }
+    )
+    report = validate_predict_frame(df, _base_contract(lookback=2))
+    assert len(report.insufficient_history_rows) == 2

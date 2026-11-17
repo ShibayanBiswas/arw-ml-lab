@@ -50,6 +50,7 @@ class ValidationReport:
     coerced: pd.DataFrame | None = None
     dropped_columns: list[str] = field(default_factory=list)
     rename_map: dict[str, str] = field(default_factory=dict)
+    insufficient_history_rows: list[Any] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         def _ser(items: list[PVIssue]) -> list[dict[str, Any]]:
@@ -430,6 +431,7 @@ def _apply_pv12_sequential(
             )
         )
     elif n_insuff > 0:
+        report.insufficient_history_rows = list(insufficient_idx)
         report.warnings.append(
             PVIssue(
                 code="PV12",

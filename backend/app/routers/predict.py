@@ -246,6 +246,14 @@ def _score_validated(
     for col in scored.get("classification_columns") or []:
         if col in scored:
             out_df[col] = scored[col]
+    # PV12 — row flag for lag lookback shortfall (oneshot-c254)
+    insuff = list(getattr(report, "insufficient_history_rows", None) or [])
+    if insuff:
+        flag = pd.Series(False, index=out_df.index)
+        for idx in insuff:
+            if idx in flag.index:
+                flag.loc[idx] = True
+        out_df["insufficient_history"] = flag.to_numpy()
     csv_bytes = predictions_to_safe_csv(out_df)
     return {
         "validation": payload,
