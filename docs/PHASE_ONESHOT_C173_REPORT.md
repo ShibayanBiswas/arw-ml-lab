@@ -25,4 +25,4 @@
 - [x] Import allowlist green.
 - [x] Rule 70: sklearn stump checks in D6 only; contract orchestrates Intake.
 
-**Ship commit:** (pending)
+**Ship commit:** `8509076`
