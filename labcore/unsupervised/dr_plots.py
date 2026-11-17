@@ -286,6 +286,111 @@ def pca_loadings_heatmap(
     }
 
 
+def pca_correlation_circle(
+    X: np.ndarray,
+    *,
+    feature_names: list[str] | None = None,
+    pc_x: int = 1,
+    pc_y: int = 2,
+    seed: int = 42,
+    loading_threshold: float = 0.4,
+) -> dict[str, Any]:
+    """DR.P.CORR_CIRCLE — variable correlations with PC_i × PC_j on the unit circle."""
+    import plotly.graph_objects as go
+
+    X = np.asarray(X, dtype=float)
+    n_features = X.shape[1]
+    if pc_x == pc_y:
+        raise ValueError("pc_x and pc_y must differ")
+    if not (1 <= pc_x <= n_features and 1 <= pc_y <= n_features):
+        raise ValueError("pc_x and pc_y must be within [1, n_features]")
+
+    names = feature_names or [f"f{j}" for j in range(n_features)]
+    if len(names) != n_features:
+        raise ValueError("feature_names length must match n_features")
+
+    Xs = StandardScaler().fit_transform(X)
+    n_comp = min(Xs.shape[1], max(1, Xs.shape[0] - 1))
+    model = PCA(n_components=n_comp, random_state=seed)
+    scores = model.fit_transform(Xs)
+    ix, iy = pc_x - 1, pc_y - 1
+
+    corrs = np.empty((n_features, 2), dtype=float)
+    for j in range(n_features):
+        corrs[j, 0] = float(np.corrcoef(Xs[:, j], scores[:, ix])[0, 1])
+        corrs[j, 1] = float(np.corrcoef(Xs[:, j], scores[:, iy])[0, 1])
+    cx, cy = corrs[:, 0], corrs[:, 1]
+    radii = np.sqrt(cx**2 + cy**2)
+    strong = (np.abs(cx) > loading_threshold) | (np.abs(cy) > loading_threshold)
+
+    theta = np.linspace(0.0, 2.0 * np.pi, 181)
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=np.cos(theta).tolist(),
+            y=np.sin(theta).tolist(),
+            mode="lines",
+            line=dict(color="rgba(80,80,80,0.45)", dash="dash"),
+            name="unit circle",
+            hoverinfo="skip",
+        )
+    )
+    fig.add_hline(y=0.0, line_width=0.5, line_color="rgba(120,120,120,0.35)")
+    fig.add_vline(x=0.0, line_width=0.5, line_color="rgba(120,120,120,0.35)")
+    for j in range(n_features):
+        color = "#c9a227" if strong[j] else "rgba(120,120,120,0.8)"
+        width = 2.5 if strong[j] else 1.25
+        fig.add_trace(
+            go.Scatter(
+                x=[0.0, float(cx[j])],
+                y=[0.0, float(cy[j])],
+                mode="lines+markers+text",
+                text=["", names[j]],
+                textposition="top center",
+                line=dict(color=color, width=width),
+                marker=dict(size=[0, 7]),
+                showlegend=False,
+                hovertemplate=(
+                    f"{names[j]}<br>r(PC{pc_x})=%{{x:.3f}}<br>r(PC{pc_y})=%{{y:.3f}}"
+                    "<extra></extra>"
+                ),
+            )
+        )
+
+    evr = np.asarray(model.explained_variance_ratio_, dtype=float)
+    fig.update_layout(
+        title=(
+            f"Correlation circle PC{pc_x} × PC{pc_y} "
+            f"({evr[ix] * 100:.1f}% / {evr[iy] * 100:.1f}% var)"
+        ),
+        xaxis_title=f"Correlation with PC{pc_x}",
+        yaxis_title=f"Correlation with PC{pc_y}",
+        xaxis=dict(range=[-1.05, 1.05], scaleanchor="y", scaleratio=1),
+        yaxis=dict(range=[-1.05, 1.05]),
+        height=480,
+    )
+    cos2 = (cx**2 + cy**2).tolist()
+    return {
+        "id": "DR.P.CORR_CIRCLE",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "pc_x": pc_x,
+            "pc_y": pc_y,
+            "explained_variance_ratio_pc_x": float(evr[ix]),
+            "explained_variance_ratio_pc_y": float(evr[iy]),
+            "correlation_pc_x": [float(v) for v in cx],
+            "correlation_pc_y": [float(v) for v in cy],
+            "cos2_in_plane": [float(v) for v in cos2],
+            "feature": names,
+            "max_radius": float(np.max(radii)) if radii.size else 0.0,
+            "strong_loading_indices": [j for j, flag in enumerate(strong) if flag],
+            "loading_threshold": loading_threshold,
+        },
+        "seed": seed,
+    }
+
+
 def shepard_diagram(
     X: np.ndarray,
     embedding: np.ndarray,

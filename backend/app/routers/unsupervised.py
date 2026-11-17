@@ -11,6 +11,7 @@ from labcore.unsupervised.anomaly_plots import anomaly_ranked_bar
 from labcore.unsupervised.cluster_plots import kmeans_k_sweep, silhouette_knife
 from labcore.unsupervised.dr_plots import (
     pca_biplot,
+    pca_correlation_circle,
     pca_cumulative_variance,
     pca_loadings_heatmap,
     pca_scree,
@@ -198,6 +199,27 @@ def unsupervised_loadings(
             feature_names=cols,
             seed=body.seed,
             max_components=max_pcs,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/api/v1/unsupervised/dr/correlation-circle")
+def unsupervised_correlation_circle(
+    body: UnsupBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """DR.P.CORR_CIRCLE — variable × PC correlations on PC_x × PC_y (seed 42)."""
+    _ = user
+    df = _frame(body.rows)
+    cols = [str(c) for c in df.columns]
+    try:
+        return pca_correlation_circle(
+            df.to_numpy(dtype=float),
+            feature_names=cols,
+            pc_x=body.pc_x,
+            pc_y=body.pc_y,
+            seed=body.seed,
         )
     except Exception as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
