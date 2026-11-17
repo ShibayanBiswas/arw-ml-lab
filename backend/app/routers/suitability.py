@@ -11,6 +11,7 @@ from labcore.suitability import (
     plot_holding_period_distribution,
     plot_min_ffd,
     plot_price_cusum,
+    plot_sadf,
     plot_sample_barriers,
     plot_uniqueness_concurrency,
     run_suitability,
@@ -35,6 +36,10 @@ class SuitabilityBody(BaseModel):
     n_samples: int = Field(default=3, ge=1, le=6)
     cusum_mult: float = Field(default=1.0, gt=0.0, le=5.0)
     d_step: float = Field(default=0.05, gt=0.01, le=0.25)
+    min_window: int = Field(default=30, ge=10, le=120)
+    max_lookback: int = Field(default=60, ge=20, le=252)
+    sadf_maxlag: int = Field(default=0, ge=0, le=10)
+    sadf_end_step: int = Field(default=3, ge=1, le=10)
 
 
 def _load_suitability_frame(
@@ -193,5 +198,30 @@ def suitability_min_ffd_plot(
     df, _time_col = _load_suitability_frame(body)
     try:
         return plot_min_ffd(df, price_col=body.price_col, d_step=body.d_step, seed=42)
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/api/v1/suitability/plots/sadf")
+def suitability_sadf_plot(
+    body: SuitabilityBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """FS.P.SADF — supremum ADF statistic over time (seed 42 metadata)."""
+    _ = user
+    df, time_col = _load_suitability_frame(body)
+    if body.max_lookback < body.min_window:
+        raise HTTPException(status_code=422, detail="max_lookback must be ≥ min_window")
+    try:
+        return plot_sadf(
+            df,
+            price_col=body.price_col,
+            time_col=time_col,
+            min_window=body.min_window,
+            max_lookback=body.max_lookback,
+            maxlag=body.sadf_maxlag,
+            end_step=body.sadf_end_step,
+            seed=42,
+        )
     except Exception as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc

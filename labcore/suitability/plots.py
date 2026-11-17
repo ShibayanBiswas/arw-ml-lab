@@ -811,3 +811,108 @@ def plot_min_ffd(
             "scan": scan["rows"],
         },
     }
+
+
+def plot_sadf(
+    df: pd.DataFrame,
+    *,
+    price_col: str | None = None,
+    time_col: str | None = None,
+    min_window: int = 30,
+    max_lookback: int = 60,
+    maxlag: int = 0,
+    end_step: int = 3,
+    seed: int = 42,
+) -> dict[str, Any]:
+    """FS.P.SADF — supremum ADF statistic over time (log price, PSY 2015)."""
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+
+    from labcore.finance.sadf import compute_sadf_series
+
+    _ = seed
+    col = price_col or _detect_price_col(df)
+    if col is None:
+        raise ValueError("no price column detected for SADF plot")
+    raw = pd.to_numeric(df[col], errors="coerce")
+    mask = raw.notna()
+    if int(mask.sum()) < min_window + 5:
+        raise ValueError("need ≥ min_window+5 prices for SADF")
+    px = raw.loc[mask].astype(float)
+    work = df.loc[mask].reset_index(drop=True)
+    log_px = np.log(px.clip(lower=1e-12).to_numpy(dtype=float))
+    sadf = compute_sadf_series(
+        log_px,
+        min_window=min_window,
+        max_lookback=max_lookback,
+        maxlag=maxlag,
+        end_step=end_step,
+    )
+    labels = _time_axis(work, time_col)
+    x = [labels[i] if i < len(labels) else str(i) for i in sadf["end_indices"]]
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    fig.add_trace(
+        go.Scatter(
+            x=x,
+            y=sadf["sadf"],
+            mode="lines",
+            name="SADF",
+            line=dict(color="#c9a227"),
+            hovertemplate="SADF=%{y:.3f}<extra></extra>",
+        ),
+        secondary_y=False,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=labels,
+            y=log_px.tolist(),
+            mode="lines",
+            name="log price",
+            line=dict(color="#4a5568", width=1),
+            opacity=0.55,
+            hovertemplate="log px=%{y:.3f}<extra></extra>",
+        ),
+        secondary_y=True,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=[x[sadf["peak_index"]]],
+            y=[sadf["peak_sadf"]],
+            mode="markers",
+            name="peak SADF",
+            marker=dict(color="#b83232", size=9),
+            hovertemplate="peak SADF=%{y:.3f}<extra></extra>",
+        ),
+        secondary_y=False,
+    )
+    fig.update_xaxes(title_text="time")
+    fig.update_yaxes(title_text="SADF (sup ADF t-stat)", secondary_y=False)
+    fig.update_yaxes(title_text="log price", secondary_y=True)
+    fig.update_layout(
+        title=(
+            "Supremum ADF over backward windows "
+            f"(peak {sadf['peak_sadf']:.2f} at index {sadf['peak_end']})"
+        ),
+        height=460,
+        legend=dict(orientation="h", yanchor="bottom", y=1.02),
+    )
+    return {
+        "id": "FS.P.SADF",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "price_col": col,
+            "n_obs": sadf["n_obs"],
+            "min_window": min_window,
+            "max_lookback": max_lookback,
+            "maxlag": maxlag,
+            "end_step": end_step,
+            "peak_end": sadf["peak_end"],
+            "peak_sadf": sadf["peak_sadf"],
+            "seed": seed,
+            "series": [
+                {"end_index": int(e), "sadf": float(v)}
+                for e, v in zip(sadf["end_indices"], sadf["sadf"], strict=True)
+            ],
+        },
+    }
