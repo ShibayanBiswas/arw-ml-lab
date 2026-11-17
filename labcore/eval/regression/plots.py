@@ -1653,3 +1653,106 @@ def plot_alpha_cv(
             "alpha_best": alpha_best,
         },
     }
+
+
+def plot_pi_band(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    y_lower: np.ndarray,
+    y_upper: np.ndarray,
+    *,
+    confidence_level: float | None = None,
+) -> dict[str, Any]:
+    """REE.P.PI_BAND — intervals sorted by ŷ with actuals (MAPIE interval layout)."""
+    import plotly.graph_objects as go
+    from mapie.metrics.regression import (
+        regression_coverage_score,
+        regression_mean_width_score,
+    )
+
+    yt = np.asarray(y_true, dtype=float).ravel()
+    yp = np.asarray(y_pred, dtype=float).ravel()
+    lo = np.asarray(y_lower, dtype=float).ravel()
+    hi = np.asarray(y_upper, dtype=float).ravel()
+    n = len(yt)
+    if not (len(yp) == len(lo) == len(hi) == n):
+        raise ValueError("y_true, y_pred, y_lower, y_upper must have the same length")
+    if n == 0:
+        raise ValueError("need at least one sample for PI_BAND")
+
+    y_intervals = np.stack([lo, hi], axis=1)[:, :, np.newaxis]
+    picp = float(np.asarray(regression_coverage_score(yt, y_intervals)).ravel()[0])
+    mpiw = float(np.asarray(regression_mean_width_score(y_intervals)).ravel()[0])
+
+    order = np.argsort(yp, kind="stable")
+    rank = np.arange(n, dtype=float)
+    yt_s = yt[order]
+    yp_s = yp[order]
+    lo_s = lo[order]
+    hi_s = hi[order]
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=rank,
+            y=hi_s,
+            mode="lines",
+            name="Upper",
+            line={"width": 0},
+            showlegend=False,
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=rank,
+            y=lo_s,
+            mode="lines",
+            name="PI",
+            line={"width": 0},
+            fill="tonexty",
+            fillcolor="rgba(201, 162, 39, 0.2)",
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=rank,
+            y=yp_s,
+            mode="lines",
+            name="Predicted",
+            line={"color": "#c9a227"},
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=rank,
+            y=yt_s,
+            mode="markers",
+            name="Actual",
+            marker={"size": 5, "opacity": 0.65},
+        )
+    )
+    title = "Prediction intervals (sorted by ŷ)"
+    if confidence_level is not None:
+        title += f" — nominal {confidence_level:.0%}"
+    fig.update_layout(
+        title=title,
+        xaxis_title="Rank (sorted by predicted)",
+        yaxis_title="Value",
+        height=440,
+    )
+    return {
+        "id": "REE.P.PI_BAND",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "n": n,
+            "confidence_level": confidence_level,
+            "picp": picp,
+            "mean_interval_width": mpiw,
+            "rank": rank.tolist(),
+            "y_true_sorted": yt_s.tolist(),
+            "y_pred_sorted": yp_s.tolist(),
+            "y_lower_sorted": lo_s.tolist(),
+            "y_upper_sorted": hi_s.tolist(),
+        },
+    }
