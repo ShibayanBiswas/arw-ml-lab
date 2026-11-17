@@ -353,16 +353,25 @@ export async function permutationExplain(
   return explainRows(modelId, rows, "permutation", targetValues);
 }
 
+export type UnsupervisedRunBody = {
+  rows: Record<string, unknown>[];
+  algorithm: string;
+  n_clusters?: number;
+  n_components?: number;
+  contamination?: number;
+  seed?: number;
+  top_n?: number;
+};
+
+export type AnomalyCataloguePlot = "score-hist" | "ranked" | "embed";
+
+export function unsupervisedAnomalyPlotPath(plot: AnomalyCataloguePlot): string {
+  return `/api/v1/unsupervised/anomaly/${plot}`;
+}
+
 export async function runUnsupervised(
   family: "clustering" | "dr" | "anomaly",
-  body: {
-    rows: Record<string, unknown>[];
-    algorithm: string;
-    n_clusters?: number;
-    n_components?: number;
-    contamination?: number;
-    seed?: number;
-  }
+  body: UnsupervisedRunBody
 ) {
   const res = await fetch(`${labApiBase()}/api/v1/unsupervised/${family}`, {
     method: "POST",
@@ -372,6 +381,22 @@ export async function runUnsupervised(
   if (!res.ok) {
     const detail = await res.text();
     throw new Error(`unsupervised ${family}: ${res.status} ${detail}`);
+  }
+  return (await res.json()) as Record<string, unknown>;
+}
+
+export async function runUnsupervisedAnomalyPlot(
+  plot: AnomalyCataloguePlot,
+  body: UnsupervisedRunBody
+) {
+  const res = await fetch(`${labApiBase()}${unsupervisedAnomalyPlotPath(plot)}`, {
+    method: "POST",
+    headers: { ...labAuthHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ ...body, seed: body.seed ?? 42 }),
+  });
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(`anomaly plot ${plot}: ${res.status} ${detail}`);
   }
   return (await res.json()) as Record<string, unknown>;
 }

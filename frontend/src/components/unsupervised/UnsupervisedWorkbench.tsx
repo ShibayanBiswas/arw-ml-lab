@@ -1,7 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { runUnsupervised } from "@/lib/api";
+import { useMemo, useState } from "react";
+import { ArtefactPanel, type ArtefactView } from "@/components/eda/ArtefactPanel";
+import {
+  runUnsupervised,
+  runUnsupervisedAnomalyPlot,
+  type AnomalyCataloguePlot,
+} from "@/lib/api";
 
 type Mode = "home" | "setup" | "dr" | "clustering" | "anomaly" | "selection" | "profiles" | "compare";
 
@@ -10,6 +15,12 @@ const DEMO_ROWS = Array.from({ length: 40 }, (_, i) => ({
   y: Math.cos(i / 4) + (i % 5) * 0.15,
   z: i * 0.02,
 }));
+
+const ANOMALY_PLOTS: { id: AnomalyCataloguePlot; label: string; artefact: string }[] = [
+  { id: "score-hist", label: "Score histogram", artefact: "ANO.P.SCORE_HIST" },
+  { id: "ranked", label: "Top-N ranked", artefact: "ANO.P.RANKED" },
+  { id: "embed", label: "PCA embed", artefact: "ANO.P.EMBED" },
+];
 
 export function UnsupervisedWorkbench({ mode }: { mode: Mode }) {
   const family =
@@ -20,21 +31,57 @@ export function UnsupervisedWorkbench({ mode }: { mode: Mode }) {
   const [status, setStatus] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<Record<string, unknown> | null>(null);
+  const [plotArtefact, setPlotArtefact] = useState<ArtefactView | null>(null);
+
+  const runBody = useMemo(
+    () => ({
+      rows: DEMO_ROWS,
+      algorithm,
+      n_clusters: 3,
+      n_components: 2,
+      contamination: 0.1,
+      seed: 42,
+      top_n: 12,
+    }),
+    [algorithm]
+  );
 
   async function run() {
     setError(null);
+    setPlotArtefact(null);
     setStatus(`Running ${family}/${algorithm}…`);
     try {
-      const out = await runUnsupervised(family, {
-        rows: DEMO_ROWS,
-        algorithm,
-        n_clusters: 3,
-        n_components: 2,
-        contamination: 0.1,
-        seed: 42,
-      });
+      const out = await runUnsupervised(family, runBody);
       setResult(out);
       setStatus("Done");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+      setStatus("");
+    }
+  }
+
+  async function runPlot(plot: AnomalyCataloguePlot) {
+    setError(null);
+    setStatus(`Plot ${plot} (${algorithm})…`);
+    try {
+      const out = await runUnsupervisedAnomalyPlot(plot, runBody);
+      const id = String(out.id ?? "");
+      setPlotArtefact({
+        id,
+        kind: "plot",
+        title: id || plot,
+        plotly: (out.plotly as Record<string, unknown> | undefined) ?? null,
+        numbers: (out.numbers as Record<string, unknown> | undefined) ?? undefined,
+      });
+      setResult({
+        id: out.id,
+        algorithm: out.algorithm,
+        contamination: out.contamination,
+        n_outliers: out.n_outliers,
+        seed: out.seed,
+        numbers: out.numbers,
+      });
+      setStatus("Plot ready");
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setStatus("");
@@ -53,7 +100,8 @@ export function UnsupervisedWorkbench({ mode }: { mode: Mode }) {
       <header>
         <h1 className="font-display text-2xl text-[var(--ink)]">Unsupervised · {mode}</h1>
         <p className="mt-1 text-sm text-[var(--muted)]">
-          Clustering, DR and anomaly via sklearn (seed 42). Demo uses a synthetic 40×3 matrix.
+          Clustering, DR and anomaly via sklearn/pyod (seed 42). Demo uses a synthetic 40×3 matrix;
+          anomaly mode can render ANO catalogue plots from lab-api.
         </p>
       </header>
 
@@ -77,12 +125,27 @@ export function UnsupervisedWorkbench({ mode }: { mode: Mode }) {
           className="bg-[var(--gold)] px-3 py-1.5 text-sm text-[var(--ink)]"
           onClick={() => void run()}
         >
-          Run
+          Run fit
         </button>
+        {family === "anomaly"
+          ? ANOMALY_PLOTS.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className="border border-[var(--line)] px-3 py-1.5 text-sm"
+                title={p.artefact}
+                onClick={() => void runPlot(p.id)}
+              >
+                {p.label}
+              </button>
+            ))
+          : null}
       </div>
 
       {status && <p className="text-sm text-[var(--muted)]">{status}</p>}
       {error && <p className="text-sm text-red-700">{error}</p>}
+
+      {plotArtefact ? <ArtefactPanel artefact={plotArtefact} /> : null}
 
       {result && (
         <pre className="max-h-[28rem] overflow-auto border border-[var(--line)] bg-[var(--paper)] p-3 text-xs">
@@ -95,6 +158,7 @@ export function UnsupervisedWorkbench({ mode }: { mode: Mode }) {
               n_outliers: result.n_outliers,
               explained_variance_ratio: result.explained_variance_ratio,
               n_components: result.n_components,
+              numbers: result.numbers,
             },
             null,
             2
