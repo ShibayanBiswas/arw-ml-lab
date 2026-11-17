@@ -22,4 +22,4 @@
 - [x] Seed 42 on API response.
 - [x] Import allowlist green.
 
-**Ship commit:** _(set after commit)_
+**Ship commit:** `8e379aa`
