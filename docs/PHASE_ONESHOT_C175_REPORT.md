@@ -24,4 +24,4 @@
 - [x] Import allowlist green.
 - [x] Rule 70: statsmodels VIF + existing EDA/insights paths only.
 
-**Ship commit:** (pending)
+**Ship commit:** `92e191a`
