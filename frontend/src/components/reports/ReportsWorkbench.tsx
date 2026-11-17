@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { labApiBase } from "@/lib/api";
 import { labAuthHeaders } from "@/lib/lab-session";
+import { ExecutiveSummaryPanel } from "@/components/reports/ExecutiveSummaryPanel";
 import { ReproductionNotebookPanel } from "@/components/reports/ReproductionNotebookPanel";
 
 type Mode = "home" | "builder" | "templates" | "history";
@@ -42,7 +43,12 @@ export function ReportsWorkbench({ mode }: { mode: Mode }) {
           FACTS-only report builder (ARCHITECTURE §25). AI text is advisory.
         </p>
       </header>
-      {mode === "templates" && <ReproductionNotebookPanel />}
+      {mode === "templates" && (
+        <>
+          <ExecutiveSummaryPanel />
+          <ReproductionNotebookPanel />
+        </>
+      )}
       {mode === "builder" && (
         <>
           <button

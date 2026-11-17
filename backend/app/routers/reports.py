@@ -5,7 +5,13 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, Depends
-from labcore.reports import build_reproduction_notebook, build_run_report, notebook_to_json
+from labcore.reports import (
+    build_executive_html,
+    build_reproduction_notebook,
+    build_run_report,
+    notebook_to_json,
+    render_executive_pdf_b64,
+)
 from pydantic import BaseModel, Field
 
 from backend.app.security import AuthUser, require_write_role
@@ -34,13 +40,44 @@ def reports_build(
     user: AuthUser = Depends(require_write_role),
 ) -> dict[str, Any]:
     _ = user
-    return build_run_report(
+    report = build_run_report(
         title=body.title,
         stage=body.stage,
         facts=body.facts,
         insights=body.insights,
         seed=42,
     )
+    report["id"] = "REP.T.BUILDER"
+    return report
+
+
+@router.post("/api/v1/reports/executive")
+def reports_executive(
+    body: ReportBody,
+    user: AuthUser = Depends(require_write_role),
+    include_pdf: bool = False,
+) -> dict[str, Any]:
+    _ = user
+    html_doc = build_executive_html(
+        title=body.title,
+        stage=body.stage,
+        facts=body.facts,
+        insights=body.insights,
+        seed=42,
+    )
+    out: dict[str, Any] = {
+        "id": "REP.T.EXECUTIVE",
+        "seed": 42,
+        "html": html_doc,
+        "pdf_available": False,
+    }
+    if include_pdf:
+        try:
+            out["pdf_base64"] = render_executive_pdf_b64(html_doc)
+            out["pdf_available"] = True
+        except Exception:  # noqa: BLE001 — Pango missing on dev Windows
+            out["pdf_available"] = False
+    return out
 
 
 @router.post("/api/v1/reports/notebook")
