@@ -267,6 +267,12 @@ async def predict_batch_upload(
     suf = name.rsplit(".", 1)[-1].lower() if "." in name else "csv"
     try:
         if suf in {"xlsx", "xls"}:
+            from labcore.security.upload_guard import XlsxUploadRejected, inspect_xlsx_archive
+
+            try:
+                inspect_xlsx_archive(raw)
+            except XlsxUploadRejected as exc:
+                raise HTTPException(status_code=422, detail=f"PV01: {exc.message}") from exc
             df = pd.read_excel(io.BytesIO(raw), engine="calamine")
         else:
             df = pd.read_csv(io.BytesIO(raw))

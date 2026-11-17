@@ -98,6 +98,9 @@ def template_xlsx_bytes(
     feature_names: list[str] | None = None,
     n_example_rows: int = 1,
 ) -> bytes:
+    from labcore.security.upload_guard import ensure_defused_xml_stdlib
+
+    ensure_defused_xml_stdlib()
     from openpyxl import Workbook
 
     df = template_dataframe(contract, feature_names=feature_names, n_example_rows=n_example_rows)

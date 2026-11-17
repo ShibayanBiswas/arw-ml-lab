@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import csv
 import io
-import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
@@ -17,6 +16,7 @@ import numpy as np
 import pandas as pd
 
 from labcore.security.formula_escape import FORMULA_TRIGGER_PREFIXES, escape_formula_export_cell
+from labcore.security.upload_guard import XlsxUploadRejected, inspect_xlsx_archive
 
 Severity = Literal["block", "warn", "info", "sanitise", "deferred"]
 
@@ -27,8 +27,6 @@ _FORMULA_PREFIXES = FORMULA_TRIGGER_PREFIXES
 
 DEFAULT_MAX_BYTES = 50 * 1024 * 1024  # 50 MB
 DEFAULT_MAX_ROWS = 1_000_000
-ZIP_BOMB_RATIO = 100
-ZIP_BOMB_UNCOMPRESSED = 500 * 1024 * 1024
 
 
 @dataclass
@@ -163,31 +161,17 @@ def _coerce_numeric(series: pd.Series, *, integer: bool) -> tuple[pd.Series, pd.
 
 
 def check_zip_bomb(path: Path) -> PVIssue | None:
-    """PV01 zip-bomb guard for XLSX (uncompressed/compressed > 100 or > 500 MB)."""
+    """PV01 zip-bomb guard for XLSX (SEC-05 / ``labcore.security.upload_guard``)."""
     if path.suffix.lower() not in {".xlsx", ".xls"}:
         return None
     try:
-        with zipfile.ZipFile(path) as zf:
-            compressed = sum(i.compress_size for i in zf.infolist()) or 1
-            uncompressed = sum(i.file_size for i in zf.infolist())
-            ratio = uncompressed / compressed
-            if uncompressed > ZIP_BOMB_UNCOMPRESSED or ratio > ZIP_BOMB_RATIO:
-                return PVIssue(
-                    code="PV01",
-                    severity="block",
-                    message="zip-bomb guard: XLSX compression ratio or size rejected",
-                    details={
-                        "uncompressed": uncompressed,
-                        "compressed": compressed,
-                        "ratio": ratio,
-                    },
-                )
-    except zipfile.BadZipFile:
+        inspect_xlsx_archive(path)
+    except XlsxUploadRejected as exc:
         return PVIssue(
             code="PV01",
             severity="block",
-            message="invalid XLSX/ZIP archive",
-            details={"source": str(path)},
+            message=exc.message,
+            details=dict(exc.details, source=str(path)),
         )
     return None
 

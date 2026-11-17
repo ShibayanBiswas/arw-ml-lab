@@ -8,6 +8,8 @@ from typing import Any
 
 import pandas as pd
 
+from labcore.security.upload_guard import XlsxUploadRejected, inspect_xlsx_archive
+
 
 def content_hash_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
@@ -37,6 +39,10 @@ def read_tabular(
     if suffix in {".jsonl", ".ndjson"}:
         return pd.read_json(path, lines=True)
     if suffix in {".xlsx", ".xls"}:
+        try:
+            inspect_xlsx_archive(path)
+        except XlsxUploadRejected as exc:
+            raise ValueError(exc.message) from exc
         return pd.read_excel(
             path, sheet_name=sheet_name if sheet_name is not None else 0, engine="calamine"
         )
