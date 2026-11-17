@@ -468,3 +468,89 @@ def plot_regression_cd(
         "plotly": fig,
         "numbers": {**result, "metric": metric, "higher_is_better": higher_is_better},
     }
+
+
+def _holm_adjust_symmetric(pmat: np.ndarray) -> np.ndarray:
+    """Holm–Bonferroni adjustment for unique off-diagonal p-values (statsmodels)."""
+    from statsmodels.stats.multitest import multipletests
+
+    k = int(pmat.shape[0])
+    idx_i, idx_j = np.triu_indices(k, k=1)
+    pvals = pmat[idx_i, idx_j]
+    _, padj, _, _ = multipletests(pvals, method="holm")
+    out = np.ones((k, k), dtype=float)
+    for n, (i, j) in enumerate(zip(idx_i, idx_j, strict=True)):
+        out[i, j] = float(padj[n])
+        out[j, i] = float(padj[n])
+    return out
+
+
+def plot_regression_pvalue_heatmap(
+    fold_scores: dict[str, list[float]],
+    *,
+    higher_is_better: bool = False,
+    metric: str = "rmse",
+    alpha: float = 0.05,
+) -> dict[str, Any]:
+    """REE.P.PVALUE_HEATMAP — Nemenyi pairwise p-values with Holm adjustment."""
+    import pandas as pd
+    import plotly.graph_objects as go
+    from scikit_posthocs import posthoc_nemenyi_friedman, sign_array
+
+    df = pd.DataFrame({k: np.asarray(v, dtype=float) for k, v in fold_scores.items()})
+    if df.shape[1] < 2 or df.shape[0] < 2:
+        return {
+            "id": "REE.P.PVALUE_HEATMAP",
+            "kind": "plot",
+            "plotly": {
+                "data": [],
+                "layout": {"title": "P-value heatmap needs ≥2 models and ≥2 folds"},
+            },
+            "numbers": {"status": "not computed", "reason": "need ≥2 models and ≥2 folds"},
+        }
+    work = df if higher_is_better else -df
+    names = list(work.columns)
+    raw = np.asarray(posthoc_nemenyi_friedman(work.to_numpy()), dtype=float)
+    raw_df = pd.DataFrame(raw, index=names, columns=names)
+    holm = _holm_adjust_symmetric(raw_df.to_numpy(dtype=float))
+    holm_df = pd.DataFrame(holm, index=names, columns=names)
+    sig = sign_array(holm_df, alpha=alpha)
+    text = np.where(
+        sig == 1,
+        np.char.add(np.round(holm, 3).astype(str), "*"),
+        np.round(holm, 3).astype(str),
+    )
+    np.fill_diagonal(text, "—")
+    fig = go.Figure(
+        go.Heatmap(
+            z=holm,
+            x=names,
+            y=names,
+            colorscale="Viridis_r",
+            zmin=0.0,
+            zmax=1.0,
+            text=text,
+            texttemplate="%{text}",
+            hovertemplate="%{y} vs %{x}<br>Holm p=%{z:.4f}<extra></extra>",
+        )
+    )
+    fig.update_layout(
+        title=f"Pairwise p-values ({metric}, Holm)",
+        xaxis_title="Model",
+        yaxis_title="Model",
+        height=max(320, 56 * len(names)),
+    )
+    return {
+        "id": "REE.P.PVALUE_HEATMAP",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "status": "ok",
+            "metric": metric,
+            "higher_is_better": higher_is_better,
+            "alpha": alpha,
+            "nemenyi_pvalues": raw_df.to_dict(),
+            "holm_pvalues": holm_df.to_dict(),
+            "significant_pairs": sign_array(holm_df, alpha=alpha).tolist(),
+        },
+    }

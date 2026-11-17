@@ -28,7 +28,7 @@ def friedman_nemenyi(
     # ranks: average rank per model (1 = best)
     ranks = scores.rank(axis=1, ascending=False, method="average")
     mean_ranks = ranks.mean(axis=0).to_dict()
-    posthoc = posthoc_nemenyi_friedman(scores.to_numpy())
+    posthoc = np.asarray(posthoc_nemenyi_friedman(scores.to_numpy()), dtype=float)
     posthoc_df = pd.DataFrame(posthoc, index=cols, columns=cols)
     k = len(cols)
     n = len(scores)
