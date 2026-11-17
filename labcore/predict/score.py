@@ -149,8 +149,28 @@ def predict_batch(
     }
     if hasattr(pipeline, "predict_proba"):
         try:
-            proba = np.asarray(pipeline.predict_proba(frame))
+            proba = np.asarray(pipeline.predict_proba(frame), dtype=float)
             out["probabilities"] = proba.tolist()
+            # §45.4 classification columns (from library proba; scipy entropy)
+            if proba.ndim == 2 and proba.shape[1] >= 2:
+                from scipy.stats import entropy as _scipy_entropy
+
+                conf = proba.max(axis=1)
+                # top-1 − top-2 margin
+                part = np.partition(proba, -2, axis=1)
+                margin = part[:, -1] - part[:, -2]
+                # normalised entropy in [0, 1]
+                h = _scipy_entropy(proba, axis=1, base=2)
+                h_max = np.log2(float(proba.shape[1]))
+                h_norm = h / h_max if h_max > 0 else h
+                out["pred_confidence"] = conf.tolist()
+                out["pred_margin"] = margin.tolist()
+                out["pred_entropy"] = h_norm.tolist()
+                out["classification_columns"] = [
+                    "pred_confidence",
+                    "pred_margin",
+                    "pred_entropy",
+                ]
         except Exception:
             pass
     intervals = try_predict_intervals(pipeline, frame, confidence_level=confidence_level)

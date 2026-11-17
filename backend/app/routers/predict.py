@@ -243,6 +243,9 @@ def _score_validated(
             out_df[col] = scored.get("pred_interval_method")
         elif col in scored:
             out_df[col] = scored[col]
+    for col in scored.get("classification_columns") or []:
+        if col in scored:
+            out_df[col] = scored[col]
     csv_bytes = predictions_to_safe_csv(out_df)
     return {
         "validation": payload,
@@ -252,6 +255,10 @@ def _score_validated(
         "predictions": scored["predictions"],
         "probabilities": scored.get("probabilities"),
         "interval_columns": scored.get("interval_columns"),
+        "classification_columns": scored.get("classification_columns"),
+        "pred_confidence": scored.get("pred_confidence"),
+        "pred_margin": scored.get("pred_margin"),
+        "pred_entropy": scored.get("pred_entropy"),
         "pred_interval_method": scored.get("pred_interval_method"),
         "confidence_level": scored.get("confidence_level"),
         "csv": csv_bytes.decode("utf-8"),
