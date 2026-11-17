@@ -1,4 +1,4 @@
-# Phase oneshot-c137 — FE.WB.UNSUP_ANOM_PARETO_PAIRWISE
+# Phase oneshot-c136 — FE.WB.UNSUP_ANOM_PARETO_PAIRWISE
 
 ## Built
 - `UnsupervisedWorkbench` (anomaly mode) — added catalogue actions **`ANO.P.PARETO`** and **`ANO.P.PAIRWISE`** alongside existing score-hist / ranked / embed (c129); calls existing lab-api routes; Plotly via `ArtefactPanel`; demo rows + seed **42**.
@@ -33,4 +33,4 @@ cd frontend && pnpm exec vitest run src/lib/unsupervised-api.test.ts
 - [x] Seed 42 on unsupervised request body.
 - [x] Import allowlist green; vitest route map green.
 
-**Ship commit:** (recorded after commit)
+**Ship commit:** `9553dbc`
