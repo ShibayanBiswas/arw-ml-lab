@@ -23,4 +23,4 @@
 - [x] Manifest `seed: 42`.
 - [x] Import allowlist green.
 
-**Ship commit:** (this commit)
+**Ship commit:** `c2499f2`
