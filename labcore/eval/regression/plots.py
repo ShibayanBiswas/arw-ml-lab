@@ -1870,3 +1870,80 @@ def plot_coverage_bin(
             "by_decile": rows,
         },
     }
+
+
+def plot_width_fitted(
+    y_pred: np.ndarray,
+    y_lower: np.ndarray,
+    y_upper: np.ndarray,
+    *,
+    confidence_level: float | None = None,
+) -> dict[str, Any]:
+    """REE.P.WIDTH_FITTED — prediction-interval width vs ŷ with LOWESS (MAPIE)."""
+    import plotly.graph_objects as go
+    from mapie.metrics.regression import regression_mean_width_score
+    from statsmodels.nonparametric.smoothers_lowess import lowess
+
+    yp = np.asarray(y_pred, dtype=float).ravel()
+    lo = np.asarray(y_lower, dtype=float).ravel()
+    hi = np.asarray(y_upper, dtype=float).ravel()
+    n = len(yp)
+    if not (len(lo) == len(hi) == n):
+        raise ValueError("y_pred, y_lower, y_upper must have the same length")
+    if n == 0:
+        raise ValueError("need at least one sample for WIDTH_FITTED")
+
+    width = hi - lo
+    y_intervals = np.stack([lo, hi], axis=1)[:, :, np.newaxis]
+    mpiw = float(np.asarray(regression_mean_width_score(y_intervals)).ravel()[0])
+
+    smooth = lowess(width, yp, frac=0.3, return_sorted=True)
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=yp,
+            y=width,
+            mode="markers",
+            name="Interval width",
+            marker={"size": 6, "opacity": 0.45, "color": "#4a5568"},
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=smooth[:, 0],
+            y=smooth[:, 1],
+            mode="lines",
+            name="LOWESS",
+            line={"width": 2, "color": "#c9a227"},
+        )
+    )
+    fig.add_hline(
+        y=mpiw,
+        line_dash="dash",
+        line_color="gray",
+        annotation_text=f"mean width {mpiw:.3g}",
+    )
+    title = "Interval width vs fitted"
+    if confidence_level is not None:
+        title += f" (nominal {confidence_level:.0%})"
+    fig.update_layout(
+        title=title,
+        xaxis_title="ŷ (fitted)",
+        yaxis_title="Upper − lower",
+        height=420,
+    )
+    return {
+        "id": "REE.P.WIDTH_FITTED",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "n": n,
+            "confidence_level": confidence_level,
+            "mean_interval_width": mpiw,
+            "width": width.tolist(),
+            "y_pred": yp.tolist(),
+            "lowess_x": smooth[:, 0].tolist(),
+            "lowess_y": smooth[:, 1].tolist(),
+        },
+    }
