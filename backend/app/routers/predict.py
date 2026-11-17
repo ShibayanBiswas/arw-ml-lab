@@ -254,6 +254,12 @@ def _score_validated(
             if idx in flag.index:
                 flag.loc[idx] = True
         out_df["insufficient_history"] = flag.to_numpy()
+    # §45.4 — probabilities labelled calibrated vs uncalibrated from contract
+    from labcore.predict.calibration_label import calibration_status_label
+
+    cal_status = calibration_status_label(m.feature_contract, m.pipeline)
+    if scored.get("probabilities") is not None:
+        out_df["calibration_status"] = cal_status
     csv_bytes = predictions_to_safe_csv(out_df)
     return {
         "validation": payload,
@@ -269,6 +275,7 @@ def _score_validated(
         "pred_entropy": scored.get("pred_entropy"),
         "pred_interval_method": scored.get("pred_interval_method"),
         "confidence_level": scored.get("confidence_level"),
+        "calibration_status": cal_status if scored.get("probabilities") is not None else None,
         "csv": csv_bytes.decode("utf-8"),
     }
 
