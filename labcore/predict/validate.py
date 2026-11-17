@@ -1,7 +1,7 @@
 """Prediction upload validation — PV01–PV16 (ARCHITECTURE §45.3).
 
-Implemented: PV01–PV09, PV10 (contract-stat OOD), PV11 (PSI/KS when ``reference_df``), PV14, PV15.
-Deferred until sequential/TS suites: PV12–PV13, PV16 (PII).
+Implemented: PV01–PV09, PV10 (contract-stat OOD), PV11 (PSI/KS when ``reference_df``), PV14–PV16.
+Deferred until sequential/TS suites: PV12–PV13.
 """
 
 from __future__ import annotations
@@ -431,11 +431,37 @@ def validate_predict_frame(
             PVIssue(code="PV11", severity="deferred", message="batch drift PSI/KS not computed yet")
         )
 
-    # Deferred: sequential / TS / PII
+    # PV16 — flag identifier_like / PII-ish features present in the upload (oneshot-c243)
+    pii_cols = [
+        n
+        for n, spec in feat_by_name.items()
+        if spec.get("kind") == "identifier_like" and n in df.columns
+    ]
+    if pii_cols:
+        report.warnings.append(
+            PVIssue(
+                code="PV16",
+                severity="warn",
+                message=(
+                    "identifier_like columns present — never send cell values to VLM/LLM; "
+                    f"columns={pii_cols}"
+                ),
+                details={"columns": pii_cols, "policy": "redact_before_ai"},
+            )
+        )
+    else:
+        report.info.append(
+            PVIssue(
+                code="PV16",
+                severity="info",
+                message="no identifier_like columns in this batch",
+            )
+        )
+
+    # Deferred: sequential / TS
     for code, msg in (
         ("PV12", "sequential history checks not computed yet"),
         ("PV13", "TS horizon checks not computed yet"),
-        ("PV16", "PII masking not computed yet"),
     ):
         report.deferred.append(PVIssue(code=code, severity="deferred", message=msg))
 
