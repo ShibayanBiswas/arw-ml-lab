@@ -65,3 +65,8 @@ celery_app.conf.update(
 celery_app.conf.broker_transport_options = {"queue_order_strategy": "priority"}
 celery_app.conf.worker_direct = False
 _ = QUEUES  # documented queue set; workers select via -Q
+
+# OPS-03: register heartbeat signal handlers (import side effect).
+from backend.worker import heartbeat as _heartbeat  # noqa: E402, F401
+
+_ = _heartbeat.HEARTBEAT_SEED

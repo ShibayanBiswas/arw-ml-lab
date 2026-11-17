@@ -78,5 +78,14 @@ class JobStore:
                 rec.heartbeat_at = time.time()
             return rec
 
+    def touch_heartbeat(self, job_id: str) -> JobRecord | None:
+        """OPS-03 periodic touch without progress change."""
+        with self._lock:
+            rec = self._jobs.get(job_id)
+            if rec is None:
+                return None
+            rec.heartbeat_at = time.time()
+            return rec
+
 
 JOB_STORE = JobStore()
