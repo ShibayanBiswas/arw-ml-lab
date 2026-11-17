@@ -61,16 +61,27 @@
 All checks passed!
 ```
 
-Hosted `GET /healthz`: **not computed** (Render services absent).
+Hosted `GET /healthz`: **not computed** (Contabo VPS not bootstrapped — `CONTABO_HOST` missing; Actions billing also blocks Deploy).
+
+## Contabo move (v2.3) — hosted smoke
+
+| Check | Result |
+|---|---|
+| Docs + ADR + prune + compose/Caddy/deploy.yml | **PASS** (in repo) |
+| SSH bootstrap + server `.env` | **BLOCKED** — no `CONTABO_HOST` / SSH path in local `.env` |
+| GHCR build + SSH deploy + `/healthz` 200 | **BLOCKED** — host + GitHub Actions billing |
+| DS1 EDA browser prove + SSE + Storage artefacts | **BLOCKED** — needs live `LAB_API_URL` |
+| Restore drill + external uptime | Offline contracts ready (`OPS.RESTORE.DRILL`, `OPS.UPTIME.EXTERNAL`); live not run |
 
 ## Deviations / TODOs
 
-1. Add Render workspace payment → approve Blueprint → set secrets/hooks → re-run `scripts/smoke_hosted.sh`.
+1. Fill Contabo + Supabase + NVIDIA secrets in local `.env`; fix GitHub Actions billing; agent resumes bootstrap → Deploy smoke.
 2. Enable GitHub Pro (or move repo to org) for branch protection requiring CI.
 3. Supabase dashboard: global file size 2 GB; Auth redirect URLs from DEPLOY.md.
-4. Replace Vercel `NEXT_PUBLIC_LAB_API_URL` placeholder with real `lab-api` URL; set GitHub `LAB_API_URL`.
+4. Replace Vercel `NEXT_PUBLIC_LAB_API_URL` with Contabo HTTPS hostname; set GitHub `LAB_API_URL`.
 5. First production deploy used Vercel region iad1; prefer `sin1` when team settings allow.
 6. Supabase advisor WARN on SECURITY DEFINER execute grants partially mitigated by follow-up migration `security_definer_grants`; keep under review in Phase 8.2.
+7. Legacy Render Blueprint remains in `render.yaml` (header: legacy); Contabo is the v2.3 target.
 
 ## Self-verification checklist (§000)
 

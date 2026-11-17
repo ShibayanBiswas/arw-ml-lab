@@ -846,3 +846,33 @@ export async function runReportsFormulas(body: ReportsFormulasBody = {}) {
     numbers: { count: number; entry_ids: string[]; by_family: Record<string, number> };
   };
 }
+
+export async function runInsights(body: {
+  stage?: string;
+  facts?: Record<string, unknown>;
+  prefer_mock?: boolean;
+  workspace_class?: string;
+}) {
+  const res = await fetch(`${labApiBase()}/api/v1/insights/run`, {
+    method: "POST",
+    headers: { ...labAuthHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`insights: ${res.status}`);
+  return (await res.json()) as Record<string, unknown>;
+}
+
+export async function proposeDecision(body: {
+  decision_point?: string;
+  facts?: Record<string, unknown>;
+  numbers_only?: boolean;
+  proposal?: Record<string, unknown>;
+}) {
+  const res = await fetch(`${labApiBase()}/api/v1/decisions/propose`, {
+    method: "POST",
+    headers: { ...labAuthHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`decisions: ${res.status}`);
+  return (await res.json()) as Record<string, unknown>;
+}
