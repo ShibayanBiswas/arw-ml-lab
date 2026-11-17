@@ -31,3 +31,5 @@ cd frontend && pnpm exec vitest run src/lib/unsupervised-api.test.ts
 - [x] No fabricated metrics; plots render from API artefact JSON only.
 - [x] Seed 42 on unsupervised request body.
 - [x] Import allowlist green; vitest route map green.
+
+**Ship commit:** `d90067b`
