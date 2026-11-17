@@ -6,7 +6,7 @@ from typing import Any
 
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException
-from labcore.suitability import plot_daily_volatility, run_suitability
+from labcore.suitability import plot_daily_volatility, plot_sample_barriers, run_suitability
 from pydantic import BaseModel, Field
 
 from backend.app.security import AuthUser, require_write_role
@@ -21,6 +21,10 @@ class SuitabilityBody(BaseModel):
     sample_id: str | None = None
     price_col: str | None = None
     vol_span: int = Field(default=100, ge=10, le=500)
+    horizon: int = Field(default=5, ge=1, le=60)
+    pt_mult: float = Field(default=1.0, gt=0.0, le=10.0)
+    sl_mult: float = Field(default=1.0, gt=0.0, le=10.0)
+    n_samples: int = Field(default=3, ge=1, le=6)
 
 
 def _load_suitability_frame(
@@ -74,6 +78,30 @@ def suitability_volatility_plot(
             price_col=body.price_col,
             time_col=time_col,
             span=body.vol_span,
+            seed=42,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/api/v1/suitability/plots/barriers")
+def suitability_barriers_plot(
+    body: SuitabilityBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """FS.P.BARRIERS — sample events with profit-take, stop-loss, vertical barriers (seed 42)."""
+    _ = user
+    df, time_col = _load_suitability_frame(body)
+    try:
+        return plot_sample_barriers(
+            df,
+            price_col=body.price_col,
+            time_col=time_col,
+            horizon=body.horizon,
+            vol_span=body.vol_span,
+            pt_mult=body.pt_mult,
+            sl_mult=body.sl_mult,
+            n_samples=body.n_samples,
             seed=42,
         )
     except Exception as exc:

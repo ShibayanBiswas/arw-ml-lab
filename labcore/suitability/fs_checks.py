@@ -372,7 +372,7 @@ def _mean_uniqueness_from_spans(spans: list[tuple[int, int]]) -> float | None:
     return float(np.mean(uniques))
 
 
-def compute_trial_tb_cell(
+def enumerate_trial_tb_events(
     df: pd.DataFrame,
     price_col: str,
     *,
@@ -382,7 +382,7 @@ def compute_trial_tb_cell(
     sl_mult: float = 1.0,
     cusum_mult: float | None = None,
 ) -> dict[str, Any]:
-    """One triple-barrier trial cell for §37.6 grid / FS10 / FS.P.*."""
+    """Triple-barrier trial events with barrier geometry (FS.P.BARRIERS / §37.6)."""
     if price_col not in df.columns:
         return {"ok": False, "reason": "no price column"}
     px = pd.to_numeric(df[price_col], errors="coerce").dropna()
@@ -402,8 +402,7 @@ def compute_trial_tb_cell(
         cusum_h = cusum_mult * vol_mean
         starts = _cusum_event_starts(rets, cusum_h)
         n_cusum_events = len(starts)
-    labels: list[int] = []
-    spans: list[tuple[int, int]] = []
+    events: list[dict[str, Any]] = []
     for i in starts:
         if i >= len(rets) - 1:
             continue
@@ -417,21 +416,129 @@ def compute_trial_tb_cell(
         upper = pt_mult * sigma
         lower = sl_mult * sigma
         t1 = end_px - 1
+        label = 0
         if np.any(path >= upper):
-            labels.append(1)
+            label = 1
             touch = int(np.argmax(path >= upper))
             t1 = i + 1 + touch
         elif np.any(path <= -lower):
-            labels.append(-1)
+            label = -1
             touch = int(np.argmax(path <= -lower))
             t1 = i + 1 + touch
-        else:
-            labels.append(0)
-            t1 = end_px - 1
-        spans.append((i, min(t1, len(log_p) - 1)))
+        t1 = min(t1, len(log_p) - 1)
+        entry_price = float(np.exp(log_p[i]))
+        events.append(
+            {
+                "t0": int(i),
+                "t1": int(t1),
+                "vertical_t": int(end_px - 1),
+                "label": int(label),
+                "sigma": float(sigma),
+                "pt_log": float(upper),
+                "sl_log": float(lower),
+                "pt_mult": float(pt_mult),
+                "sl_mult": float(sl_mult),
+                "entry_price": entry_price,
+                "pt_price": float(entry_price * np.exp(upper)),
+                "sl_price": float(entry_price * np.exp(-lower)),
+            }
+        )
+    return {
+        "ok": True,
+        "method": "triple_barrier",
+        "price_col": price_col,
+        "horizon": horizon,
+        "vol_span": vol_span,
+        "pt_mult": pt_mult,
+        "sl_mult": sl_mult,
+        "cusum_mult": cusum_mult,
+        "cusum_h": cusum_h,
+        "n_cusum_events": n_cusum_events,
+        "n_labels": len(events),
+        "events": events,
+    }
+
+
+def sample_trial_tb_events(
+    df: pd.DataFrame,
+    price_col: str,
+    *,
+    horizon: int = 5,
+    vol_span: int = 100,
+    pt_mult: float = 1.0,
+    sl_mult: float = 1.0,
+    cusum_mult: float | None = None,
+    n_samples: int = 3,
+    seed: int = 42,
+) -> dict[str, Any]:
+    """Representative events for FS.P.BARRIERS (one per label class when possible)."""
+    base = enumerate_trial_tb_events(
+        df,
+        price_col,
+        horizon=horizon,
+        vol_span=vol_span,
+        pt_mult=pt_mult,
+        sl_mult=sl_mult,
+        cusum_mult=cusum_mult,
+    )
+    if not base.get("ok"):
+        return base
+    events = base["events"]
+    if not events:
+        return {"ok": False, "reason": "no trial labels", "n_cusum_events": base["n_cusum_events"]}
+    n_samples = max(1, min(int(n_samples), 6, len(events)))
+    rng = np.random.default_rng(seed)
+    by_label: dict[int, list[dict[str, Any]]] = {-1: [], 0: [], 1: []}
+    for ev in events:
+        by_label[ev["label"]].append(ev)
+    picked: list[dict[str, Any]] = []
+    for lab in (-1, 0, 1):
+        pool = by_label[lab]
+        if pool:
+            picked.append(pool[int(rng.integers(len(pool)))])
+    if len(picked) < n_samples:
+        rest = [e for e in events if e not in picked]
+        order = rng.permutation(len(rest))
+        for j in order:
+            if len(picked) >= n_samples:
+                break
+            picked.append(rest[int(j)])
+    return {
+        **base,
+        "seed": seed,
+        "n_samples": len(picked[:n_samples]),
+        "sampled_events": picked[:n_samples],
+    }
+
+
+def compute_trial_tb_cell(
+    df: pd.DataFrame,
+    price_col: str,
+    *,
+    horizon: int = 5,
+    vol_span: int = 100,
+    pt_mult: float = 1.0,
+    sl_mult: float = 1.0,
+    cusum_mult: float | None = None,
+) -> dict[str, Any]:
+    """One triple-barrier trial cell for §37.6 grid / FS10 / FS.P.*."""
+    base = enumerate_trial_tb_events(
+        df,
+        price_col,
+        horizon=horizon,
+        vol_span=vol_span,
+        pt_mult=pt_mult,
+        sl_mult=sl_mult,
+        cusum_mult=cusum_mult,
+    )
+    if not base.get("ok"):
+        return base
+    events = base["events"]
+    if not events:
+        return {"ok": False, "reason": "no trial labels", "n_cusum_events": base["n_cusum_events"]}
+    labels = [int(e["label"]) for e in events]
+    spans = [(int(e["t0"]), int(e["t1"])) for e in events]
     n_labels = len(labels)
-    if n_labels == 0:
-        return {"ok": False, "reason": "no trial labels", "n_cusum_events": n_cusum_events}
     counts = {
         -1: int(sum(1 for x in labels if x < 0)),
         0: int(sum(1 for x in labels if x == 0)),
@@ -452,8 +559,8 @@ def compute_trial_tb_cell(
         "pt_mult": pt_mult,
         "sl_mult": sl_mult,
         "cusum_mult": cusum_mult,
-        "cusum_h": cusum_h,
-        "n_cusum_events": n_cusum_events,
+        "cusum_h": base["cusum_h"],
+        "n_cusum_events": base["n_cusum_events"],
         "n_labels": n_labels,
         "counts": counts,
         "shares": shares,

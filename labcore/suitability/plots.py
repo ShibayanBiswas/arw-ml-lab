@@ -16,6 +16,7 @@ from labcore.suitability.fs_checks import (
     compute_fixed_horizon_label_balance,
     compute_suitability_parameter_grid,
     compute_trial_tb_label_balance,
+    sample_trial_tb_events,
 )
 
 LabelMethod = Literal["triple_barrier", "fixed_horizon"]
@@ -289,5 +290,170 @@ def plot_suitability_grid(
             "n_cells": grid["n_cells"],
             "default_cell": default,
             "cells": grid["cells"],
+        },
+    }
+
+
+_LABEL_COLOURS = {-1: "#c44e52", 0: "#888888", 1: "#2ca02c"}
+
+
+def plot_sample_barriers(
+    df: pd.DataFrame,
+    *,
+    price_col: str | None = None,
+    time_col: str | None = None,
+    horizon: int = 5,
+    vol_span: int = 100,
+    pt_mult: float = 1.0,
+    sl_mult: float = 1.0,
+    n_samples: int = 3,
+    seed: int = 42,
+) -> dict[str, Any]:
+    """FS.P.BARRIERS — sample triple-barrier events with PT / SL / vertical levels."""
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+
+    col = price_col or _detect_price_col(df)
+    if col is None:
+        raise ValueError("no price column detected for barrier plot")
+    sample = sample_trial_tb_events(
+        df,
+        col,
+        horizon=horizon,
+        vol_span=vol_span,
+        pt_mult=pt_mult,
+        sl_mult=sl_mult,
+        n_samples=n_samples,
+        seed=seed,
+    )
+    if not sample.get("ok"):
+        raise ValueError(sample.get("reason", "barrier sampling failed"))
+    px = pd.to_numeric(df[col], errors="coerce")
+    times = _time_axis(df, time_col)
+    sampled = sample["sampled_events"]
+    n_rows = len(sampled)
+    subtitles = [f"label {ev['label']:+d} @ bar {ev['t0']}" for ev in sampled]
+    fig = make_subplots(
+        rows=n_rows,
+        cols=1,
+        shared_xaxes=False,
+        vertical_spacing=0.06,
+        subplot_titles=subtitles,
+    )
+    numbers_events: list[dict[str, Any]] = []
+    for row_idx, ev in enumerate(sampled, start=1):
+        t0 = int(ev["t0"])
+        t1 = int(ev["t1"])
+        vert = int(ev["vertical_t"])
+        pad = 2
+        i0 = max(0, t0 - pad)
+        i1 = min(len(px) - 1, vert + pad)
+        xs = times[i0 : i1 + 1]
+        ys = [None if pd.isna(px.iloc[j]) else float(px.iloc[j]) for j in range(i0, i1 + 1)]
+        fig.add_trace(
+            go.Scatter(
+                x=xs,
+                y=ys,
+                mode="lines",
+                name="close",
+                line=dict(color="#1f2937"),
+                showlegend=row_idx == 1,
+                hovertemplate="t=%{x}<br>price=%{y:.2f}<extra></extra>",
+            ),
+            row=row_idx,
+            col=1,
+        )
+        pt_p = float(ev["pt_price"])
+        sl_p = float(ev["sl_price"])
+        fig.add_hline(
+            y=pt_p,
+            line_dash="dash",
+            line_color="#2ca02c",
+            annotation_text="profit-take",
+            row=row_idx,
+            col=1,
+        )
+        fig.add_hline(
+            y=sl_p,
+            line_dash="dash",
+            line_color="#c44e52",
+            annotation_text="stop-loss",
+            row=row_idx,
+            col=1,
+        )
+        if vert <= i1 and vert >= i0:
+            fig.add_vline(
+                x=times[vert],
+                line_dash="dot",
+                line_color="#c9a227",
+                annotation_text="vertical",
+                row=row_idx,
+                col=1,
+            )
+        entry_x = times[t0] if t0 < len(times) else str(t0)
+        exit_x = times[t1] if t1 < len(times) else str(t1)
+        fig.add_trace(
+            go.Scatter(
+                x=[entry_x],
+                y=[float(ev["entry_price"])],
+                mode="markers",
+                marker=dict(size=10, color="#c9a227", symbol="circle"),
+                name="entry",
+                showlegend=row_idx == 1,
+                hovertemplate="entry<br>price=%{y:.2f}<extra></extra>",
+            ),
+            row=row_idx,
+            col=1,
+        )
+        exit_price = ys[t1 - i0] if 0 <= t1 - i0 < len(ys) and ys[t1 - i0] is not None else None
+        if exit_price is not None:
+            fig.add_trace(
+                go.Scatter(
+                    x=[exit_x],
+                    y=[exit_price],
+                    mode="markers",
+                    marker=dict(size=10, color=_LABEL_COLOURS[int(ev["label"])], symbol="diamond"),
+                    name="exit",
+                    showlegend=row_idx == 1,
+                    hovertemplate="exit label=%{customdata}<extra></extra>",
+                    customdata=[ev["label"]],
+                ),
+                row=row_idx,
+                col=1,
+            )
+        fig.update_yaxes(title_text="price", row=row_idx, col=1)
+        fig.update_xaxes(title_text="time", row=row_idx, col=1)
+        numbers_events.append(
+            {
+                "t0": t0,
+                "t1": t1,
+                "vertical_t": vert,
+                "label": int(ev["label"]),
+                "sigma": float(ev["sigma"]),
+                "pt_price": pt_p,
+                "sl_price": sl_p,
+            }
+        )
+    fig.update_layout(
+        title=(
+            f"Sample triple-barrier events (pt={pt_mult}×σ, sl={sl_mult}×σ, "
+            f"vertical={horizon} bars)"
+        ),
+        height=max(260, 220 * n_rows),
+    )
+    return {
+        "id": "FS.P.BARRIERS",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "price_col": col,
+            "horizon": horizon,
+            "vol_span": vol_span,
+            "pt_mult": pt_mult,
+            "sl_mult": sl_mult,
+            "seed": seed,
+            "n_events_total": int(sample["n_labels"]),
+            "n_panels": n_rows,
+            "sampled_events": numbers_events,
         },
     }
