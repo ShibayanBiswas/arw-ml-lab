@@ -35,7 +35,12 @@ def insights_run(
         key_present=bool(os.environ.get("NVIDIA_API_KEY")),
     )
     if body.prefer_mock or policy.must_use_numbers_only():
-        parsed = resolve_insight(body.facts, policy=policy, seed=42)
+        if body.stage == "prediction":
+            from labcore.predict.narrative import prediction_narrative
+
+            parsed = prediction_narrative(body.facts, seed=42)
+        else:
+            parsed = resolve_insight(body.facts, policy=policy, seed=42)
         validation = validate_insights_payload(parsed, facts=body.facts)
         return {
             "stage": body.stage,

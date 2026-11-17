@@ -6,6 +6,7 @@ import {
   getModelSampleRow,
   getModelSchema,
   predictSingle,
+  runInsights,
   type FeatureContract,
 } from "@/lib/api";
 
@@ -31,6 +32,7 @@ export function CustomPredictForm({ modelId }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState("");
   const [humilityAction, setHumilityAction] = useState<"warn" | "abstain" | "review">("warn");
+  const [narrative, setNarrative] = useState<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const feats = useMemo(
@@ -252,6 +254,50 @@ export function CustomPredictForm({ modelId }: Props) {
               {(result.humility as Record<string, unknown>).needs_human_review
                 ? " · needs review"
                 : ""}
+            </p>
+          ) : null}
+          <button
+            type="button"
+            className="mt-2 rounded border border-[var(--border)] px-2 py-1 text-xs hover:bg-[var(--surface-2)]"
+            data-artefact="PRED.NARRATIVE"
+            onClick={() => {
+              void (async () => {
+                try {
+                  const h =
+                    result.humility && typeof result.humility === "object"
+                      ? (result.humility as Record<string, unknown>)
+                      : {};
+                  const out = await runInsights({
+                    stage: "prediction",
+                    prefer_mock: true,
+                    facts: {
+                      prediction: result.prediction,
+                      probabilities: result.probabilities,
+                      humility_action: h.humility_action,
+                      abstain: h.abstain,
+                      ood_score: h.ood_score,
+                      flag_ood: h.flag_ood,
+                      flag_out_of_range: h.flag_out_of_range,
+                      model_id: modelId,
+                    },
+                  });
+                  const insights = out.insights as Record<string, unknown> | undefined;
+                  setNarrative(
+                    typeof insights?.summary === "string"
+                      ? insights.summary
+                      : JSON.stringify(insights ?? out)
+                  );
+                } catch (e) {
+                  setError(e instanceof Error ? e.message : String(e));
+                }
+              })();
+            }}
+          >
+            Explain this prediction
+          </button>
+          {narrative ? (
+            <p className="mt-2 text-xs text-[var(--muted)]" data-testid="prediction-narrative">
+              {narrative}
             </p>
           ) : null}
         </div>
