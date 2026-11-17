@@ -14,4 +14,4 @@ def test_soft_time_limit_manifest_seed_42() -> None:
     assert m["id"] == ARTEFACT_ID
     assert m["stress_test"] == STRESS_ID
     assert m["seed"] == 42
-    assert len(m["checks"]) == 4
+    assert len(m["checks"]) == 5

@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 import pandas as pd
+from labcore.ops.soft_time_limit import is_soft_time_limit_exc, save_best_so_far
 from labcore.preprocess.recipe import RecipeSpec
 from labcore.train.tune import run_optuna_tune
 
@@ -17,6 +18,7 @@ from backend.worker.celery_app import celery_app
 @celery_app.task(name="lab.tune.run", bind=True, queue="q.tune")
 def run_tune_task(self, job_id: str, experiment_id: str, body: dict[str, Any]) -> dict[str, Any]:  # noqa: ANN001
     _ = self
+    partial: dict[str, Any] | None = None
     JOB_STORE.update(
         job_id,
         status="running",
@@ -59,6 +61,7 @@ def run_tune_task(self, job_id: str, experiment_id: str, body: dict[str, Any]) -
             "best_value": result.get("best_value"),
             "best_params": result.get("best_params"),
         }
+        partial = {**result, **out, "leaderboard": []}
         JOB_STORE.update(
             job_id,
             status="done",
@@ -69,6 +72,15 @@ def run_tune_task(self, job_id: str, experiment_id: str, body: dict[str, Any]) -
         )
         return out
     except Exception as exc:
+        if is_soft_time_limit_exc(exc):
+            return save_best_so_far(
+                job_update=JOB_STORE.update,
+                experiment_update=EXPERIMENT_STORE.update,
+                job_id=job_id,
+                experiment_id=experiment_id,
+                partial=partial,
+                seed=42,
+            )
         EXPERIMENT_STORE.update(experiment_id, status="error")
         JOB_STORE.update(
             job_id,

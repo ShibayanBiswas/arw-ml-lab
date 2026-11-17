@@ -14,6 +14,7 @@ from labcore.ops.soft_time_limit import (
 
 ROOT = Path(__file__).resolve().parents[2]
 TRAIN_TASK = ROOT / "backend" / "worker" / "tasks" / "train.py"
+TUNE_TASK = ROOT / "backend" / "worker" / "tasks" / "tune.py"
 
 
 class SoftTimeLimitContractError(ValueError):
@@ -78,12 +79,21 @@ def assert_train_task_handles_soft() -> dict[str, object]:
     return {"train_wired": True}
 
 
+def assert_tune_task_handles_soft() -> dict[str, object]:
+    src = TUNE_TASK.read_text(encoding="utf-8")
+    for needle in ("is_soft_time_limit_exc", "save_best_so_far"):
+        if needle not in src:
+            raise SoftTimeLimitContractError(f"tune task missing {needle}")
+    return {"tune_wired": True}
+
+
 def assert_soft_time_limit_contract(*, seed: int = 42) -> list[dict[str, object]]:
     return [
         assert_truncated_payload(seed=seed),
         assert_detect_soft_exc(),
         assert_save_best_so_far(seed=seed),
         assert_train_task_handles_soft(),
+        assert_tune_task_handles_soft(),
     ]
 
 
