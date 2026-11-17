@@ -22,4 +22,4 @@
 - [x] Import allowlist green.
 - [x] Rule 70: sklearn GroupKFold + pandas only (no custom splitter).
 
-**Ship commit:** (see git log `phase oneshot-c164`)
+**Ship commit:** `475ced2`
