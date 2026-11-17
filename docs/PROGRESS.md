@@ -4,7 +4,7 @@
 |---|---|
 | Current phase | Contabo v2.3 (blocked on host secrets) + One-shot CLE/REE → 8.2 |
 | Last completed step | oneshot-c101 `OPS-03 lab-beat maintenance` (c102 `DR.P.SCREE` already on main) |
-| Last green commit | (push pending) |
+| Last green commit | 2bb8424 |
 | Open failures | Contabo host/SSH/.env; Supabase migrate secrets; NVIDIA_API_KEY; Deploy cannot smoke without LAB_API_URL |
 | Next action | Shibayan: Contabo + Supabase + NVIDIA secrets (Blocked). Agent: Celery `heartbeat_at` writes; `CLU.P.SILHOUETTE` / remaining CLU·DR·ANO plots |
 
