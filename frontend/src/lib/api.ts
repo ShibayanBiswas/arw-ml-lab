@@ -335,6 +335,9 @@ export async function predictBatchJson(modelId: string, rows: Record<string, unk
     csv?: string | null;
     n_rows?: number;
     refit?: boolean;
+    interval_columns?: string[];
+    pred_interval_method?: string;
+    confidence_level?: number;
   };
 }
 
@@ -358,6 +361,9 @@ export async function predictBatchUpload(modelId: string, file: File) {
     csv?: string | null;
     n_rows?: number;
     refit?: boolean;
+    interval_columns?: string[];
+    pred_interval_method?: string;
+    confidence_level?: number;
   };
 }
 
