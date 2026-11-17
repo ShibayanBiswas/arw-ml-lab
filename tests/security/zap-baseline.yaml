@@ -1,21 +1,26 @@
-# OWASP ZAP baseline (Phase 7 / ARCHITECTURE §26) — run manually:
-#   docker run --rm -v $(pwd):/zap/wrk owasp/zap2docker-stable \
+# OWASP ZAP baseline (SEC.ZAP.BASELINE / ARCHITECTURE §26) — run manually:
+#   docker run --rm -v $(pwd)/tests/security:/zap/wrk owasp/zap2docker-stable \
 #     zap-baseline.py -t https://arw-ml-lab.vercel.app -c zap-baseline.yaml
 #
-# Not executed in CI until lab-api is live (Render blocked). Failures on
-# authenticated API routes are expected without a session cookie.
+# Public Next.js shell only; lab-api unauthenticated routes use zap-baseline-lab-api.yaml.
+# Not executed in CI until hosts are live. Authenticated API routes need a session (out of scope).
 env:
   contexts:
     - name: "arw-ml-lab-public"
       urls:
         - "https://arw-ml-lab.vercel.app"
       includePaths:
-        - "https://arw-ml-lab.vercel.app.*"
+        - "https://arw-ml-lab.vercel.app/.*"
       excludePaths:
         - "https://arw-ml-lab.vercel.app/api/.*"
+        - "https://arw-ml-lab.vercel.app/_next/.*\\.map"
 rules:
   # Informational noise from Next.js static assets — warn only
   - id: 10015
     threshold: IGNORE
   - id: 10027
+    threshold: WARN
+  - id: 10021
+    threshold: WARN
+  - id: 10109
     threshold: WARN

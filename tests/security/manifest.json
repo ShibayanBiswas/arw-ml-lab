@@ -1,0 +1,18 @@
+{
+  "id": "SEC.ZAP.BASELINE",
+  "seed": 42,
+  "description": "OWASP ZAP baseline policy files for public Vercel shell and unauthenticated lab-api probes.",
+  "configs": [
+    {
+      "file": "zap-baseline.yaml",
+      "target_kind": "frontend",
+      "default_target": "https://arw-ml-lab.vercel.app"
+    },
+    {
+      "file": "zap-baseline-lab-api.yaml",
+      "target_kind": "lab-api",
+      "default_target": "http://127.0.0.1:8000"
+    }
+  ],
+  "run_note": "Not executed in CI until LAB_API_URL and Vercel are reachable; pytest validates structure only."
+}

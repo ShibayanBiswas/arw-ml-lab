@@ -1,0 +1,27 @@
+# OWASP ZAP baseline — unauthenticated lab-api surface (oneshot-c145 / SEC.ZAP.BASELINE).
+#   docker run --rm -v ${PWD}/tests/security:/zap/wrk owasp/zap2docker-stable \
+#     zap-baseline.py -t http://127.0.0.1:8000 -c zap-baseline-lab-api.yaml
+#
+# Probes GET /healthz and GET /api/v1/catalog* only — no secrets, no Bearer token.
+# Hosted: set -t to LAB_API_URL (Contabo/Render); not run from CI while deploy is blocked.
+env:
+  contexts:
+    - name: "arw-ml-lab-api-public"
+      urls:
+        - "http://127.0.0.1:8000"
+      includePaths:
+        - "http://127.0.0.1:8000/healthz"
+        - "http://127.0.0.1:8000/api/v1/catalog.*"
+      excludePaths:
+        - "http://127.0.0.1:8000/api/v1/(?!catalog).*"
+        - "http://127.0.0.1:8000/docs.*"
+        - "http://127.0.0.1:8000/redoc.*"
+        - "http://127.0.0.1:8000/openapi.json"
+rules:
+  # OpenAPI UI is intentionally excluded; missing security headers on JSON are informational.
+  - id: 10021
+    threshold: WARN
+  - id: 10020
+    threshold: WARN
+  - id: 10015
+    threshold: IGNORE
