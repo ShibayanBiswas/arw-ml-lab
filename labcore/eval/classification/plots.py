@@ -244,6 +244,99 @@ def plot_pr(y_true: np.ndarray, scores: np.ndarray) -> dict[str, Any]:
     return {"id": "CLE.P.PR", "kind": "plot", "plotly": fig.to_plotly_json(), "numbers": {"ap": ap}}
 
 
+def plot_pr_cv(
+    fold_pairs: list[tuple[np.ndarray, np.ndarray]],
+    *,
+    n_grid: int = 101,
+) -> dict[str, Any]:
+    """CLE.P.PR_CV — fold PR curves + mean precision ± 1 std on a common recall grid."""
+    import plotly.graph_objects as go
+    from sklearn.metrics import average_precision_score, precision_recall_curve
+
+    if not fold_pairs:
+        raise ValueError("fold_pairs must be non-empty")
+    recall_grid = np.linspace(0.0, 1.0, n_grid)
+    interp_stack: list[np.ndarray] = []
+    fold_ap: list[float] = []
+    fig = go.Figure()
+    for i, (y_true, scores) in enumerate(fold_pairs):
+        yt = np.asarray(y_true)
+        sc = np.asarray(scores, dtype=float).ravel()
+        if yt.shape[0] != sc.shape[0]:
+            raise ValueError(f"fold {i}: y_true and scores length mismatch")
+        prec, rec, _ = precision_recall_curve(yt, sc)
+        fold_ap.append(float(average_precision_score(yt, sc)))
+        rec_inc = np.flip(rec)
+        prec_inc = np.flip(prec)
+        prec_on_grid = np.interp(recall_grid, rec_inc, prec_inc, left=1.0, right=0.0)
+        interp_stack.append(prec_on_grid)
+        fig.add_trace(
+            go.Scatter(
+                x=recall_grid,
+                y=prec_on_grid,
+                mode="lines",
+                name=f"fold {i}",
+                line={"width": 1},
+                opacity=0.45,
+                showlegend=i == 0,
+            )
+        )
+    stack = np.vstack(interp_stack)
+    mean_p = stack.mean(axis=0)
+    std_p = stack.std(axis=0, ddof=1) if stack.shape[0] > 1 else np.zeros_like(mean_p)
+    upper = np.clip(mean_p + std_p, 0.0, 1.0)
+    lower = np.clip(mean_p - std_p, 0.0, 1.0)
+    fig.add_trace(
+        go.Scatter(
+            x=recall_grid,
+            y=upper,
+            mode="lines",
+            line={"width": 0},
+            showlegend=False,
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=recall_grid,
+            y=lower,
+            mode="lines",
+            line={"width": 0},
+            fill="tonexty",
+            fillcolor="rgba(201, 162, 39, 0.18)",
+            name="mean ± 1 std",
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=recall_grid,
+            y=mean_p,
+            mode="lines",
+            name="mean PR",
+            line={"width": 2, "color": "#c9a227"},
+        )
+    )
+    fig.update_layout(
+        title="Precision-Recall by CV fold",
+        xaxis_title="Recall",
+        yaxis_title="Precision",
+        height=440,
+    )
+    return {
+        "id": "CLE.P.PR_CV",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "n_folds": len(fold_pairs),
+            "recall_grid": recall_grid.tolist(),
+            "precision_mean": mean_p.tolist(),
+            "precision_std": std_p.tolist(),
+            "ap_per_fold": fold_ap,
+            "ap_mean": float(np.mean(fold_ap)),
+            "ap_std": float(np.std(fold_ap, ddof=1)) if len(fold_ap) > 1 else 0.0,
+        },
+    }
+
+
 def plot_reliability(y_true: np.ndarray, scores: np.ndarray) -> dict[str, Any]:
     import plotly.graph_objects as go
 
