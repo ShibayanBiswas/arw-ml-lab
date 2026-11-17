@@ -24,4 +24,4 @@
 - [x] Import allowlist green.
 - [x] Rule 70: wraps existing `labcore.timeseries.horizon_guard` only.
 
-**Ship commit:** _pending commit_
+**Ship commit:** `f08641a`
