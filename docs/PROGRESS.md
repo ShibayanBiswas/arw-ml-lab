@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Current phase | Contabo v2.3 (blocked on host secrets) + One-shot CLE/REE → 8.2 |
-| Last completed step | oneshot-c236 Blocked inventory refresh; tip 904a240 |
-| Last green commit | 904a240 (c236 pending) |
+| Last completed step | oneshot-c237 NVIDIA chat timeout 8s; c236 blocked inventory |
+| Last green commit | c2d558e (c237 pending) |
 | Open failures | Contabo host/SSH/.env; Supabase migrate secrets; NVIDIA_API_KEY; Deploy cannot smoke without LAB_API_URL; Actions billing; TradingLab parity (submodule) |
 | Next action | Shibayan: Contabo + Supabase + NVIDIA + Actions billing (Blocked). Agent: continue 8.2 offline gaps; TradingLab parity when submodule present |
 
@@ -28,7 +28,7 @@
 - [ ] SSH bootstrap + verify (**blocked** — no `CONTABO_HOST`)
 - [x] compose.prod / Caddy / deploy.sh in repo (`9419aa3`); server `.env` **blocked**
 - [x] deploy.yml GHCR+SSH (`9419aa3`); actionlint clean
-- [ ] gh secrets/vars complete (`CONTABO_USER`, `CONTABO_SSH_KEY`, `SMOKE_EDA` set; host/known_hosts/LAB_API_URL/Supabase tokens still missing)
+- [ ] gh secrets/vars complete (`CONTABO_USER`, `CONTABO_SSH_KEY`, `SMOKE_EDA=false` set; still missing `CONTABO_HOST`, `CONTABO_KNOWN_HOSTS`, `LAB_API_URL`, `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`)
 - [ ] Vercel `NEXT_PUBLIC_LAB_API_URL` (**blocked** — no hostname)
 - [ ] Deploy green + smoke + rollback + backup cron
 - [ ] One-shot remainder → FINAL_REPORT

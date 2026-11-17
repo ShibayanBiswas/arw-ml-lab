@@ -80,7 +80,8 @@ class NvidiaAIClient:
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
         }
-        with httpx.Client(timeout=60.0) as client:
+        # Keep under §39.13 numbers-only 10s budget (oneshot-c237)
+        with httpx.Client(timeout=8.0) as client:
             r = client.post(f"{self.base_url}/chat/completions", json=payload, headers=headers)
             r.raise_for_status()
             data: dict[str, Any] = dict(r.json())
