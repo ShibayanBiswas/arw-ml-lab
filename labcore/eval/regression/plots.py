@@ -282,6 +282,91 @@ def plot_cooks_distance(cooks: np.ndarray) -> dict[str, Any]:
     }
 
 
+def _cooks_contour_studentised(h: np.ndarray, cooks_level: float, n_params: int) -> np.ndarray:
+    """|studentised residual| for constant Cook's D on leverage h (statsmodels OLS rule)."""
+    h = np.asarray(h, dtype=float)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        return np.sqrt(cooks_level * n_params * (1.0 - h) / h)
+
+
+def plot_leverage_studentised(
+    leverage: np.ndarray,
+    studentised: np.ndarray,
+    *,
+    n_params: int,
+    cooks_levels: tuple[float, ...] = (0.5, 1.0),
+) -> dict[str, Any]:
+    """REE.P.LEVERAGE — studentised residual vs leverage with Cook's D contours."""
+    import plotly.graph_objects as go
+
+    leverage = np.asarray(leverage, dtype=float)
+    studentised = np.asarray(studentised, dtype=float)
+    n = int(len(leverage))
+    p = int(n_params)
+    h_max = float(np.nanmax(leverage)) if n else 0.0
+    h_hi = min(0.995, max(h_max * 1.1, 1e-3) + 1e-3)
+    h_grid = np.linspace(1e-4, h_hi, 200)
+
+    fig = go.Figure(
+        go.Scatter(
+            x=leverage,
+            y=studentised,
+            mode="markers",
+            name="points",
+            opacity=0.65,
+        )
+    )
+    contour_payload: dict[str, list[float]] = {}
+    for level in cooks_levels:
+        y_cont = _cooks_contour_studentised(h_grid, level, p)
+        valid = np.isfinite(y_cont) & (h_grid < 1.0)
+        h_line = h_grid[valid]
+        y_line = y_cont[valid]
+        label = f"Cook's D = {level:g}"
+        fig.add_trace(
+            go.Scatter(
+                x=h_line,
+                y=y_line,
+                mode="lines",
+                name=f"{label} (+)",
+                line={"dash": "dot"},
+                showlegend=True,
+            )
+        )
+        fig.add_trace(
+            go.Scatter(
+                x=h_line,
+                y=-y_line,
+                mode="lines",
+                name=f"{label} (−)",
+                line={"dash": "dot"},
+                showlegend=False,
+            )
+        )
+        contour_payload[f"cooks_{level:g}_h"] = h_line.tolist()
+        contour_payload[f"cooks_{level:g}_abs_stud"] = y_line.tolist()
+
+    fig.update_layout(
+        title="Leverage vs studentised residual",
+        xaxis_title="Leverage",
+        yaxis_title="Studentised residual",
+        height=400,
+    )
+    return {
+        "id": "REE.P.LEVERAGE",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "n": n,
+            "n_params": p,
+            "cooks_levels": list(cooks_levels),
+            "leverage": [float(v) for v in leverage],
+            "studentised_resid": [float(v) for v in studentised],
+            "contours": contour_payload,
+        },
+    }
+
+
 def plot_studentised_residuals(stud: np.ndarray) -> dict[str, Any]:
     import plotly.graph_objects as go
 

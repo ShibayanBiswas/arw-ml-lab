@@ -245,6 +245,7 @@ def test_expanded_ree_plots_ds12_fixture():
     ids = {p["id"] for p in plots}
     for need in (
         "REE.P.COOKS",
+        "REE.P.LEVERAGE",
         "REE.P.STUD_RESID",
         "REE.P.BLAND_ALTMAN",
         "REE.P.RESID_ACF",

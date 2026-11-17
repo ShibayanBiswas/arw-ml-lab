@@ -12,6 +12,7 @@ from labcore.eval.regression.plots import (
     plot_abs_resid_vs_fitted,
     plot_bland_altman,
     plot_cooks_distance,
+    plot_leverage_studentised,
     plot_cum_error,
     plot_error_hist,
     plot_pred_vs_actual,
@@ -63,12 +64,14 @@ def run_regression_eval(
     infl = influence_table(y_oof, y_pred_oof)
     cooks = np.asarray([r["cooks_d"] for r in infl["rows"]], dtype=float)
     stud = np.asarray([r["studentised_resid"] for r in infl["rows"]], dtype=float)
+    lev = np.asarray([r["leverage"] for r in infl["rows"]], dtype=float)
     plots = [
         plot_pred_vs_actual(y_oof, y_pred_oof),
         plot_resid_fitted(y_pred_oof, resid),
         plot_residual_hist(resid),
         plot_qq(resid),
         plot_cooks_distance(cooks),
+        plot_leverage_studentised(lev, stud, n_params=infl["n_params"]),
         plot_studentised_residuals(stud),
         plot_bland_altman(y_oof, y_pred_oof),
         plot_residual_acf(resid),

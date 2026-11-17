@@ -143,11 +143,14 @@ def influence_table(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, Any]:
     infl = model.get_influence()
     cooks = np.asarray(infl.cooks_distance[0])
     student = np.asarray(infl.resid_studentized_internal)
+    leverage = np.asarray(infl.hat_matrix_diag)
+    n_params = int(exog.shape[1])
     rows = [
         {
             "i": int(i),
             "cooks_d": float(cooks[i]),
             "studentised_resid": float(student[i]),
+            "leverage": float(leverage[i]),
         }
         for i in range(len(y_true))
     ]
@@ -155,5 +158,6 @@ def influence_table(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, Any]:
         "id": "REE.T.INFLUENCE",
         "rows": rows,
         "cooks_d_max": float(np.nanmax(cooks)),
+        "n_params": n_params,
         "prediction_source": "oof",
     }
