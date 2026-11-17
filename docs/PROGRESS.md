@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Current phase | Contabo v2.3 (blocked on host secrets) + One-shot CLE/REE → 8.2 |
-| Last completed step | oneshot-c82 `CLE.P.ERROR_OVERLAP` (c83 `REE.P.RESID_FEATURE` on `ef97769`) |
-| Last green commit | bca0a5c |
+| Last completed step | oneshot-c85 `REE.P.COEF_FOREST` |
+| Last green commit | (set after c85 commit) |
 | Open failures | Contabo host/SSH/.env; Supabase migrate secrets; NVIDIA_API_KEY; Deploy cannot smoke without LAB_API_URL |
-| Next action | Shibayan: Contabo + Supabase + NVIDIA secrets (Blocked). Agent: `REE.P.PARTIAL_RESID` or remaining §42 influence plots |
+| Next action | Shibayan: Contabo + Supabase + NVIDIA secrets (Blocked). Agent: `REE.P.PARTIAL_RESID` (c84 lane) or `REE.P.REG_PATH` |
 
 ## Blocked — needs Shibayan
 

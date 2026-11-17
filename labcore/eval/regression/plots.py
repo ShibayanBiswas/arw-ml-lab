@@ -150,6 +150,111 @@ def plot_resid_feature(
     }
 
 
+def plot_partial_resid(
+    y: np.ndarray,
+    X: np.ndarray,
+    *,
+    feature_names: list[str] | None = None,
+    max_features: int = 12,
+) -> dict[str, Any]:
+    """REE.P.PARTIAL_RESID — CCPR small multiples (statsmodels ``plot_ccpr`` numbers)."""
+    import plotly.graph_objects as go
+    import statsmodels.api as sm
+    from plotly.subplots import make_subplots
+    from statsmodels.tools.tools import add_constant
+
+    y = np.asarray(y, dtype=float)
+    X = np.asarray(X, dtype=float)
+    if X.ndim == 1:
+        X = X.reshape(-1, 1)
+    n, p = X.shape
+    if len(y) != n:
+        raise ValueError("y and X must have the same number of rows")
+    if n < 3:
+        raise ValueError("need at least 3 rows for OLS CCPR")
+
+    exog = add_constant(X, has_constant="add")
+    ols = sm.OLS(y, exog).fit()
+
+    p_show = min(p, max_features)
+    names = list(feature_names[:p_show]) if feature_names else [f"x{i}" for i in range(p_show)]
+    if len(names) < p_show:
+        names.extend(f"x{i}" for i in range(len(names), p_show))
+
+    cols = min(3, p_show)
+    rows = int(np.ceil(p_show / cols))
+    fig = make_subplots(rows=rows, cols=cols, subplot_titles=names[:p_show])
+
+    by_feature: dict[str, dict[str, Any]] = {}
+    for j in range(p_show):
+        r, c = divmod(j, cols)
+        exog_idx = j + 1  # column 0 is intercept
+        x1 = np.asarray(exog[:, exog_idx], dtype=float)
+        beta = float(ols.params[exog_idx])
+        x1beta = x1 * beta
+        partial_y = x1beta + ols.resid
+
+        comp_mod = sm.OLS(x1beta, add_constant(x1)).fit()
+        intercept = float(comp_mod.params[0])
+        slope = float(comp_mod.params[1])
+
+        fig.add_trace(
+            go.Scatter(
+                x=x1,
+                y=partial_y,
+                mode="markers",
+                name=names[j],
+                opacity=0.55,
+                showlegend=False,
+            ),
+            row=r + 1,
+            col=c + 1,
+        )
+        x_lo, x_hi = float(np.nanmin(x1)), float(np.nanmax(x1))
+        if x_hi > x_lo:
+            x_line = [x_lo, x_hi]
+            y_line = [intercept + slope * x_lo, intercept + slope * x_hi]
+            fig.add_trace(
+                go.Scatter(
+                    x=x_line,
+                    y=y_line,
+                    mode="lines",
+                    name="component",
+                    showlegend=(j == 0),
+                    line={"width": 2},
+                ),
+                row=r + 1,
+                col=c + 1,
+            )
+        by_feature[names[j]] = {
+            "beta": beta,
+            "component_intercept": intercept,
+            "component_slope": slope,
+            "partial_y": [float(v) for v in partial_y],
+            "x": [float(v) for v in x1],
+        }
+        fig.update_xaxes(title_text=names[j], row=r + 1, col=c + 1)
+        fig.update_yaxes(
+            title_text=f"Residual + {names[j]}×β",
+            row=r + 1,
+            col=c + 1,
+        )
+
+    fig.update_layout(title="Component + partial residual (CCPR)", height=max(320, 280 * rows))
+
+    return {
+        "id": "REE.P.PARTIAL_RESID",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "n_features": p,
+            "features_shown": p_show,
+            "ols_r2": float(ols.rsquared),
+            "by_feature": by_feature,
+        },
+    }
+
+
 def plot_residual_scatter(y_pred: np.ndarray, resid: np.ndarray) -> dict[str, Any]:
     """Alias for :func:`plot_resid_fitted` (legacy call sites)."""
     return plot_resid_fitted(y_pred, resid)
@@ -1216,5 +1321,70 @@ def plot_regression_learning_curve(
             "train_sizes": train_sizes.tolist(),
             "train_mean": np.mean(train_scores, axis=1).tolist(),
             "val_mean": np.mean(val_scores, axis=1).tolist(),
+        },
+    }
+
+
+def plot_coef_forest(
+    names: list[str],
+    params: np.ndarray,
+    conf_int: np.ndarray,
+    *,
+    alpha: float = 0.05,
+) -> dict[str, Any]:
+    """REE.P.COEF_FOREST — coefficient forest with confidence intervals (linear models)."""
+    import plotly.graph_objects as go
+
+    names = list(names)
+    params = np.asarray(params, dtype=float).ravel()
+    conf_int = np.asarray(conf_int, dtype=float)
+    if conf_int.ndim != 2 or conf_int.shape[1] != 2:
+        msg = "conf_int must have shape (n_params, 2)"
+        raise ValueError(msg)
+    if len(names) != len(params) or conf_int.shape[0] != len(params):
+        msg = "names, params, and conf_int must have the same number of coefficients"
+        raise ValueError(msg)
+
+    ci_low = conf_int[:, 0]
+    ci_high = conf_int[:, 1]
+    order = np.argsort(params)
+    names_ord = [names[i] for i in order]
+    params_ord = params[order]
+    low_ord = ci_low[order]
+    high_ord = ci_high[order]
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=params_ord,
+            y=names_ord,
+            mode="markers",
+            name="estimate",
+            error_x={
+                "type": "data",
+                "symmetric": False,
+                "array": (high_ord - params_ord).tolist(),
+                "arrayminus": (params_ord - low_ord).tolist(),
+            },
+            marker={"size": 10},
+        )
+    )
+    fig.add_vline(x=0.0, line_dash="dash", line_color="gray")
+    fig.update_layout(
+        title=f"Coefficient forest ({int((1 - alpha) * 100)}% CI)",
+        xaxis_title="Coefficient",
+        yaxis_title="Term",
+        height=max(320, 56 * len(names_ord)),
+    )
+    return {
+        "id": "REE.P.COEF_FOREST",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "alpha": float(alpha),
+            "names": names,
+            "params": [float(v) for v in params],
+            "ci_lower": [float(v) for v in ci_low],
+            "ci_upper": [float(v) for v in ci_high],
         },
     }
