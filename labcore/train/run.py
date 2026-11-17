@@ -319,6 +319,16 @@ def run_supervised_cv(
         seed=config.seed,
     )
 
+    from labcore.integrity.nested_cv_contract import build_nested_cv_manifest
+
+    nested_cv = build_nested_cv_manifest(
+        n_train=int(len(X_tr)),
+        nested_enabled=nested_on,
+        cv_scheme=scheme,
+        nested_override=config.nested,
+        seed=config.seed,
+    )
+
     return {
         "leaderboard": rows,
         "config": config.model_dump(),
@@ -335,4 +345,5 @@ def run_supervised_cv(
         "feature_names": feature_names,
         "champion_pipeline": champion_pipeline,
         "holdout_reuse": holdout_reuse,
+        "nested_cv": nested_cv,
     }

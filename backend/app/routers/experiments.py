@@ -44,7 +44,8 @@ class TuneBody(BaseModel):
 
 def _reject_gpu_or_hidden(algorithm_keys: list[str]) -> None:
     """HTTP 422 when GPU-only model has no worker, or TabPFN requested while disabled."""
-    from labcore.deep.guards import assert_gpu_allowed, tabpfn_enabled
+    from labcore.deep.gpu_guard_contract import validate_train_gpu_guard
+    from labcore.deep.guards import tabpfn_enabled
     from labcore.registry.algorithms import thin_algorithm_specs
 
     by_key = {s.key: s for s in thin_algorithm_specs()}
@@ -57,10 +58,10 @@ def _reject_gpu_or_hidden(algorithm_keys: list[str]) -> None:
                 status_code=422,
                 detail="TabPFN is disabled (TABPFN_ENABLED=false); commercial licence required.",
             )
-        try:
-            assert_gpu_allowed(spec.resources)
-        except ValueError as exc:
-            raise HTTPException(status_code=422, detail=str(exc)) from exc
+    try:
+        validate_train_gpu_guard(algorithm_keys)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 @router.post("/api/v1/experiments/train")
