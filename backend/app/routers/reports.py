@@ -7,6 +7,7 @@ from typing import Any
 from fastapi import APIRouter, Depends
 from labcore.reports import (
     build_executive_html,
+    build_formula_sheet,
     build_reproduction_notebook,
     build_run_report,
     notebook_to_json,
@@ -32,6 +33,11 @@ class NotebookBody(BaseModel):
     algorithm_key: str
     facts: dict[str, Any] = Field(default_factory=dict)
     pip_pins: list[str] | None = None
+
+
+class FormulasBody(BaseModel):
+    title: str = "Metric formula sheet"
+    families: list[str] | None = None
 
 
 @router.post("/api/v1/reports/build")
@@ -99,3 +105,12 @@ def reports_notebook(
         "nbformat_json": notebook_to_json(nb),
         "seed": 42,
     }
+
+
+@router.post("/api/v1/reports/formulas")
+def reports_formulas(
+    body: FormulasBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    _ = user
+    return build_formula_sheet(title=body.title, families=body.families, seed=42)

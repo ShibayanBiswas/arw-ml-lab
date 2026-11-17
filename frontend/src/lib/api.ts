@@ -758,3 +758,31 @@ export async function runReportsExecutive(body: ReportsExecutiveBody, includePdf
     pdf_base64?: string;
   };
 }
+
+export type ReportsFormulasBody = {
+  title?: string;
+  families?: Array<"classification" | "regression">;
+};
+
+export function reportsFormulasPath(): string {
+  return "/api/v1/reports/formulas";
+}
+
+export async function runReportsFormulas(body: ReportsFormulasBody = {}) {
+  const res = await fetch(`${labApiBase()}${reportsFormulasPath()}`, {
+    method: "POST",
+    headers: { ...labAuthHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(`reports formulas: ${res.status} ${detail}`);
+  }
+  return (await res.json()) as {
+    id: string;
+    seed: number;
+    html: string;
+    entries: Array<Record<string, string>>;
+    numbers: { count: number; entry_ids: string[]; by_family: Record<string, number> };
+  };
+}

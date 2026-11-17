@@ -4,6 +4,7 @@ import { useState } from "react";
 import { labApiBase } from "@/lib/api";
 import { labAuthHeaders } from "@/lib/lab-session";
 import { ExecutiveSummaryPanel } from "@/components/reports/ExecutiveSummaryPanel";
+import { FormulaSheetPanel } from "@/components/reports/FormulaSheetPanel";
 import { ReproductionNotebookPanel } from "@/components/reports/ReproductionNotebookPanel";
 
 type Mode = "home" | "builder" | "templates" | "history";
@@ -46,6 +47,7 @@ export function ReportsWorkbench({ mode }: { mode: Mode }) {
       {mode === "templates" && (
         <>
           <ExecutiveSummaryPanel />
+          <FormulaSheetPanel />
           <ReproductionNotebookPanel />
         </>
       )}
