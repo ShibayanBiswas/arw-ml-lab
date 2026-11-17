@@ -18,6 +18,7 @@ def test_dr_workbench_wires_dr_catalogue() -> None:
         "DR.P.BIPLOT",
         "DR.P.LOADINGS",
         "DR.P.CORR_CIRCLE",
+        "DR.P.SHEPARD",
     ):
         assert artefact in src
     assert 'family === "dr"' in src
@@ -29,3 +30,4 @@ def test_api_exports_dr_plot_paths() -> None:
     assert "unsupervisedDrPlotPath" in api
     assert "runUnsupervisedDrPlot" in api
     assert "DrCataloguePlot" in api
+    assert '"shepard"' in api

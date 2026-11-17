@@ -41,5 +41,6 @@ describe("unsupervisedDrPlotPath", () => {
     expect(unsupervisedDrPlotPath("correlation-circle")).toBe(
       "/api/v1/unsupervised/dr/correlation-circle"
     );
+    expect(unsupervisedDrPlotPath("shepard")).toBe("/api/v1/unsupervised/dr/shepard");
   });
 });

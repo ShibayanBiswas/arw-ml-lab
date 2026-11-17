@@ -43,6 +43,7 @@ const DR_PLOTS: { id: DrCataloguePlot; label: string; artefact: string }[] = [
   { id: "biplot", label: "Biplot", artefact: "DR.P.BIPLOT" },
   { id: "loadings", label: "Loadings heatmap", artefact: "DR.P.LOADINGS" },
   { id: "correlation-circle", label: "Correlation circle", artefact: "DR.P.CORR_CIRCLE" },
+  { id: "shepard", label: "Shepard diagram", artefact: "DR.P.SHEPARD" },
 ];
 
 export function UnsupervisedWorkbench({ mode }: { mode: Mode }) {

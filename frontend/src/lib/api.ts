@@ -383,7 +383,8 @@ export type DrCataloguePlot =
   | "cumvar"
   | "biplot"
   | "loadings"
-  | "correlation-circle";
+  | "correlation-circle"
+  | "shepard";
 
 export function unsupervisedAnomalyPlotPath(plot: AnomalyCataloguePlot): string {
   return `/api/v1/unsupervised/anomaly/${plot}`;

@@ -1,7 +1,7 @@
 # ARW ML Lab — One-shot finish report (interim)
 
 **Date:** 17 Nov 2026 (IST)
-**Tip:** `9553dbc` — oneshot-c136 FE.WB.UNSUP_ANOM_PARETO_PAIRWISE
+**Tip:** _(see c137 report)_ — oneshot-c137 FE.WB.UNSUP_DR_SHEPARD
 **Live frontend:** https://arw-ml-lab.vercel.app/login → **200**
 **Repo:** https://github.com/ShibayanBiswas/arw-ml-lab
 **Backend target:** Contabo VPS (`docs/DEPLOY_CONTABO.md`, ADR-0017) — **not yet live**
