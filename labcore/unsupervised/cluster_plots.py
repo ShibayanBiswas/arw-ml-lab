@@ -152,3 +152,76 @@ def kmeans_k_sweep(
         },
         "seed": seed,
     }
+
+
+def kmeans_elbow(
+    X: np.ndarray,
+    *,
+    k_min: int = 2,
+    k_max: int = 10,
+    seed: int = 42,
+) -> dict[str, Any]:
+    """Inertia vs k with Kneedle knee (elbow method). Returns numbers + Plotly."""
+    import plotly.graph_objects as go
+    from kneed import KneeLocator
+
+    Xs = StandardScaler().fit_transform(np.asarray(X, dtype=float))
+    ks = list(range(k_min, k_max + 1))
+    inertias: list[float] = []
+    for k in ks:
+        km = KMeans(n_clusters=k, random_state=seed, n_init=10).fit(Xs)
+        inertias.append(float(km.inertia_))
+
+    knee: int | None = None
+    knee_y: float | None = None
+    if len(ks) >= 3:
+        locator = KneeLocator(ks, inertias, curve="convex", direction="decreasing", S=1.0)
+        if locator.knee is not None:
+            knee = int(locator.knee)
+            knee_y = float(locator.knee_y) if locator.knee_y is not None else None
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=ks,
+            y=inertias,
+            mode="lines+markers",
+            name="inertia (WCSS)",
+        )
+    )
+    if knee is not None and knee_y is not None:
+        fig.add_vline(
+            x=knee,
+            line_dash="dash",
+            line_color="#c9a227",
+            annotation_text=f"elbow k={knee}",
+            annotation_position="top",
+        )
+        fig.add_trace(
+            go.Scatter(
+                x=[knee],
+                y=[knee_y],
+                mode="markers",
+                name="knee",
+                marker={"size": 12, "color": "#c9a227", "symbol": "diamond"},
+            )
+        )
+    title = f"KMeans elbow (knee k={knee})" if knee is not None else "KMeans elbow"
+    fig.update_layout(
+        title=title,
+        xaxis_title="k",
+        yaxis_title="Inertia (WCSS)",
+        height=400,
+    )
+    return {
+        "id": "CLU.P.ELBOW",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "k": ks,
+            "inertia": inertias,
+            "knee_k": knee,
+            "knee_inertia": knee_y,
+        },
+        "seed": seed,
+    }
