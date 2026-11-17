@@ -37,6 +37,12 @@ from backend.app.routers import (
 from backend.app.observability import init_sentry
 from backend.app.schemas import Healthz
 from backend.app.settings import get_settings
+from labcore.security.api_auth_policy import (
+    CORS_ALLOWED_HEADERS,
+    CORS_ALLOWED_METHODS,
+    CORS_ALLOW_CREDENTIALS,
+    reject_cookie_without_bearer,
+)
 
 limiter = Limiter(key_func=get_remote_address, default_limits=["120/minute"])
 
@@ -63,9 +69,9 @@ def create_app() -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=origins or ["http://localhost:3000"],
-        allow_credentials=False,
-        allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
-        allow_headers=["Authorization", "Content-Type", "Idempotency-Key", "X-Workspace-Id"],
+        allow_credentials=CORS_ALLOW_CREDENTIALS,
+        allow_methods=list(CORS_ALLOWED_METHODS),
+        allow_headers=list(CORS_ALLOWED_HEADERS),
     )
 
     @app.get("/healthz", response_model=Healthz)
@@ -80,7 +86,21 @@ def create_app() -> FastAPI:
 
     @app.middleware("http")
     async def reject_cookie_auth(request: Request, call_next: object) -> Response:
-        # SEC-07: lab-api accepts Authorization Bearer only (no cookie session to API)
+        if reject_cookie_without_bearer(
+            cookie=request.headers.get("cookie"),
+            authorization=request.headers.get("authorization"),
+            method=request.method,
+            path=request.url.path,
+        ):
+            return JSONResponse(
+                status_code=401,
+                content={
+                    "type": "about:blank",
+                    "title": "Unauthorized",
+                    "status": 401,
+                    "detail": "lab-api accepts Authorization Bearer only; do not send session cookies.",
+                },
+            )
         response = await call_next(request)  # type: ignore[operator]
         return response
 
