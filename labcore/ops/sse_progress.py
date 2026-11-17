@@ -37,10 +37,11 @@ def assert_fe_sse_client() -> dict[str, str]:
 def assert_caddy_buffers_off_or_flush() -> dict[str, str]:
     """Caddy should not buffer SSE forever — flush or disable response buffering."""
     caddy = (_repo_root() / "infra" / "caddy" / "Caddyfile").read_text(encoding="utf-8")
-    # soft check: reverse_proxy to lab-api exists
     if "lab-api" not in caddy and "8000" not in caddy:
         raise AssertionError("Caddyfile must proxy to lab-api")
-    return {"proxy": "lab-api"}
+    if "flush_interval" not in caddy:
+        raise AssertionError("Caddy reverse_proxy must set flush_interval for SSE")
+    return {"proxy": "lab-api", "flush_interval": True}
 
 
 def sse_manifest(*, seed: int = 42) -> dict[str, Any]:
