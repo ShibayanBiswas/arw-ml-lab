@@ -4,7 +4,7 @@
 |---|---|
 | Current phase | Contabo v2.3 (blocked on host secrets) + One-shot CLE/REE → 8.2 |
 | Last completed step | oneshot-c151 **SEC.CORS.BEARER** (ST-SEC-07); oneshot-c149 **OPS.EGRESS.ALLOWLIST** (ST-OPS-08) |
-| Last green commit | (set after oneshot-c151 push) |
+| Last green commit | 6f537ba |
 | Open failures | Contabo host/SSH/.env; Supabase migrate secrets; NVIDIA_API_KEY; Deploy cannot smoke without LAB_API_URL |
 | Next action | Shibayan: Contabo + Supabase + NVIDIA secrets (Blocked). Agent: Chunk C / F* / Phase 7 remainder per FINAL_REPORT |
 

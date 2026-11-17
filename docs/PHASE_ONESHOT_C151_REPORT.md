@@ -22,4 +22,4 @@
 - [x] Import allowlist green.
 - [x] Rule 70: stdlib + existing FastAPI stack only in new module.
 
-**Ship commit:** `(after push)`
+**Ship commit:** `6f537ba`
