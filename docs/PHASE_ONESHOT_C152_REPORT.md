@@ -21,4 +21,4 @@
 - [x] Import allowlist green.
 - [x] Rule 70: skops/torch/sklearn pins unchanged.
 
-**Ship commit:** _(pending)_
+**Ship commit:** `0958a48`
