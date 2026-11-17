@@ -24,4 +24,4 @@
 - [x] Import allowlist green (`opentelemetry` → `opentelemetry-sdk`).
 - [x] Rule 70: OTel instrumentation uses pinned libraries only (lazy import).
 
-**Ship commit:** _(pending)_
+**Ship commit:** `b8bf39a`
