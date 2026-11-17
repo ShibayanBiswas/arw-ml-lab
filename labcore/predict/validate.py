@@ -1,7 +1,7 @@
 """Prediction upload validation — PV01–PV16 (ARCHITECTURE §45.3).
 
-Implemented: PV01–PV09, PV10 (contract-stat OOD), PV14, PV15.
-Deferred until sequential/TS suites: PV11–PV13, PV16 (PII).
+Implemented: PV01–PV09, PV10 (contract-stat OOD), PV11 (PSI/KS when ``reference_df``), PV14, PV15.
+Deferred until sequential/TS suites: PV12–PV13, PV16 (PII).
 """
 
 from __future__ import annotations
@@ -254,6 +254,7 @@ def validate_predict_frame(
     max_bytes: int | None = None,
     source_bytes: int | None = None,
     csv_meta: dict[str, Any] | None = None,
+    reference_df: pd.DataFrame | None = None,
 ) -> ValidationReport:
     """Run PV checks; return coerced frame aligned to required feature names."""
     report = ValidationReport(ok=True)
@@ -381,9 +382,57 @@ def validate_predict_frame(
         )
     report.dropped_columns = drop_cols
 
-    # Deferred: drift / sequential / TS / PII
+    # PV11 — batch drift when a training reference frame is supplied (oneshot-c242)
+    if reference_df is not None and len(reference_df) > 0 and len(df) > 0:
+        try:
+            from labcore.monitoring.drift import ks_drift_report, psi_drift_report
+
+            numeric = [
+                n
+                for n in required
+                if n in df.columns
+                and n in reference_df.columns
+                and feat_by_name.get(n, {}).get("kind", "numeric") == "numeric"
+            ]
+            if numeric:
+                ref = reference_df[numeric].to_numpy(dtype=float)
+                cur = df[numeric].to_numpy(dtype=float)
+                ks = ks_drift_report(ref, cur, feature_names=numeric)
+                psi = psi_drift_report(ref, cur, feature_names=numeric)
+                report.warnings.append(
+                    PVIssue(
+                        code="PV11",
+                        severity="warn" if (ks.get("n_drifted") or 0) > 0 else "info",
+                        message=(
+                            f"batch drift KS drifted={ks.get('n_drifted')} "
+                            f"PSI drifted={psi.get('n_drifted')}"
+                        ),
+                        details={"ks": ks, "psi": psi},
+                    )
+                )
+            else:
+                report.deferred.append(
+                    PVIssue(
+                        code="PV11",
+                        severity="deferred",
+                        message="batch drift PSI/KS: no overlapping numeric features",
+                    )
+                )
+        except Exception as exc:  # noqa: BLE001 — never block predict on drift I/O
+            report.warnings.append(
+                PVIssue(
+                    code="PV11",
+                    severity="warn",
+                    message=f"batch drift not computed: {type(exc).__name__}",
+                )
+            )
+    else:
+        report.deferred.append(
+            PVIssue(code="PV11", severity="deferred", message="batch drift PSI/KS not computed yet")
+        )
+
+    # Deferred: sequential / TS / PII
     for code, msg in (
-        ("PV11", "batch drift PSI/KS not computed yet"),
         ("PV12", "sequential history checks not computed yet"),
         ("PV13", "TS horizon checks not computed yet"),
         ("PV16", "PII masking not computed yet"),
