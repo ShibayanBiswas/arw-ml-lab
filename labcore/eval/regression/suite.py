@@ -19,7 +19,7 @@ from labcore.eval.regression.plots import (
     plot_rec,
     plot_residual_acf,
     plot_residual_hist,
-    plot_residual_scatter,
+    plot_resid_fitted,
     plot_scale_location,
     plot_studentised_residuals,
 )
@@ -65,7 +65,7 @@ def run_regression_eval(
     stud = np.asarray([r["studentised_resid"] for r in infl["rows"]], dtype=float)
     plots = [
         plot_pred_vs_actual(y_oof, y_pred_oof),
-        plot_residual_scatter(y_pred_oof, resid),
+        plot_resid_fitted(y_pred_oof, resid),
         plot_residual_hist(resid),
         plot_qq(resid),
         plot_cooks_distance(cooks),

@@ -23,15 +23,51 @@ def plot_pred_vs_actual(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, Any
     return {"id": "REE.P.PRED_VS_ACTUAL", "kind": "plot", "plotly": fig.to_plotly_json()}
 
 
-def plot_residual_scatter(y_pred: np.ndarray, resid: np.ndarray) -> dict[str, Any]:
+def plot_resid_fitted(
+    y_pred: np.ndarray, resid: np.ndarray, *, frac: float = 2.0 / 3.0
+) -> dict[str, Any]:
+    """REE.P.RESID_FITTED — residuals vs fitted with statsmodels LOWESS."""
     import plotly.graph_objects as go
+    from statsmodels.nonparametric.smoothers_lowess import lowess
 
-    fig = go.Figure(go.Scatter(x=y_pred, y=resid, mode="markers", opacity=0.6))
-    fig.add_hline(y=0, line_dash="dash")
-    fig.update_layout(
-        title="Residuals vs fitted", xaxis_title="Fitted", yaxis_title="Residual", height=400
+    y_pred = np.asarray(y_pred, dtype=float)
+    resid = np.asarray(resid, dtype=float)
+    fig = go.Figure(
+        go.Scatter(x=y_pred, y=resid, mode="markers", name="residuals", opacity=0.6)
     )
-    return {"id": "REE.P.RESID_SCATTER", "kind": "plot", "plotly": fig.to_plotly_json()}
+    fig.add_hline(y=0, line_dash="dash")
+    lowess_x: list[float] = []
+    lowess_y: list[float] = []
+    if len(y_pred) >= 3 and np.any(np.isfinite(y_pred) & np.isfinite(resid)):
+        sm = lowess(resid, y_pred, frac=frac, return_sorted=True)
+        lowess_x = [float(v) for v in sm[:, 0]]
+        lowess_y = [float(v) for v in sm[:, 1]]
+        fig.add_trace(
+            go.Scatter(
+                x=lowess_x,
+                y=lowess_y,
+                mode="lines",
+                name="LOWESS",
+                line={"width": 2},
+            )
+        )
+    fig.update_layout(
+        title="Residuals vs fitted",
+        xaxis_title="Fitted",
+        yaxis_title="Residual",
+        height=400,
+    )
+    return {
+        "id": "REE.P.RESID_FITTED",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {"frac": frac, "lowess_x": lowess_x, "lowess_y": lowess_y},
+    }
+
+
+def plot_residual_scatter(y_pred: np.ndarray, resid: np.ndarray) -> dict[str, Any]:
+    """Alias for :func:`plot_resid_fitted` (legacy call sites)."""
+    return plot_resid_fitted(y_pred, resid)
 
 
 def plot_residual_hist(resid: np.ndarray) -> dict[str, Any]:
