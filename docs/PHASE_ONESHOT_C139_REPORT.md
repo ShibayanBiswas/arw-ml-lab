@@ -33,4 +33,4 @@ cd frontend && pnpm exec vitest run src/lib/monitoring-api.test.ts
 - [x] Backend report carries `seed: 42` metadata.
 - [x] Import allowlist + vitest green.
 
-**Ship commit:** `ee0f14f`
+**Ship commit:** `ac50a59`

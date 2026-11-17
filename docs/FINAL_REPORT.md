@@ -1,7 +1,7 @@
 # ARW ML Lab — One-shot finish report (interim)
 
 **Date:** 17 Nov 2026 (IST)
-**Tip:** _(c139)_ — oneshot-c139 FE.WB.PREDICT_MONITOR_KS
+**Tip:** `ac50a59` — oneshot-c139 FE.WB.PREDICT_MONITOR_KS
 **Live frontend:** https://arw-ml-lab.vercel.app/login → **200**
 **Repo:** https://github.com/ShibayanBiswas/arw-ml-lab
 **Backend target:** Contabo VPS (`docs/DEPLOY_CONTABO.md`, ADR-0017) — **not yet live**
