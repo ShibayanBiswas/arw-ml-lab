@@ -266,6 +266,7 @@ def run_supervised_cv(
 
     eval_payload = None
     champion_pipeline = None
+    conformal_meta: dict[str, Any] | None = None
     if config.run_eval and rows:
         champ = rows[0]
         oof = champ.pop("_oof")
@@ -273,6 +274,31 @@ def run_supervised_cv(
         for r in rows[1:]:
             r.pop("_oof", None)
             r.pop("_pipeline", None)
+        if config.task == "regression" and champion_pipeline is not None:
+            from labcore.predict.conformal_attach import (
+                attach_oof_residual_qhat,
+                oof_absolute_residual_qhat,
+            )
+
+            try:
+                qhat = oof_absolute_residual_qhat(
+                    oof["y_true"], oof["y_pred"], confidence_level=0.9
+                )
+                champion_pipeline = attach_oof_residual_qhat(
+                    champion_pipeline,
+                    oof["y_true"],
+                    oof["y_pred"],
+                    confidence_level=0.9,
+                )
+                conformal_meta = {
+                    "method": "split_conformal_residual",
+                    "confidence_level": 0.9,
+                    "conformal_qhat": qhat,
+                    "source": "oof",
+                }
+                feature_contract["uncertainty"] = dict(conformal_meta)
+            except Exception:
+                conformal_meta = None
         if config.task == "regression":
             from labcore.eval.regression.suite import run_regression_eval
 
@@ -353,6 +379,16 @@ def run_supervised_cv(
         if "fit_indices" in refit_meta:
             # Keep result JSON small / serialisable
             refit_meta["n_fit_indices"] = len(refit_meta.pop("fit_indices"))
+        # Refit may clone the estimator — re-attach OOF qhat (still from OOF, not test)
+        if conformal_meta and champion_pipeline is not None:
+            try:
+                setattr(
+                    champion_pipeline,
+                    "conformal_qhat_",
+                    float(conformal_meta["conformal_qhat"]),
+                )
+            except Exception:
+                pass
 
     return {
         "leaderboard": rows,
@@ -372,4 +408,5 @@ def run_supervised_cv(
         "holdout_reuse": holdout_reuse,
         "nested_cv": nested_cv,
         "refit_full": refit_meta,
+        "uncertainty": conformal_meta,
     }
