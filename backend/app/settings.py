@@ -25,6 +25,11 @@ class Settings(BaseSettings):
         default="postgresql://postgres:postgres@127.0.0.1:54322/postgres",
         alias="DATABASE_URL",
     )
+    # Session/direct pooler for workers, Optuna, long transactions (§39)
+    database_url_session: str = Field(
+        default="postgresql://postgres:postgres@127.0.0.1:54322/postgres",
+        alias="DATABASE_URL_SESSION",
+    )
     ai_enabled: bool = Field(default=False, alias="AI_ENABLED")
     service_role: str = Field(default="api", alias="SERVICE_ROLE")
     # When true, accept TEST_AUTH_* headers for unit tests (never in production)
@@ -41,8 +46,16 @@ class Settings(BaseSettings):
     otel_enabled: bool = Field(default=False, alias="OTEL_ENABLED")
     otel_exporter_otlp_endpoint: str = Field(default="", alias="OTEL_EXPORTER_OTLP_ENDPOINT")
     otel_service_name: str = Field(default="lab-api", alias="OTEL_SERVICE_NAME")
-    # Optuna RDB URL for resumable studies (§39.3); empty → in-memory
+    # Optuna RDB URL for resumable studies (§39.3); empty → DATABASE_URL_SESSION → in-memory
     optuna_storage_url: str = Field(default="", alias="OPTUNA_STORAGE_URL")
+
+    def resolved_optuna_storage_url(self) -> str:
+        """Prefer explicit OPTUNA_STORAGE_URL; else session pooler for workers."""
+        if self.optuna_storage_url.strip():
+            return self.optuna_storage_url.strip()
+        if self.service_role.startswith("worker") and self.database_url_session.strip():
+            return self.database_url_session.strip()
+        return ""
 
 
 @lru_cache

@@ -40,7 +40,7 @@ def run_tune_task(self, job_id: str, experiment_id: str, body: dict[str, Any]) -
             event={"type": "progress", "pct": 0.3, "step": "tune"},
         )
         settings = get_settings()
-        storage = body.get("storage") or (settings.optuna_storage_url or None)
+        storage = body.get("storage") or (settings.resolved_optuna_storage_url() or None)
         study_name = body.get("study_name") or f"exp-{experiment_id}"
         result = run_optuna_tune(
             df,
