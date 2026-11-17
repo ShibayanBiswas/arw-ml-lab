@@ -65,6 +65,91 @@ def plot_resid_fitted(
     }
 
 
+def plot_resid_feature(
+    resid: np.ndarray,
+    X: np.ndarray,
+    *,
+    feature_names: list[str] | None = None,
+    frac: float = 2.0 / 3.0,
+    max_features: int = 12,
+) -> dict[str, Any]:
+    """REE.P.RESID_FEATURE — residuals vs each feature (LOWESS small multiples)."""
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+    from statsmodels.nonparametric.smoothers_lowess import lowess
+
+    resid = np.asarray(resid, dtype=float)
+    X = np.asarray(X)
+    if X.ndim == 1:
+        X = X.reshape(-1, 1)
+    n, p = X.shape
+    if len(resid) != n:
+        raise ValueError("resid and X must have the same number of rows")
+
+    p_show = min(p, max_features)
+    names = list(feature_names[:p_show]) if feature_names else [f"x{i}" for i in range(p_show)]
+    if len(names) < p_show:
+        names.extend(f"x{i}" for i in range(len(names), p_show))
+
+    cols = min(3, p_show)
+    rows = int(np.ceil(p_show / cols))
+    fig = make_subplots(rows=rows, cols=cols, subplot_titles=names[:p_show])
+
+    by_feature: dict[str, dict[str, list[float]]] = {}
+    for j in range(p_show):
+        r, c = divmod(j, cols)
+        xj = np.asarray(X[:, j], dtype=float)
+        fig.add_trace(
+            go.Scatter(
+                x=xj,
+                y=resid,
+                mode="markers",
+                name=names[j],
+                opacity=0.55,
+                showlegend=False,
+            ),
+            row=r + 1,
+            col=c + 1,
+        )
+        fig.add_hline(y=0, line_dash="dash", row=r + 1, col=c + 1)
+
+        lowess_x: list[float] = []
+        lowess_y: list[float] = []
+        if n >= 3 and np.any(np.isfinite(xj) & np.isfinite(resid)):
+            sm = lowess(resid, xj, frac=frac, return_sorted=True)
+            lowess_x = [float(v) for v in sm[:, 0]]
+            lowess_y = [float(v) for v in sm[:, 1]]
+            fig.add_trace(
+                go.Scatter(
+                    x=lowess_x,
+                    y=lowess_y,
+                    mode="lines",
+                    name="LOWESS",
+                    showlegend=(j == 0),
+                    line={"width": 2},
+                ),
+                row=r + 1,
+                col=c + 1,
+            )
+        by_feature[names[j]] = {"lowess_x": lowess_x, "lowess_y": lowess_y}
+        fig.update_xaxes(title_text=names[j], row=r + 1, col=c + 1)
+        fig.update_yaxes(title_text="Residual", row=r + 1, col=c + 1)
+
+    fig.update_layout(title="Residuals vs features", height=max(320, 280 * rows))
+
+    return {
+        "id": "REE.P.RESID_FEATURE",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "frac": frac,
+            "n_features": p,
+            "features_shown": p_show,
+            "by_feature": by_feature,
+        },
+    }
+
+
 def plot_residual_scatter(y_pred: np.ndarray, resid: np.ndarray) -> dict[str, Any]:
     """Alias for :func:`plot_resid_fitted` (legacy call sites)."""
     return plot_resid_fitted(y_pred, resid)
