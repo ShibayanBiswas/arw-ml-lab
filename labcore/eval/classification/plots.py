@@ -53,6 +53,107 @@ def plot_roc(y_true: np.ndarray, scores: np.ndarray) -> dict[str, Any]:
     }
 
 
+def plot_roc_multi(y_true: np.ndarray, y_score: np.ndarray) -> dict[str, Any]:
+    """CLE.P.ROC_MULTI — per-class OvR ROC + micro + macro (sklearn OvR recipe)."""
+    import plotly.graph_objects as go
+    from sklearn.metrics import auc, roc_auc_score
+    from sklearn.preprocessing import label_binarize
+
+    y_true = np.asarray(y_true)
+    y_score = np.asarray(y_score, dtype=float)
+    if y_score.ndim != 2:
+        raise ValueError("y_score must be (n_samples, n_classes)")
+    classes = np.unique(y_true)
+    n_classes = len(classes)
+    if n_classes < 2 or y_score.shape[1] != n_classes:
+        raise ValueError("y_score columns must match unique classes in y_true")
+
+    y_bin = label_binarize(y_true, classes=classes)
+    if n_classes == 2:
+        y_bin = np.hstack([1 - y_bin, y_bin])
+
+    fpr: dict[str, np.ndarray] = {}
+    tpr: dict[str, np.ndarray] = {}
+    roc_auc: dict[str, float] = {}
+
+    for i, cls in enumerate(classes):
+        fpr[str(cls)], tpr[str(cls)], _ = roc_curve(y_bin[:, i], y_score[:, i])
+        roc_auc[str(cls)] = float(auc(fpr[str(cls)], tpr[str(cls)]))
+
+    fpr["micro"], tpr["micro"], _ = roc_curve(y_bin.ravel(), y_score.ravel())
+    roc_auc["micro"] = float(auc(fpr["micro"], tpr["micro"]))
+
+    all_fpr = np.unique(np.concatenate([fpr[str(c)] for c in classes]))
+    mean_tpr = np.zeros_like(all_fpr)
+    for cls in classes:
+        mean_tpr += np.interp(all_fpr, fpr[str(cls)], tpr[str(cls)])
+    mean_tpr /= n_classes
+    fpr["macro"] = all_fpr
+    tpr["macro"] = mean_tpr
+    class_aucs = [roc_auc[str(c)] for c in classes]
+    roc_auc["macro"] = float(np.mean(class_aucs))
+    roc_auc["macro_curve"] = float(auc(fpr["macro"], tpr["macro"]))
+
+    fig = go.Figure()
+    for cls in classes:
+        fig.add_trace(
+            go.Scatter(
+                x=fpr[str(cls)],
+                y=tpr[str(cls)],
+                mode="lines",
+                name=f"class {cls} AUC={roc_auc[str(cls)]:.3f}",
+            )
+        )
+    fig.add_trace(
+        go.Scatter(
+            x=fpr["micro"],
+            y=tpr["micro"],
+            mode="lines",
+            name=f"micro AUC={roc_auc['micro']:.3f}",
+            line={"width": 2},
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=fpr["macro"],
+            y=tpr["macro"],
+            mode="lines",
+            name=f"macro AUC={roc_auc['macro']:.3f}",
+            line={"dash": "dash", "width": 2},
+        )
+    )
+    fig.add_trace(
+        go.Scatter(x=[0, 1], y=[0, 1], mode="lines", name="chance", line={"dash": "dot"})
+    )
+    fig.update_layout(title="ROC — OvR / micro / macro", xaxis_title="FPR", yaxis_title="TPR", height=440)
+
+    oracle_macro = float(
+        roc_auc_score(y_true, y_score, multi_class="ovr", average="macro")
+    )
+    oracle_micro = float(
+        roc_auc_score(y_true, y_score, multi_class="ovr", average="micro")
+    )
+    oracle_per_class = roc_auc_score(
+        y_true, y_score, multi_class="ovr", average=None, labels=classes
+    )
+
+    return {
+        "id": "CLE.P.ROC_MULTI",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "auc_per_class": {str(c): roc_auc[str(c)] for c in classes},
+            "auc_micro": roc_auc["micro"],
+            "auc_macro": roc_auc["macro"],
+            "auc_macro_curve": roc_auc["macro_curve"],
+            "auc_macro_oracle": oracle_macro,
+            "auc_micro_oracle": oracle_micro,
+            "auc_per_class_oracle": [float(v) for v in oracle_per_class],
+            "classes": [str(c) for c in classes.tolist()],
+        },
+    }
+
+
 def plot_pr(y_true: np.ndarray, scores: np.ndarray) -> dict[str, Any]:
     import plotly.graph_objects as go
     from sklearn.metrics import average_precision_score
