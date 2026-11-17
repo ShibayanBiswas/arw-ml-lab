@@ -555,7 +555,7 @@ flowchart TD
 
 ## 17. Deployment and CI/CD
 
-§39: GitHub Actions → Supabase migrations → Render Blueprint → Vercel → smoke tests; hosted NVIDIA AI API; optional GPU worker (heavy DL) and K8s scale-out.
+§39: GitHub Actions → Supabase migrations → Render Blueprint (legacy / alternative; the primary backend path is the Contabo VPS in §21) → Vercel → smoke tests; hosted NVIDIA AI API; optional GPU worker (heavy DL) and K8s scale-out.
 
 ![Deployment and CI/CD](diagrams/17_deployment.png)
 
@@ -683,4 +683,45 @@ flowchart TD
   GRID --> AI[AI explanation - NVIDIA VLM via labcore ai, FACTS-checked,<br/>numbers-only fallback, no identifiers sent]
   CARD --> AI
   FILES --> AUD[(audit_log + retention 30 days via lab-beat)]
+```
+
+
+## 21. Contabo VPS backend deploy (ARCHITECTURE §39.0)
+
+Primary backend path from v2.3: GitHub Actions builds images to GHCR, SSH-deploys Compose on a Contabo VPS behind Caddy HTTPS. Vercel and Supabase unchanged; `render.yaml` remains the legacy alternative.
+
+![Contabo deploy](diagrams/21_contabo_deploy.png)
+
+```mermaid
+flowchart LR
+  DEV[Developer + Cursor agent] -->|push main| GH[GitHub monorepo arw-ml-lab]
+  GH --> CI[ci.yml - lint, types, tests, RLS]
+  CI -->|green| DP[deploy.yml]
+  DP --> MG[migrate - supabase link + db push]
+  DP --> BD[build - 3 images to GHCR<br/>api, worker-light, worker-train]
+  MG --> DJ
+  BD --> DJ[deploy - SSH deploy@VPS<br/>compose pull + up -d]
+  DJ --> HC{healthz OK?}
+  HC -->|yes| SM[smoke - public HTTPS healthz + DS1 EDA]
+  HC -->|no| RB[rollback to previous image tag]
+  MG --> SB[(Supabase - Postgres + RLS, Auth, Storage)]
+  subgraph VPS[Contabo Cloud VPS 10 - Ubuntu 24.04, 4 vCPU, 8 GB, ufw 22/80/443]
+    CD[caddy - Let's Encrypt HTTPS] --> API[lab-api FastAPI]
+    API --> RD[(redis - password, AOF, noeviction)]
+    WL[worker-light 1.5 GB] --> RD
+    WT[worker-train 3.5 GB, concurrency 1] --> RD
+    BT[lab-beat hourly maintenance]
+    MF[mlflow optional]
+  end
+  DJ --> CD
+  USR[Browser] --> VC[Vercel - Next.js frontend]
+  VC -->|HTTPS Bearer JWT| CD
+  USR -->|signed upload| SB
+  API --> SB
+  WL --> SB
+  WT --> SB
+  API -->|NVIDIA_API_KEY only in /opt/arw-ml-lab/.env| NV[NVIDIA API catalog]
+  RN[Render render.yaml - legacy alternative]:::legacy -.-> GH
+  classDef legacy stroke-dasharray: 5 5,color:#888
+
 ```

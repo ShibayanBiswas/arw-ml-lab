@@ -1,11 +1,11 @@
-# ARW ML Lab — End-to-End Architecture (v2.2, design only)
+# ARW ML Lab — End-to-End Architecture (v2.3, design only)
 
 > A world-class, general-purpose **Machine Learning Lab** web app for any tabular dataset (numeric + categorical; not NLP/text).
 > Users upload data, pick inputs and output(s), choose the family (**Supervised**, **Unsupervised**, **Time Series**),
 > and the lab runs EDA → preprocessing → modelling → cross-validation/tuning → model selection → explainability →
 > prediction, with an **AI Insights** layer (hosted vision-language model via the NVIDIA API catalog, swappable providers, numbers-only offline fallback — §40) that reads every plot and table.
 >
-> Owner: Shibayan Biswas (Anand Rathi Wealth). Prepared 14 Nov 2026 (IST). Status: architecture + build plan; nothing built yet. v2.0 (round 2) adds §34 Deep Learning, §35 Time Series, §36 per-family metrics/tables/plots, §37 financial labelling suitability, §38 VLM decision agent and §39 hosted deployment (GitHub + Vercel + Render + Supabase, now the primary path). v2.2 (round 4, 15 Nov 2026) adds §45 **Prediction Studio** (batch upload with validation, intervals/probabilities/flags and downloads; auto-generated custom input form; feature contracts; prediction samples for all 33 datasets) and §46 **Hardening** (stress-test results: ML integrity, scale/ops, security, UX, feature parity with AutoML tools; findings in `docs/STRESS_TEST.md`). The build prompt is `CURSOR_PROMPT.md`.
+> Owner: Shibayan Biswas (Anand Rathi Wealth). Prepared 14 Nov 2026 (IST). Status: architecture + build plan; nothing built yet. v2.0 (round 2) adds §34 Deep Learning, §35 Time Series, §36 per-family metrics/tables/plots, §37 financial labelling suitability, §38 VLM decision agent and §39 hosted deployment (GitHub + Vercel + Render + Supabase, now the primary path). v2.2 (round 4, 15 Nov 2026) adds §45 **Prediction Studio** (batch upload with validation, intervals/probabilities/flags and downloads; auto-generated custom input form; feature contracts; prediction samples for all 33 datasets) and §46 **Hardening** (stress-test results: ML integrity, scale/ops, security, UX, feature parity with AutoML tools; findings in `docs/STRESS_TEST.md`). The build prompt is `CURSOR_PROMPT.md`. v2.3 (round 6, 16 Nov 2026): the **backend target is a Contabo Cloud VPS** (Docker Compose + Caddy HTTPS, images from GHCR, SSH deploy from GitHub Actions); Vercel and Supabase are unchanged and **Render is the alternative / legacy path** (§39.0, `docs/DEPLOY_CONTABO.md`, `docs/adr/ADR-contabo.md`).
 
 ---
 
@@ -49,7 +49,7 @@
 36. Per-family catalogue — metrics (formula + interpretation), tables (exact columns) and plots (shows/axes/when) for regression, classification, DL, TS, dimensionality reduction, clustering, anomaly detection
 37. Financial labelling suitability check — FS1–FS20 pass/warn/fail rules before triple-barrier / meta-labelling / fixed-horizon / trend-scanning, report schema, fallback
 38. VLM decision agent — 12 decision points, rule baselines, hard guards, human approval, prompts, JSON schemas, agent loop, audit
-39. Deployment — GitHub monorepo, Vercel (frontend), Render (API + workers + Key Value via render.yaml), Supabase (Postgres, Auth, Storage, RLS, CLI migrations), sizing/limits, VLM hosting, CI/CD, env matrix, optional K8s
+39. Deployment — GitHub monorepo, Vercel (frontend), **Contabo Cloud VPS backend (primary from v2.3, §39.0)** / Render (alternative, legacy: API + workers + Key Value via render.yaml), Supabase (Postgres, Auth, Storage, RLS, CLI migrations), sizing/limits, VLM hosting, CI/CD, env matrix, optional K8s
 40. AI provider layer — hosted VLM/LLM via NVIDIA API catalog (primary), provider abstraction (Gemini / OpenRouter / Groq fallbacks), image sizing, retries, rate limits, caching, budgets, data protection
 41. Classification Evaluation Suite — confusion matrices (counts, row/column/all-normalised, per-fold, CV-aggregated, cost-weighted, multilabel), full classification report, 55 metrics with formulas, 45 plots, threshold optimisation, imbalance reporting, CV mean ± std, model comparison, statistical tests, AI prompts
 42. Regression Evaluation Suite — audit and completion: 40 metrics, residual/influence/test tables, 36 plots, CV aggregation, comparison tests, AI prompts
@@ -3097,9 +3097,28 @@ Per-decision `choice` sub-schemas (examples):
 
 ---
 
-## 39. Deployment — GitHub monorepo, Vercel, Render and Supabase (primary path)
+## 39. Deployment — GitHub monorepo, Vercel, Supabase and a Contabo VPS backend (Render = alternative / legacy)
 
 > Round-2 addition (deployment steering). This is now the **primary deployment path** and replaces the Kubernetes/KEDA plan in §4 and §8. Kubernetes stays as an optional later scale-out (§39.12). Plan sizes and limits were checked on vendor pages in Nov 2026; re-check before buying (§31).
+
+### 39.0 Backend target: Contabo Cloud VPS (primary from v2.3; Render becomes the alternative / legacy path)
+
+> v2.3, 16 Nov 2026 (IST). The Render Blueprint never provisioned (`need_payment_info`), so the backend moves to one **Contabo Cloud VPS 10** (4 vCPU, 8 GB RAM, 75 GB NVMe, Ubuntu 24.04, Mumbai or Singapore, about EUR 4.50–6.60/month). **Vercel (frontend) and Supabase (Postgres, Auth, Storage, migrations) are unchanged**, and so is the application code: the same `backend/Dockerfile` builds three images via its `REQUIREMENTS_LOCK` build argument. Full runbook: `docs/DEPLOY_CONTABO.md`; decision: `docs/adr/ADR-contabo.md`; diagram: `docs/diagrams/21_contabo_deploy.png` (FLOWCHART §21). Where §39.1–§39.13 below say "Render", read the Contabo mapping in this table; the Render text stays as the documented alternative (`render.yaml` is kept, not deleted).
+
+| Concern | Render (legacy / alternative) | Contabo VPS (primary) |
+|---|---|---|
+| API | web service `lab-api` | `lab-api` container (uvicorn, 2 workers, 1.0 GB limit) behind **Caddy** (Let's Encrypt HTTPS on a domain or `<ip>.sslip.io`) |
+| Workers | `lab-worker-light` 2c-4g, `lab-worker-train` 4c-16g | `worker-light` (concurrency 2, 1.5 GB), `worker-train` (concurrency 1, 3.5 GB, CPU only) |
+| Scheduler | cron job `lab-beat` | `lab-beat` container (hourly `python -m backend.worker.maintenance --all`) |
+| Broker / cache | Render Key Value | `redis:7` container: password, AOF persistence, `noeviction`, no published port |
+| MLflow | optional | optional compose profile `mlflow` (artefacts in Supabase Storage) |
+| Secrets | Render env group `lab-shared` | `/opt/arw-ml-lab/.env` (mode 600) on the VPS; **`NVIDIA_API_KEY` lives only there** |
+| Deploy | Render deploy hooks after `migrate` | `deploy.yml`: `migrate` (unchanged) + `build` (3 images → GHCR) → `deploy` (SSH: `docker compose pull && up -d`, `/healthz` check, automatic rollback to the previous tag) → `smoke` |
+| GitHub config | `RENDER_DEPLOY_HOOK_*` | `CONTABO_HOST`, `CONTABO_USER`, `CONTABO_SSH_KEY`, `CONTABO_KNOWN_HOSTS` + Supabase secrets; `vars.LAB_API_URL` |
+| Frontend link | `NEXT_PUBLIC_LAB_API_URL` = Render URL | `NEXT_PUBLIC_LAB_API_URL=https://<LAB_API_HOSTNAME>`; `CORS_ALLOWED_ORIGINS=https://arw-ml-lab.vercel.app` |
+| Hardening | managed | non-root `deploy` user, SSH keys only, ufw 22/80/443, fail2ban, unattended-upgrades, 4 GB swap, Docker log rotation |
+| Backups / monitoring | managed | Supabase backups for data; nightly redis/mlflow volume tarballs + Contabo snapshots; external uptime check on `/healthz`, Sentry |
+| Limits | 4c-16g train worker, optional GPU worker | 8 GB total: one heavy job at a time, small DL defaults, GPU-only models refused (422), TabPFN off |
 
 ### 39.1 Topology
 
@@ -3142,7 +3161,7 @@ Browser → Vercel (pages, BFF routes) → Render `lab-api` (REST + SSE progress
 | VLM / LLM | hosted NVIDIA API catalog (+ optional fallback providers), called from Render only | see §39.8 and §40 |
 | GPU training | external GPU worker (optional) | same Celery app, listens on `q.train.gpu` only |
 
-### 39.3 Render sizing (compute plans, Nov 2026)
+### 39.3 Render sizing (compute plans, Nov 2026; legacy / alternative path, Contabo sizing in §39.0 and `docs/DEPLOY_CONTABO.md` §5)
 
 | Service | Recommended plan | Why | Scale |
 |---|---|---|---|
@@ -3200,7 +3219,7 @@ arw-ml-lab/
 ├─ AGENTS.md, CURSOR_PROMPT.md, README.md, .env.example, .gitignore
 ```
 
-### 39.7 render.yaml (blueprint, abridged — the full file ships in the kit)
+### 39.7 render.yaml (blueprint, abridged — the full file ships in the kit; legacy / alternative path, the primary path is `docker-compose.prod.yml` per `docs/DEPLOY_CONTABO.md` §5)
 
 ```yaml
 services:
@@ -3307,7 +3326,7 @@ When concurrent heavy training outgrows Render workers (e.g. > 4 simultaneous Th
 
 ### 39.13 Deployment acceptance criteria
 
-1. `render.yaml` validates (Render Blueprint sync succeeds) and creates lab-api, two workers, the `lab-beat` cron job and lab-kv.
+1. Primary (Contabo, v2.3): `docs/DEPLOY_CONTABO.md` §13 AC 1–4 pass (hardened host, all compose services healthy, HTTPS `/healthz` 200, SSH deploy with automatic rollback). Legacy alternative: `render.yaml` validates (Render Blueprint sync succeeds) and creates lab-api, two workers, the `lab-beat` cron job and lab-kv.
 2. `supabase db push` applies all migrations to an empty project; `supabase test db` RLS tests pass (a user cannot read another workspace's rows or objects).
 3. Vercel production build succeeds with Root Directory `frontend`; no server bundle imports Python or data libraries.
 4. Upload of a 200 MB CSV goes browser → Supabase Storage (resumable) without touching Vercel functions.

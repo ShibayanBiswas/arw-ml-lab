@@ -2,7 +2,9 @@
 
 Live Page: https://cursor.com/canvas/store-e0b12a15-de4c-4810-858b-72090d8f0713/4ced1d9e-3efe-4a36-afca-1981b050bd2a
 
-Source: ARCHITECTURE.md §30 (phased roadmap), v2.2. Build instructions per phase: ../../CURSOR_PROMPT.md (execution protocol §000). Kickoff message for Cursor: ../../CURSOR_KICKOFF.md. Progress tracker: ../PROGRESS.md.
+Source: ARCHITECTURE.md §30 (phased roadmap), v2.3. Build instructions per phase: ../../CURSOR_PROMPT.md (execution protocol §000). Kickoff message for Cursor: ../../CURSOR_KICKOFF.md. Progress tracker: ../PROGRESS.md.
+
+v2.3 (16 Nov 2026): backend hosting moves to a **Contabo Cloud VPS** (Docker Compose + Caddy, SSH deploy from GitHub Actions; `docs/DEPLOY_CONTABO.md`, `CURSOR_CONTABO_FOLLOWUP.md`); Vercel and Supabase unchanged; Render is the alternative / legacy path.
 
 v2.2 additions: Phase **3A Prediction Studio** (§45 — batch upload + custom input form, prediction samples for all 33 datasets) and the stress-test hardening (§46, `docs/STRESS_TEST.md`) closed in Phase 8.2.
 
@@ -28,6 +30,6 @@ v2.2 additions: Phase **3A Prediction Studio** (§45 — batch upload + custom i
 | **6B · Per-family catalogue completion** (2 wk; after Phase 6A) | §36: every REG/CLF/DR/CLU/ANO table and plot, KMO/Bartlett, trustworthiness/continuity, Shepard, gap statistic, bootstrap stability, external indices | catalogue tests: each artefact renders on its golden dataset |
 | **5B · Financial labelling suitability** (1 wk; before Phase 5 labels) | §37: FS1–FS20 checks, grid preview, report, fallback | DS30 Suitable; airline Not suitable → fallback; synthetic FAIL cases |
 | **6A · VLM decision agent** (2 wk; after Phase 6) | §38: VD1–VD12, baselines, guards, decision cards, audit, eval harness | 0 guard violations; agreement ≥ baseline on golden decisions; numbers-only fallback |
-| **8 · Deployment** (8.1 after Phase 1; 8.2 after Phase 7) | §39: render.yaml (incl. lab-beat cron), vercel.json, supabase migrations/RLS/storage, GitHub Actions CI/CD, env matrix, smoke tests; 8.2 closes §46 and `docs/STRESS_TEST.md` | §39.13 acceptance criteria; STRESS_TEST items closed |
+| **8 · Deployment** (8.1 after Phase 1; 8.2 after Phase 7) | §39 + `docs/DEPLOY_CONTABO.md`: Contabo VPS (hardening, `docker-compose.prod.yml`, Caddy HTTPS, GHCR + SSH deploy with rollback; `render.yaml` kept as legacy alternative), vercel.json, supabase migrations/RLS/storage, GitHub Actions CI/CD, env matrix, smoke tests; 8.2 closes §46 and `docs/STRESS_TEST.md` | §39.13 acceptance criteria; STRESS_TEST items closed |
 
 ---

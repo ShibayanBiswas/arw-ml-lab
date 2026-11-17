@@ -7,17 +7,21 @@ Design and build kit for the **ARW ML Lab**: a world-class, general-purpose mach
 ## Start here
 1. Open this folder in Cursor.
 2. Open a new Agent chat and paste the message in **`CURSOR_KICKOFF.md`** (it makes the agent read `AGENTS.md`, `CURSOR_PROMPT.md` and `docs/ARCHITECTURE.md`, use the strongest reasoning model, and stop after each phase). After each phase report, send the one-line "continue" message from the same file.
-3. Before Phase 6, create an NVIDIA Developer account at build.nvidia.com and an API key (free trial key for development/testing). Put it in your local `.env` and later in Render as `NVIDIA_API_KEY`. Never put it in Vercel.
+3. Before Phase 6, create an NVIDIA Developer account at build.nvidia.com and an API key (free trial key for development/testing). Put it in your local `.env` and later in the backend server env file (`/opt/arw-ml-lab/.env` on the Contabo VPS; Render env group only on the legacy path) as `NVIDIA_API_KEY`. Never put it in Vercel.
+4. **Backend hosting (v2.3):** get a Contabo Cloud VPS and hand it to Cursor — follow the USER section of `docs/DEPLOY_CONTABO.md`, then paste `CURSOR_CONTABO_FOLLOWUP.md` into Cursor Agent.
 
 ## What is inside
 | Path | Contents |
 |---|---|
+| `CURSOR_CONTABO_FOLLOWUP.md` | One copy-paste prompt: Cursor bootstraps the Contabo VPS, switches deploy to SSH/GHCR, wires secrets, deploys, smoke-tests, then continues `CURSOR_ONE_SHOT.md` |
+| `CURSOR_ONE_SHOT.md` | One copy-paste prompt to finish all remaining phases autonomously |
 | `CURSOR_KICKOFF.md` | Short copy-paste kickoff message for Cursor Agent + the one-line "continue" message |
 | `CURSOR_PROMPT.md` | Phase-by-phase build prompt (18 phases incl. 3A Prediction Studio) with acceptance criteria, execution protocol (definition of done, no-stub rules, self-check, resume) |
 | `AGENTS.md` | Agent instructions |
 | `.cursor/rules/*.mdc` | 11 project rules: core, stack, Python, frontend, ML integrity (incl. evaluation integrity), AI provider, testing, phase order, deployment, security, use-established-libraries |
-| `docs/ARCHITECTURE.md` | Full architecture v2.2, §1–§46 (incl. §45 Prediction Studio — batch upload + custom input form, §46 Hardening — ML integrity, ops, security, UX, feature parity; §34 Deep Learning, §35 Time Series, §36 metrics/tables/plots per family, §37 financial label suitability, §38 VLM decision agent, §39 deployment, §40 hosted AI provider layer, §41 Classification Evaluation Suite, §42 Regression Evaluation Suite, §43 library gap audit, §44 Library Matrix) |
-| `docs/FLOWCHART.md`, `docs/diagrams/` | 20 Mermaid diagrams (PNG + `.mmd` source) |
+| `docs/DEPLOY_CONTABO.md`, `docs/adr/ADR-contabo.md` | Backend runbook for the Contabo VPS (hardening, compose design, Caddy HTTPS, SSH deploy with rollback, secrets, backups, monitoring, limits, user steps) and its ADR |
+| `docs/ARCHITECTURE.md` | Full architecture v2.3, §1–§46 (incl. §45 Prediction Studio — batch upload + custom input form, §46 Hardening — ML integrity, ops, security, UX, feature parity; §34 Deep Learning, §35 Time Series, §36 metrics/tables/plots per family, §37 financial label suitability, §38 VLM decision agent, §39 deployment, §40 hosted AI provider layer, §41 Classification Evaluation Suite, §42 Regression Evaluation Suite, §43 library gap audit, §44 Library Matrix) |
+| `docs/FLOWCHART.md`, `docs/diagrams/` | 21 Mermaid diagrams (PNG + `.mmd` source; 21 = Contabo deploy) |
 | `docs/STRESS_TEST.md` | Round-4 red-team audit: every finding with severity, fix and where it was fixed |
 | `docs/contracts/` | Feature-contract JSON Schema used by the Prediction Studio |
 | `docs/PROGRESS.md` | Build progress tracker the agent keeps current (resume point) |
@@ -25,22 +29,22 @@ Design and build kit for the **ARW ML Lab**: a world-class, general-purpose mach
 | `backend/requirements/` | Pinned Python requirements per Render service (api, worker-light, worker-train, optional images) + `uv` lock files; see its README |
 | `data/samples/` | 19 bundled sample datasets, `urls.txt`, `datasets_manifest.json/.csv`, 33 `presets/*.yaml`, and `predict/`: 35 prediction sample files for all 33 datasets (target removed, seed 42) + feature contracts |
 | `scripts/make_predict_samples.py` | Regenerates the prediction samples (downloads cached; `--offline`) |
-| `render.yaml` | Render Blueprint: lab-api (web), lab-worker-light and lab-worker-train (background workers), lab-beat (hourly cron), lab-kv (Key Value) |
+| `render.yaml` | **Legacy / alternative** Render Blueprint (primary backend is the Contabo VPS, see `docs/DEPLOY_CONTABO.md`): lab-api (web), lab-worker-light and lab-worker-train (background workers), lab-beat (hourly cron), lab-kv (Key Value) |
 | `frontend/vercel.json` | Vercel config for the Next.js app |
 | `supabase/` | `config.toml`, 6 migrations (schema, RLS, storage buckets, helpers, Prediction Studio, hardening), seed, pgTAP RLS tests (core + prediction) |
 | `tests/` | `unit/test_predict_samples.py` (38 checks) and `db_harness/` (runs the migrations and pgTAP tests on a throw-away Postgres without Docker) |
-| `.github/workflows/` | `ci.yml` (lint/type/test/RLS), `deploy.yml` (migrations → Render → smoke test) |
+| `.github/workflows/` | `ci.yml` (lint/type/test/RLS), `deploy.yml` (migrations → GHCR images → SSH deploy to the Contabo VPS → smoke test, per `docs/DEPLOY_CONTABO.md` §8; the Render hooks are the legacy path) |
 | `.env.example` | Environment variables per platform |
 | `frontend/ backend/ labcore/ infra/ vendor/` | Skeleton folders (only `backend/requirements/` is filled) |
 
 ## Deployment target
-GitHub (private monorepo) → **Vercel** (frontend only) + **Render** (FastAPI API, Celery workers, Key Value) + **Supabase** (Postgres, Auth, Storage, RLS). AI calls go from Render to the **NVIDIA API catalog** (OpenAI-compatible). See `docs/ARCHITECTURE.md §39–§40`.
+GitHub (private monorepo) → **Vercel** (frontend only) + **Contabo Cloud VPS** (FastAPI API, Celery workers, Redis, Caddy HTTPS via Docker Compose; v2.3 primary) + **Supabase** (Postgres, Auth, Storage, RLS). AI calls go from the VPS to the **NVIDIA API catalog** (OpenAI-compatible). **Render** (`render.yaml`) is kept as the alternative / legacy backend path. See `docs/ARCHITECTURE.md §39.0–§40` and `docs/DEPLOY_CONTABO.md`.
 
 ## Things to decide before production
 - The NVIDIA API free key is a trial (dev/test). Production needs an NVIDIA AI Enterprise licence, a paid endpoint or another provider.
 - Confirm with compliance that aggregate plots and metrics may be sent to the hosted AI provider (raw rows are never sent).
 - TabPFN stays disabled (non-commercial weights for v2.5+).
-- Re-check Render, Vercel and Supabase plan prices and limits (checked Nov 2026). Supabase must be on **Pro** with the global file size limit raised (Free caps uploads at 50 MB).
+- Re-check Contabo (and, for the legacy path, Render), Vercel and Supabase plan prices and limits (checked Nov 2026). Supabase must be on **Pro** with the global file size limit raised (Free caps uploads at 50 MB).
 - Yahoo Finance data (NIFTY sample) is for research only; use an NSE/vendor feed in production.
 
 The private reference repositories (sp-workstation, blackcarbon-saas, ml-for-trading) are **not** included. Clone them into `refs/` (git-ignored) with your GitHub access when Cursor needs them.

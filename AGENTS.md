@@ -15,7 +15,7 @@ A general-purpose Machine Learning Lab web app for tabular data (no NLP) for Ana
 | Path | Purpose |
 |---|---|
 | `frontend/` | Next.js 16 app (Vercel, Root Directory = frontend) |
-| `backend/` | FastAPI `lab-api` + Celery workers (Render, via `render.yaml`) |
+| `backend/` | FastAPI `lab-api` + Celery workers (Contabo VPS via `docker-compose.prod.yml` + Caddy, see `docs/DEPLOY_CONTABO.md`; `render.yaml` = legacy alternative) |
 | `labcore/` | Pure-Python ML library (registries, CV, metrics, plots, finance, suitability, ai, insights, decisions) |
 | `supabase/` | Postgres migrations, RLS, storage buckets, pgTAP tests |
 | `tests/` | unit (incl. `test_predict_samples.py`), contract_tradinglab, golden, e2e, load, `db_harness/` (Docker-free migration + pgTAP runner) |
@@ -31,7 +31,7 @@ A general-purpose Machine Learning Lab web app for tabular data (no NLP) for Ana
 ## Hard rules
 - Never fabricate metrics, test results or plot values. Seed 42 everywhere.
 - Leakage-safe pipelines; purged CV for financial labels; financial labels only after the suitability check passes.
-- AI is hosted (NVIDIA API catalog via `labcore/ai`); `NVIDIA_API_KEY` only on the Render backend; numbers-only fallback must always work.
+- AI is hosted (NVIDIA API catalog via `labcore/ai`); `NVIDIA_API_KEY` only on the backend server (`/opt/arw-ml-lab/.env` on the Contabo VPS, mode 600; Render env group only on the legacy path); numbers-only fallback must always work.
 - No heavy compute on Vercel. RLS on every table.
 - Use only libraries pinned in `backend/requirements/*.txt` and listed in ARCHITECTURE §44; lab code is thin wrappers only (rule 70).
 - Every classification run shows the full §41 evaluation suite (confusion matrix counts + row/column/all normalisations, full classification report, CV mean ± std); every regression run the §42 suite.

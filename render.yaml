@@ -1,3 +1,4 @@
+# LEGACY / ALTERNATIVE PATH (v2.3): primary backend is Contabo VPS — see docs/DEPLOY_CONTABO.md. Keep this file; do not delete.
 # Render Blueprint for ARW ML Lab (docs/ARCHITECTURE.md §39.7)
 # backend/Dockerfile is created in Phase 0. Secrets use `sync: false` and are entered in the Render Dashboard.
 # Plans checked Nov 2026; re-check pricing before applying. Region: Singapore (closest to India).

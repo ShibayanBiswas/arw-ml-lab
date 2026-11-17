@@ -18,7 +18,8 @@ You are building the ARW ML Lab in this folder. It is a design kit; no app code 
    what was built, AC results, deviations, open TODOs and the plan for the next phase.
 6. Ask me before anything outside this folder: creating the GitHub repo, pushing, connecting
    Vercel/Render/Supabase, paid plans, production secrets, deploys. Never ask me to paste keys in chat;
-   NVIDIA_API_KEY goes only into Render and my local .env, never Vercel.
+   NVIDIA_API_KEY goes only into the backend server env (/opt/arw-ml-lab/.env on the Contabo VPS)
+  and my local .env, never Vercel.
 7. If anything in the spec is unclear or contradictory, stop and ask instead of guessing.
 
 Start now: read the files, then plan Phase 0.

@@ -60,7 +60,7 @@ export default function App() {
   return (
     <Page
       title="ARW ML Lab — Architecture & Build Plan"
-      summary="Design for a general-purpose tabular Machine Learning Lab in the SP Workstation style: modules, catalogues, financial validation mirrored from ml-for-trading, AI insights and plot-reading decisions from a hosted NVIDIA model, a financial label suitability check, deployment on Vercel, Render and Supabase, and a phase-by-phase Cursor build plan."
+      summary="Design for a general-purpose tabular Machine Learning Lab in the SP Workstation style: modules, catalogues, financial validation mirrored from ml-for-trading, AI insights and plot-reading decisions from a hosted NVIDIA model, a financial label suitability check, deployment on Vercel, a Contabo VPS backend (Render as the legacy alternative) and Supabase, and a phase-by-phase Cursor build plan."
       width="wide"
     >
       <TableOfContents
@@ -151,12 +151,12 @@ export default function App() {
           nodes={[
             { id: "b", label: "Browser", detail: "Next.js 16 SP shell, Plotly, KaTeX", kind: "person" },
             { id: "bff", label: "Vercel: Next.js BFF", detail: "Supabase Auth session, signed uploads; no heavy compute" },
-            { id: "core", label: "Render: lab-api", detail: "FastAPI, REST + SSE" },
-            { id: "redis", label: "Render Key Value", detail: "Celery broker, noeviction" },
-            { id: "w", label: "Render workers", detail: "light (EDA, insights) · train (ML, tuning)" },
+            { id: "core", label: "Contabo VPS: lab-api", detail: "FastAPI behind Caddy HTTPS, REST + SSE" },
+            { id: "redis", label: "Redis (VPS container)", detail: "Celery broker, password, AOF, noeviction" },
+            { id: "w", label: "VPS workers", detail: "light (EDA, insights) · train (ML, tuning, concurrency 1)" },
             { id: "eng", label: "labcore + TradingLab", detail: "sklearn, GBMs, torch, Nixtla" },
             { id: "st", label: "Supabase", detail: "Postgres + RLS, Auth, Storage" },
-            { id: "vlm", label: "NVIDIA API catalog", detail: "hosted VLM + LLM, key on Render only" },
+            { id: "vlm", label: "NVIDIA API catalog", detail: "hosted VLM + LLM, key on the VPS only" },
           ]}
           edges={[
             { from: "b", to: "bff", label: "HTTPS" }, { from: "bff", to: "core", label: "JWT" },

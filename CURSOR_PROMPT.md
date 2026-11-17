@@ -5,6 +5,9 @@
 > **Phase order (18 phases):** 0 → 1 → **8.1** (hosted skeleton) → 1A → 2 → **2A** → 3 → **3A** (Prediction Studio) → 4 → **4A** → **5B** → 5 → 5A → 6 → **6A** → **6B** → 7 → **8.2** (production hardening). The execution protocol (§000) defines done, the no-stub rules, the self-check and how to resume.
 > Work **phase by phase**. Do not start a phase until the previous phase's acceptance criteria pass in CI. After each phase write `docs/PHASE_<n>_REPORT.md` (what was built, test results, deviations, TODOs), update `docs/PROGRESS.md`, commit, then stop and wait for the user to say "continue".
 
+
+> **v2.3 hosting note (16 Nov 2026):** the backend deploys to a **Contabo Cloud VPS** (`docs/DEPLOY_CONTABO.md`, `CURSOR_CONTABO_FOLLOWUP.md`). Wherever this prompt says Render, `render.yaml`, Render deploy hooks or the Render env group, use the Contabo equivalent from ARCHITECTURE §39.0; `render.yaml` stays as the legacy alternative and must not be deleted.
+
 ---
 
 ## 00. Cursor operating instructions (read before anything else)

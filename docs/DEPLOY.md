@@ -1,3 +1,5 @@
+> **v2.3 (16 Nov 2026):** the backend target is a Contabo Cloud VPS; follow docs/DEPLOY_CONTABO.md. The Render sections below are the alternative / legacy path.
+
 # Deploy guide — Machine Learning Lab (ARCHITECTURE §39 + ADR-0005)
 
 Secrets never go in git or chat; set them in the vendor dashboards and GitHub Environment `production`.
