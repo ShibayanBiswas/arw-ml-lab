@@ -49,6 +49,9 @@ def fetch(url: str, cache: Path, name: str, offline: bool) -> Path | None:
         return p
     if offline:
         return None
+    from labcore.ops.egress_allowlist import check_egress_url
+
+    check_egress_url(url)
     try:
         req = urllib.request.Request(url, headers=UA)
         with urllib.request.urlopen(req, timeout=180) as r:
