@@ -6,7 +6,7 @@ from typing import Any
 
 import numpy as np
 from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_samples, silhouette_score
+from sklearn.metrics import calinski_harabasz_score, silhouette_samples, silhouette_score
 from sklearn.preprocessing import StandardScaler
 
 
@@ -222,6 +222,84 @@ def kmeans_elbow(
             "inertia": inertias,
             "knee_k": knee,
             "knee_inertia": knee_y,
+        },
+        "seed": seed,
+    }
+
+
+def kmeans_calinski_harabasz(
+    X: np.ndarray,
+    *,
+    k_min: int = 2,
+    k_max: int = 10,
+    seed: int = 42,
+) -> dict[str, Any]:
+    """Calinski-Harabasz index vs k (higher is better). Returns numbers + Plotly."""
+    import plotly.graph_objects as go
+
+    Xs = StandardScaler().fit_transform(np.asarray(X, dtype=float))
+    ks = list(range(k_min, k_max + 1))
+    ch_scores: list[float | None] = []
+    for k in ks:
+        km = KMeans(n_clusters=k, random_state=seed, n_init=10).fit(Xs)
+        if k >= 2 and len(set(km.labels_)) >= 2:
+            ch_scores.append(float(calinski_harabasz_score(Xs, km.labels_)))
+        else:
+            ch_scores.append(None)
+
+    best_k: int | None = None
+    best_ch: float | None = None
+    finite = [(k, s) for k, s in zip(ks, ch_scores, strict=True) if s is not None]
+    if finite:
+        best_k, best_ch = max(finite, key=lambda t: t[1])
+
+    fig = go.Figure()
+    y_plot = [s if s is not None else None for s in ch_scores]
+    fig.add_trace(
+        go.Scatter(
+            x=ks,
+            y=y_plot,
+            mode="lines+markers",
+            name="Calinski-Harabasz",
+        )
+    )
+    if best_k is not None and best_ch is not None:
+        fig.add_vline(
+            x=best_k,
+            line_dash="dash",
+            line_color="#c9a227",
+            annotation_text=f"max CH k={best_k}",
+            annotation_position="top",
+        )
+        fig.add_trace(
+            go.Scatter(
+                x=[best_k],
+                y=[best_ch],
+                mode="markers",
+                name="best k",
+                marker={"size": 12, "color": "#c9a227", "symbol": "diamond"},
+            )
+        )
+    title = (
+        f"Calinski-Harabasz vs k (best k={best_k})"
+        if best_k is not None
+        else "Calinski-Harabasz vs k"
+    )
+    fig.update_layout(
+        title=title,
+        xaxis_title="k",
+        yaxis_title="Calinski-Harabasz index",
+        height=400,
+    )
+    return {
+        "id": "CLU.P.CH",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "k": ks,
+            "calinski_harabasz": ch_scores,
+            "best_k_by_ch": best_k,
+            "best_ch": best_ch,
         },
         "seed": seed,
     }

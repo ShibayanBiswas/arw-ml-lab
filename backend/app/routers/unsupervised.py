@@ -8,7 +8,12 @@ import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException
 from labcore.unsupervised import fit_anomaly, fit_clustering, fit_dr
 from labcore.unsupervised.anomaly_plots import anomaly_ranked_bar
-from labcore.unsupervised.cluster_plots import kmeans_elbow, kmeans_k_sweep, silhouette_knife
+from labcore.unsupervised.cluster_plots import (
+    kmeans_calinski_harabasz,
+    kmeans_elbow,
+    kmeans_k_sweep,
+    silhouette_knife,
+)
 from labcore.unsupervised.dr_plots import (
     pca_biplot,
     pca_correlation_circle,
@@ -139,6 +144,25 @@ def unsupervised_k_sweep(
     X = _frame(body.rows)
     try:
         return kmeans_k_sweep(
+            X.to_numpy(dtype=float),
+            k_min=body.k_min,
+            k_max=body.k_max,
+            seed=body.seed,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/api/v1/unsupervised/clustering/ch")
+def unsupervised_calinski_harabasz(
+    body: UnsupBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """CLU.P.CH — Calinski-Harabasz vs k (seed 42)."""
+    _ = user
+    X = _frame(body.rows)
+    try:
+        return kmeans_calinski_harabasz(
             X.to_numpy(dtype=float),
             k_min=body.k_min,
             k_max=body.k_max,
