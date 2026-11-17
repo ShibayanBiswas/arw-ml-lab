@@ -25,4 +25,4 @@
 - [x] Import allowlist green.
 - [x] Rule 70: sklearn + imbalanced-learn only; no custom resampler.
 
-**Ship commit:** `1045a5e`
+**Ship commit:** `9cde1b5`
