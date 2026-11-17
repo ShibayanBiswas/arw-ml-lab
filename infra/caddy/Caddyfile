@@ -2,7 +2,9 @@
   email {$ACME_EMAIL}
 }
 {$LAB_API_HOSTNAME} {
-  encode zstd gzip
+  # Compress ordinary JSON/HTML; leave SSE (text/event-stream) uncompressed so flush works
+  @notSse not header Content-Type *event-stream*
+  encode @notSse zstd gzip
   request_body {
     max_size 60MB
   }
