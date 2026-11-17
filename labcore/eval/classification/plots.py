@@ -775,6 +775,79 @@ def plot_compare_bars(
     }
 
 
+def plot_pvalue_heatmap(
+    fold_scores: dict[str, list[float]],
+    *,
+    higher_is_better: bool = True,
+    metric: str = "accuracy",
+    alpha: float = 0.05,
+) -> dict[str, Any]:
+    """CLE.P.PVALUE_HEATMAP — Nemenyi pairwise p-values with Holm adjustment."""
+    import pandas as pd
+    import plotly.graph_objects as go
+    from scikit_posthocs import posthoc_nemenyi_friedman, sign_array
+
+    from labcore.eval.regression.plots import _holm_adjust_symmetric
+
+    df = pd.DataFrame({k: np.asarray(v, dtype=float) for k, v in fold_scores.items()})
+    if df.shape[1] < 2 or df.shape[0] < 2:
+        return {
+            "id": "CLE.P.PVALUE_HEATMAP",
+            "kind": "plot",
+            "plotly": {
+                "data": [],
+                "layout": {"title": "P-value heatmap needs ≥2 models and ≥2 folds"},
+            },
+            "numbers": {"status": "not computed", "reason": "need ≥2 models and ≥2 folds"},
+        }
+    work = df if higher_is_better else -df
+    names = list(work.columns)
+    raw = np.asarray(posthoc_nemenyi_friedman(work.to_numpy()), dtype=float)
+    raw_df = pd.DataFrame(raw, index=names, columns=names)
+    holm = _holm_adjust_symmetric(raw_df.to_numpy(dtype=float))
+    holm_df = pd.DataFrame(holm, index=names, columns=names)
+    sig = sign_array(holm_df, alpha=alpha)
+    text = np.where(
+        sig == 1,
+        np.char.add(np.round(holm, 3).astype(str), "*"),
+        np.round(holm, 3).astype(str),
+    )
+    np.fill_diagonal(text, "—")
+    fig = go.Figure(
+        go.Heatmap(
+            z=holm,
+            x=names,
+            y=names,
+            colorscale="Viridis_r",
+            zmin=0.0,
+            zmax=1.0,
+            text=text,
+            texttemplate="%{text}",
+            hovertemplate="%{y} vs %{x}<br>Holm p=%{z:.4f}<extra></extra>",
+        )
+    )
+    fig.update_layout(
+        title=f"Pairwise p-values ({metric}, Holm)",
+        xaxis_title="Model",
+        yaxis_title="Model",
+        height=max(320, 56 * len(names)),
+    )
+    return {
+        "id": "CLE.P.PVALUE_HEATMAP",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "status": "ok",
+            "metric": metric,
+            "higher_is_better": higher_is_better,
+            "alpha": alpha,
+            "nemenyi_pvalues": raw_df.to_dict(),
+            "holm_pvalues": holm_df.to_dict(),
+            "significant_pairs": sign_array(holm_df, alpha=alpha).tolist(),
+        },
+    }
+
+
 def plot_discrimination(
     y_true: np.ndarray,
     scores: np.ndarray,
