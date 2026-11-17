@@ -6,7 +6,7 @@ from typing import Any
 
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException
-from labcore.suitability import run_suitability
+from labcore.suitability import plot_daily_volatility, run_suitability
 from pydantic import BaseModel, Field
 
 from backend.app.security import AuthUser, require_write_role
@@ -19,14 +19,13 @@ class SuitabilityBody(BaseModel):
     time_col: str | None = None
     asset: str | None = None
     sample_id: str | None = None
+    price_col: str | None = None
+    vol_span: int = Field(default=100, ge=10, le=500)
 
 
-@router.post("/api/v1/suitability/run")
-def suitability_run(
+def _load_suitability_frame(
     body: SuitabilityBody,
-    user: AuthUser = Depends(require_write_role),
-) -> dict[str, Any]:
-    _ = user
+) -> tuple[pd.DataFrame, str | None]:
     if body.sample_id:
         from pathlib import Path
 
@@ -40,17 +39,42 @@ def suitability_run(
         if entry is None or not entry[0].exists():
             if not body.rows:
                 raise HTTPException(status_code=404, detail=f"sample '{body.sample_id}' not found")
-            df = pd.DataFrame(body.rows)
-            time_col = body.time_col
-        else:
-            df = pd.read_csv(entry[0])
-            time_col = body.time_col or entry[1]
-    else:
-        if len(body.rows) < 3:
-            raise HTTPException(status_code=422, detail="need sample_id or ≥3 rows")
-        df = pd.DataFrame(body.rows)
-        time_col = body.time_col
+            return pd.DataFrame(body.rows), body.time_col
+        df = pd.read_csv(entry[0])
+        return df, body.time_col or entry[1]
+    if len(body.rows) < 3:
+        raise HTTPException(status_code=422, detail="need sample_id or ≥3 rows")
+    return pd.DataFrame(body.rows), body.time_col
+
+
+@router.post("/api/v1/suitability/run")
+def suitability_run(
+    body: SuitabilityBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    _ = user
+    df, time_col = _load_suitability_frame(body)
     try:
         return run_suitability(df, time_col=time_col, asset=body.asset)
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/api/v1/suitability/plots/volatility")
+def suitability_volatility_plot(
+    body: SuitabilityBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """FS.P.VOL — EWMA daily volatility (seed 42)."""
+    _ = user
+    df, time_col = _load_suitability_frame(body)
+    try:
+        return plot_daily_volatility(
+            df,
+            price_col=body.price_col,
+            time_col=time_col,
+            span=body.vol_span,
+            seed=42,
+        )
     except Exception as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc

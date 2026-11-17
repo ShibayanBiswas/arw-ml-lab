@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
+import numpy as np
 import pandas as pd
 
 from labcore.suitability.fs_checks import (
@@ -11,12 +12,85 @@ from labcore.suitability.fs_checks import (
     PT_SL_GRID,
     VERTICAL_BARRIER_GRID,
     _detect_price_col,
+    compute_daily_ewma_vol,
     compute_fixed_horizon_label_balance,
     compute_suitability_parameter_grid,
     compute_trial_tb_label_balance,
 )
 
 LabelMethod = Literal["triple_barrier", "fixed_horizon"]
+
+
+def _time_axis(df: pd.DataFrame, time_col: str | None) -> list[str]:
+    if time_col and time_col in df.columns:
+        parsed = pd.to_datetime(df[time_col], errors="coerce")
+        return [ts.isoformat() if pd.notna(ts) else "" for ts in parsed]
+    if isinstance(df.index, pd.DatetimeIndex):
+        return [ts.isoformat() for ts in df.index]
+    return [str(i) for i in range(len(df))]
+
+
+def plot_daily_volatility(
+    df: pd.DataFrame,
+    *,
+    price_col: str | None = None,
+    time_col: str | None = None,
+    span: int = 100,
+    seed: int = 42,
+) -> dict[str, Any]:
+    """FS.P.VOL — EWMA daily volatility series (AFML get_daily_vol equivalent)."""
+    _ = seed  # metadata only; vol path is deterministic given prices
+    import plotly.graph_objects as go
+
+    comp = compute_daily_ewma_vol(df, price_col, span=span)
+    if not comp.get("ok"):
+        raise ValueError(comp.get("reason", "daily vol computation failed"))
+    col = str(comp["price_col"])
+    vol = comp["volatility"]
+    x = _time_axis(df, time_col)
+    y = [None if pd.isna(v) else float(v) for v in vol.to_numpy()]
+    median_vol = comp.get("median_vol")
+
+    fig = go.Figure(
+        data=[
+            go.Scatter(
+                x=x,
+                y=y,
+                mode="lines",
+                name=f"EWMA σ (span={span})",
+                hovertemplate="t=%{x}<br>σ=%{y:.4%}<extra></extra>",
+            )
+        ]
+    )
+    if median_vol is not None and np.isfinite(median_vol):
+        fig.add_hline(
+            y=float(median_vol),
+            line_dash="dash",
+            line_color="#c9a227",
+            annotation_text=f"median σ = {median_vol:.3%}",
+            annotation_position="right",
+        )
+    fig.update_layout(
+        title="EWMA daily volatility (close-to-close)",
+        xaxis_title="time",
+        yaxis_title="σ (daily return)",
+        height=420,
+    )
+    return {
+        "id": "FS.P.VOL",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "price_col": col,
+            "time_col": time_col,
+            "span": span,
+            "seed": seed,
+            "median_vol": None if median_vol is None else float(median_vol),
+            "non_null_share": float(comp["non_null_share"]),
+            "positive_share": float(comp["positive_share"]),
+            "n_bars": int(len(df)),
+        },
+    }
 
 
 def plot_label_balance(

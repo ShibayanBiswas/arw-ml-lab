@@ -235,27 +235,59 @@ def check_fs6_length(df: pd.DataFrame) -> FSResult:
     return FSResult("FS6", "FAIL", f"n={n} bars (<500)", {"n": n})
 
 
+def compute_daily_ewma_vol(
+    df: pd.DataFrame,
+    price_col: str | None = None,
+    *,
+    span: int = 100,
+) -> dict[str, Any]:
+    """Close-to-close EWMA σ (AFML ``get_daily_vol`` equivalent) for FS7 / FS.P.VOL."""
+    col = price_col or _detect_price_col(df)
+    if col is None or col not in df.columns:
+        return {"ok": False, "reason": "no price column for EWMA vol"}
+    px = pd.to_numeric(df[col], errors="coerce")
+    rets = px.pct_change(fill_method=None)
+    min_periods = max(span // 2, 10)
+    vol = rets.ewm(span=span, min_periods=min_periods).std()
+    warm = vol.iloc[span:] if len(vol) > span else vol.dropna()
+    if len(warm) == 0:
+        return {
+            "ok": False,
+            "reason": "insufficient bars for EWMA vol warm-up",
+            "price_col": col,
+            "span": span,
+        }
+    non_null = float(warm.notna().mean())
+    positive = float((warm.fillna(0) > 0).mean())
+    return {
+        "ok": True,
+        "price_col": col,
+        "span": span,
+        "min_periods": min_periods,
+        "volatility": vol,
+        "non_null_share": non_null,
+        "positive_share": positive,
+        "median_vol": float(warm.median()) if warm.notna().any() else None,
+    }
+
+
 def check_fs7_daily_vol(df: pd.DataFrame, price_col: str | None, *, span: int = 100) -> FSResult:
     """FS7 — EWMA volatility estimable (AFML ``get_daily_vol`` equivalent).
 
     Uses ``pandas.Series.ewm(span=span).std()`` on close-to-close returns.
     PASS if ≥95% non-null after warm-up and vol > 0; WARN 80–95%; else FAIL.
     """
-    if price_col is None or price_col not in df.columns:
-        return FSResult("FS7", "FAIL", "no price column for EWMA vol")
-    px = pd.to_numeric(df[price_col], errors="coerce")
-    rets = px.pct_change(fill_method=None)
-    vol = rets.ewm(span=span, min_periods=max(span // 2, 10)).std()
-    warm = vol.iloc[span:] if len(vol) > span else vol.dropna()
-    if len(warm) == 0:
-        return FSResult("FS7", "FAIL", "insufficient bars for EWMA vol warm-up", {"span": span})
-    non_null = float(warm.notna().mean())
-    positive = float((warm.fillna(0) > 0).mean())
+    comp = compute_daily_ewma_vol(df, price_col, span=span)
+    if not comp.get("ok"):
+        reason = comp.get("reason", "no price column for EWMA vol")
+        return FSResult("FS7", "FAIL", reason, {"span": span})
+    non_null = float(comp["non_null_share"])
+    positive = float(comp["positive_share"])
     details = {
         "span": span,
         "non_null_share": non_null,
         "positive_share": positive,
-        "median_vol": float(warm.median()) if warm.notna().any() else None,
+        "median_vol": comp.get("median_vol"),
     }
     if non_null >= 0.95 and positive >= 0.95:
         return FSResult("FS7", "PASS", f"EWMA vol ok (non-null={non_null:.1%})", details)
