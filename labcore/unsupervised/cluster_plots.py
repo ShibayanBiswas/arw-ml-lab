@@ -386,3 +386,208 @@ def kmeans_davies_bouldin(
         },
         "seed": seed,
     }
+
+
+def _kmeans_log_inertia(X: np.ndarray, k: int, seed: int) -> float:
+    """log WCSS for Tibshirani gap statistic (sklearn KMeans inertia)."""
+    tiny = np.finfo(float).tiny
+    km = KMeans(n_clusters=k, random_state=seed, n_init=10).fit(X)
+    inertia = max(float(km.inertia_), tiny)
+    return float(np.log(inertia))
+
+
+def kmeans_gap_statistic(
+    X: np.ndarray,
+    *,
+    k_min: int = 2,
+    k_max: int = 10,
+    n_refs: int = 50,
+    seed: int = 42,
+) -> dict[str, Any]:
+    """Gap statistic vs k with 1-SE rule (Tibshirani et al. 2001; sklearn KMeans WCSS)."""
+    import plotly.graph_objects as go
+
+    if n_refs < 1:
+        raise ValueError("n_refs must be ≥ 1")
+    Xs = StandardScaler().fit_transform(np.asarray(X, dtype=float))
+    n_rows = Xs.shape[0]
+    if n_rows < k_min or k_max < k_min:
+        raise ValueError("need enough rows for k_min and k_max")
+    ks = list(range(k_min, k_max + 1))
+    rng = np.random.default_rng(seed)
+    lows = Xs.min(axis=0)
+    highs = Xs.max(axis=0)
+
+    log_wk: list[float] = []
+    gap: list[float] = []
+    gap_se: list[float] = []
+    ref_log_mean: list[float] = []
+
+    for i, k in enumerate(ks):
+        log_wk.append(_kmeans_log_inertia(Xs, k, seed))
+        ref_logs: list[float] = []
+        for b in range(n_refs):
+            ref = rng.uniform(lows, highs, size=Xs.shape)
+            ref_seed = seed + k * 10_000 + b
+            ref_logs.append(_kmeans_log_inertia(ref, k, ref_seed))
+        ref_arr = np.asarray(ref_logs, dtype=float)
+        mean_ref = float(ref_arr.mean())
+        ref_log_mean.append(mean_ref)
+        gap_k = mean_ref - log_wk[i]
+        gap.append(gap_k)
+        std_ref = float(ref_arr.std(ddof=1)) if n_refs > 1 else 0.0
+        gap_se.append(std_ref * float(np.sqrt(1.0 + 1.0 / n_refs)))
+
+    best_k: int | None = None
+    for i in range(len(ks) - 1):
+        if gap[i] >= gap[i + 1] - gap_se[i + 1]:
+            best_k = ks[i]
+            break
+    if best_k is None:
+        best_k = ks[-1]
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=ks,
+            y=gap,
+            mode="lines+markers",
+            name="Gap(k)",
+            error_y={"type": "data", "array": gap_se, "visible": True},
+        )
+    )
+    best_gap = gap[ks.index(best_k)]
+    fig.add_vline(
+        x=best_k,
+        line_dash="dash",
+        line_color="#c9a227",
+        annotation_text=f"1-SE k={best_k}",
+        annotation_position="top",
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=[best_k],
+            y=[best_gap],
+            mode="markers",
+            name="1-SE choice",
+            marker={"size": 12, "color": "#c9a227", "symbol": "diamond"},
+        )
+    )
+    fig.update_layout(
+        title=f"Gap statistic vs k (1-SE k={best_k}, B={n_refs})",
+        xaxis_title="k",
+        yaxis_title="Gap(k)",
+        height=400,
+    )
+    return {
+        "id": "CLU.P.GAP",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "k": ks,
+            "log_wk": log_wk,
+            "ref_log_wk_mean": ref_log_mean,
+            "gap": gap,
+            "gap_standard_error": gap_se,
+            "n_refs": n_refs,
+            "best_k_1se": best_k,
+            "best_gap": best_gap,
+        },
+        "seed": seed,
+    }
+
+
+def hierarchical_dendrogram(
+    X: np.ndarray,
+    *,
+    linkage_method: str = "ward",
+    metric: str = "euclidean",
+    truncate_p: int = 30,
+    max_rows: int = 2000,
+    seed: int = 42,
+) -> dict[str, Any]:
+    """Agglomerative dendrogram (truncated) with cophenetic correlation (scipy)."""
+    import plotly.graph_objects as go
+    from scipy.cluster import hierarchy
+    from scipy.spatial.distance import pdist
+
+    Xs = StandardScaler().fit_transform(np.asarray(X, dtype=float))
+    n_rows = Xs.shape[0]
+    if n_rows < 2:
+        raise ValueError("need at least 2 rows for hierarchical clustering")
+    if n_rows > max_rows:
+        raise ValueError(f"at most {max_rows} rows for dendrogram (got {n_rows})")
+    if linkage_method == "ward" and metric != "euclidean":
+        raise ValueError("Ward linkage requires euclidean metric")
+
+    condensed = pdist(Xs, metric=metric)
+    z_link = hierarchy.linkage(condensed, method=linkage_method)
+    coph_corr, _coph_dists = hierarchy.cophenet(z_link, condensed)
+    color_threshold = 0.7 * float(np.max(z_link[:, 2]))
+    p_show = min(truncate_p, n_rows - 1)
+    ddata = hierarchy.dendrogram(
+        z_link,
+        truncate_mode="lastp",
+        p=p_show,
+        color_threshold=color_threshold,
+        no_plot=True,
+    )
+
+    mpl_tab10 = (
+        "#1f77b4",
+        "#ff7f0e",
+        "#2ca02c",
+        "#d62728",
+        "#9467bd",
+        "#8c564b",
+        "#e377c2",
+        "#7f7f7f",
+        "#bcbd22",
+        "#17becf",
+    )
+
+    def _plotly_line_color(mpl_color: str) -> str:
+        if mpl_color.startswith("C") and mpl_color[1:].isdigit():
+            return mpl_tab10[int(mpl_color[1:]) % len(mpl_tab10)]
+        if mpl_color in {"k", "black"}:
+            return "#222222"
+        return mpl_color if mpl_color.startswith("#") else "#636363"
+
+    fig = go.Figure()
+    for icoord, dcoord, color in zip(
+        ddata["icoord"], ddata["dcoord"], ddata["color_list"], strict=True
+    ):
+        fig.add_trace(
+            go.Scatter(
+                x=icoord,
+                y=dcoord,
+                mode="lines",
+                line={"color": _plotly_line_color(color), "width": 1.5},
+                showlegend=False,
+                hoverinfo="skip",
+            )
+        )
+    title = f"Hierarchical dendrogram ({linkage_method}, cophenetic r={coph_corr:.3f})"
+    fig.update_layout(
+        title=title,
+        xaxis_title="Cluster / leaf",
+        yaxis_title="Linkage distance",
+        height=480,
+        showlegend=False,
+    )
+    return {
+        "id": "CLU.P.DENDROGRAM",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "n_rows": n_rows,
+            "linkage_method": linkage_method,
+            "metric": metric,
+            "truncate_p": p_show,
+            "color_threshold": color_threshold,
+            "cophenetic_correlation": float(coph_corr),
+            "ivl_labels": list(ddata["ivl"]),
+            "n_merge_segments": len(ddata["icoord"]),
+        },
+        "seed": seed,
+    }

@@ -9,9 +9,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from labcore.unsupervised import fit_anomaly, fit_clustering, fit_dr
 from labcore.unsupervised.anomaly_plots import anomaly_ranked_bar
 from labcore.unsupervised.cluster_plots import (
+    hierarchical_dendrogram,
     kmeans_calinski_harabasz,
     kmeans_davies_bouldin,
     kmeans_elbow,
+    kmeans_gap_statistic,
     kmeans_k_sweep,
     silhouette_knife,
 )
@@ -39,6 +41,10 @@ class UnsupBody(BaseModel):
     seed: int = 42
     k_min: int = 2
     k_max: int = 8
+    n_refs: int = Field(default=50, ge=1, le=200)
+    linkage_method: str = "ward"
+    truncate_p: int = Field(default=30, ge=2, le=500)
+    dendro_max_rows: int = Field(default=2000, ge=3, le=5000)
     top_n: int = Field(default=20, ge=1, le=500)
     pc_x: int = Field(default=1, ge=1, le=32)
     pc_y: int = Field(default=2, ge=1, le=32)
@@ -186,6 +192,46 @@ def unsupervised_davies_bouldin(
             X.to_numpy(dtype=float),
             k_min=body.k_min,
             k_max=body.k_max,
+            seed=body.seed,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/api/v1/unsupervised/clustering/gap")
+def unsupervised_gap_statistic(
+    body: UnsupBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """CLU.P.GAP — Tibshirani gap vs k with 1-SE rule (seed 42)."""
+    _ = user
+    X = _frame(body.rows)
+    try:
+        return kmeans_gap_statistic(
+            X.to_numpy(dtype=float),
+            k_min=body.k_min,
+            k_max=body.k_max,
+            n_refs=body.n_refs,
+            seed=body.seed,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/api/v1/unsupervised/clustering/dendrogram")
+def unsupervised_dendrogram(
+    body: UnsupBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """CLU.P.DENDROGRAM — truncated hierarchical dendrogram + cophenetic r (seed 42)."""
+    _ = user
+    X = _frame(body.rows)
+    try:
+        return hierarchical_dendrogram(
+            X.to_numpy(dtype=float),
+            linkage_method=body.linkage_method,
+            truncate_p=body.truncate_p,
+            max_rows=body.dendro_max_rows,
             seed=body.seed,
         )
     except Exception as exc:
