@@ -1,7 +1,7 @@
 # ARW ML Lab — One-shot finish report (interim)
 
 **Date:** 17 Nov 2026 (IST)
-**Tip:** `fcf6231` — see `docs/PROGRESS.md`
+**Tip:** `28bfcbc` — see `docs/PROGRESS.md`
 **Frontend:** https://arw-ml-lab.vercel.app → READY
 **Backend target:** Contabo VPS — **not live** (`docs/DEPLOY_CONTABO.md`, ADR-0017)
 
@@ -19,4 +19,4 @@ Then agent resumes: SSH bootstrap → server `.env` → Deploy green → DS1 EDA
 
 ## Offline one-shot (continued)
 
-Catalogue, FE workbenches, Phase 7 reports/admin/load/ZAP, and STRESS/8.2 contracts through oneshot ~c188 (humility, refit_full, mobile predict, leaderboard FE, Celery limits, Contabo budget, soft-limit best-so-far, fold upserts) while Contabo stayed blocked. Full hosted prove and TradingLab FS16–18 remain open.
+Catalogue, FE workbenches, Phase 7 reports/admin/load/ZAP, and STRESS/8.2 contracts through oneshot ~c189 (humility, refit_full, mobile predict, leaderboard FE, Celery limits, Contabo budget, soft-limit best-so-far, fold upserts, Optuna resume) while Contabo stayed blocked. Full hosted prove and TradingLab FS16–18 remain open.
