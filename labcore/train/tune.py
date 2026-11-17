@@ -68,6 +68,13 @@ def _primary_scoring(task: str) -> str:
     return "balanced_accuracy"
 
 
+def resolve_optuna_storage(storage: str | None = None) -> str | None:
+    """Return Optuna storage URL (Postgres/SQLite). None → in-memory (not resumable)."""
+    if storage:
+        return storage
+    return os.environ.get("OPTUNA_STORAGE_URL") or None
+
+
 def run_optuna_tune(
     df: pd.DataFrame,
     *,
@@ -82,12 +89,15 @@ def run_optuna_tune(
     n_trials: int | None = None,
     sampler: str = "tpe",
     use_hyperband: bool = False,
+    storage: str | None = None,
+    study_name: str | None = None,
 ) -> dict[str, Any]:
     """Optuna study; objective = CV mean primary metric. Returns best params + history.
 
     ``sampler``: ``tpe`` (default) or ``nsga2`` (multi-objective: score + -n_params).
     ``use_hyperband``: attach ``HyperbandPruner`` (requires intermediate reports — thin
     path still evaluates full CV per trial; pruner is wired for future step reports).
+    ``storage`` / ``OPTUNA_STORAGE_URL``: RDB/SQLite URL for resumable studies (§39.3).
     """
     import optuna
     from optuna.pruners import HyperbandPruner, NopPruner
@@ -119,18 +129,30 @@ def run_optuna_tune(
 
     optuna.logging.set_verbosity(optuna.logging.WARNING)
     multi = sampler.lower() in {"nsga2", "nsga-ii", "nsgaii"}
+    storage_url = resolve_optuna_storage(storage)
+    name = study_name or f"lab-{algorithm_key}-{preset}-s{seed}"
+    study_kwargs: dict[str, Any] = {
+        "pruner": HyperbandPruner() if use_hyperband else NopPruner(),
+    }
+    if storage_url:
+        study_kwargs["storage"] = storage_url
+        study_kwargs["study_name"] = name
+        study_kwargs["load_if_exists"] = True
     if multi:
         study = optuna.create_study(
             directions=["maximize", "minimize"],
             sampler=NSGAIISampler(seed=seed),
-            pruner=HyperbandPruner() if use_hyperband else NopPruner(),
+            **study_kwargs,
         )
     else:
         study = optuna.create_study(
             direction="maximize",
             sampler=TPESampler(seed=seed),
-            pruner=HyperbandPruner() if use_hyperband else NopPruner(),
+            **study_kwargs,
         )
+    # Resume: only run remaining trials toward the requested budget
+    already = len(study.trials)
+    remaining = max(0, trials - already)
 
     def objective(trial: optuna.Trial) -> float | tuple[float, float]:
         params = _suggest_params(trial, spec)
@@ -156,7 +178,8 @@ def run_optuna_tune(
             return mean, complexity
         return mean
 
-    study.optimize(objective, n_trials=trials, show_progress_bar=False)
+    if remaining > 0:
+        study.optimize(objective, n_trials=remaining, show_progress_bar=False)
 
     history = [
         {
@@ -184,6 +207,8 @@ def run_optuna_tune(
         "algorithm_key": algorithm_key,
         "preset": preset,
         "n_trials": trials,
+        "n_trials_completed": len(study.trials),
+        "n_trials_resumed_from": already,
         "seed": seed,
         "scoring": scoring,
         "sampler": sampler,
@@ -195,6 +220,9 @@ def run_optuna_tune(
         "trials": history,
         "dropped_high_card": drop_cols,
         "n_pareto": len(study.best_trials) if multi else None,
+        "storage": storage_url,
+        "study_name": name if storage_url else None,
+        "resumable": bool(storage_url),
     }
 
     uri = os.environ.get("MLFLOW_TRACKING_URI")
