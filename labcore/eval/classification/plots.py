@@ -738,6 +738,174 @@ def plot_cm_delta(
     }
 
 
+def _intersection_label(membership: dict[str, bool]) -> str:
+    active = [name for name, on in membership.items() if on]
+    if not active:
+        return "(none)"
+    if len(active) == 1:
+        return f"{active[0]} only"
+    return " ∩ ".join(active)
+
+
+def plot_error_overlap(
+    y_true: np.ndarray,
+    predictions: dict[str, np.ndarray],
+) -> dict[str, Any]:
+    """CLE.P.ERROR_OVERLAP — UpSet of rows misclassified by each model (`upsetplot` → Plotly)."""
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+    from upsetplot import from_contents
+
+    y = np.asarray(y_true)
+    if not predictions:
+        raise ValueError("predictions must include at least one model")
+
+    model_names = list(predictions.keys())
+    contents: dict[str, set[int]] = {}
+    set_sizes: dict[str, int] = {}
+    for name in model_names:
+        pred = np.asarray(predictions[name])
+        if pred.shape[0] != y.shape[0]:
+            raise ValueError(f"{name}: prediction length {pred.shape[0]} != y {y.shape[0]}")
+        wrong = {int(i) for i in np.flatnonzero(pred != y)}
+        contents[name] = wrong
+        set_sizes[name] = len(wrong)
+
+    empty_numbers: dict[str, Any] = {
+        "status": "empty",
+        "set_sizes": set_sizes,
+        "intersections": [],
+        "n_evaluated": int(y.shape[0]),
+    }
+    if sum(set_sizes.values()) == 0:
+        fig = go.Figure()
+        fig.update_layout(title="Misclassification overlap (no errors)")
+        return {
+            "id": "CLE.P.ERROR_OVERLAP",
+            "kind": "plot",
+            "plotly": fig.to_plotly_json(),
+            "numbers": empty_numbers,
+        }
+
+    df = from_contents(contents)
+    grouped = df.groupby(level=model_names, observed=True).size().sort_values(ascending=False)
+    intersections: list[dict[str, Any]] = []
+    for idx, cnt in grouped.items():
+        memb_tuple = idx if isinstance(idx, tuple) else (idx,)
+        membership = {model_names[i]: bool(memb_tuple[i]) for i in range(len(model_names))}
+        intersections.append({"membership": membership, "count": int(cnt)})
+
+    labels = [_intersection_label(item["membership"]) for item in intersections]
+    counts = [item["count"] for item in intersections]
+    n_int = len(intersections)
+    y_ticks = list(range(n_int))
+
+    fig = make_subplots(
+        rows=2,
+        cols=2,
+        row_heights=[0.58, 0.42],
+        column_widths=[0.28, 0.72],
+        specs=[
+            [{"type": "bar", "rowspan": 2}, {"type": "bar"}],
+            [None, {"type": "scatter"}],
+        ],
+        vertical_spacing=0.14,
+        subplot_titles=("Errors per model", "Intersection size", None),
+    )
+
+    fig.add_trace(
+        go.Bar(
+            x=[set_sizes[n] for n in model_names],
+            y=model_names,
+            orientation="h",
+            marker_color="#4a6fa5",
+            showlegend=False,
+        ),
+        row=1,
+        col=1,
+    )
+    fig.add_trace(
+        go.Bar(
+            x=counts,
+            y=y_ticks,
+            orientation="h",
+            marker_color="#c9a227",
+            showlegend=False,
+            hovertext=labels,
+            hoverinfo="text+x",
+        ),
+        row=1,
+        col=2,
+    )
+
+    for row_i, item in enumerate(intersections):
+        memb = item["membership"]
+        active_x = [xi for xi, name in enumerate(model_names) if memb[name]]
+        for xi in active_x:
+            fig.add_trace(
+                go.Scatter(
+                    x=[xi],
+                    y=[row_i],
+                    mode="markers",
+                    marker={"size": 11, "color": "#1a1a1a"},
+                    showlegend=False,
+                    hoverinfo="skip",
+                ),
+                row=2,
+                col=2,
+            )
+        if len(active_x) >= 2:
+            fig.add_trace(
+                go.Scatter(
+                    x=active_x,
+                    y=[row_i] * len(active_x),
+                    mode="lines",
+                    line={"color": "#1a1a1a", "width": 2},
+                    showlegend=False,
+                    hoverinfo="skip",
+                ),
+                row=2,
+                col=2,
+            )
+
+    tick_kwargs = {
+        "tickmode": "array",
+        "tickvals": y_ticks,
+        "ticktext": labels,
+        "autorange": "reversed",
+    }
+    fig.update_xaxes(title_text="Misclassified rows", row=1, col=1)
+    fig.update_yaxes(title_text="", row=1, col=1)
+    fig.update_xaxes(title_text="Rows in intersection", row=1, col=2)
+    fig.update_yaxes(**tick_kwargs, row=1, col=2)
+    fig.update_xaxes(
+        tickmode="array",
+        tickvals=list(range(len(model_names))),
+        ticktext=model_names,
+        row=2,
+        col=2,
+    )
+    fig.update_yaxes(**tick_kwargs, row=2, col=2, showticklabels=False)
+
+    fig.update_layout(
+        title="Misclassification overlap (UpSet)",
+        height=max(360, 120 + 44 * n_int),
+        margin={"l": 60, "r": 24, "t": 72, "b": 48},
+    )
+
+    return {
+        "id": "CLE.P.ERROR_OVERLAP",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "status": "ok",
+            "set_sizes": set_sizes,
+            "intersections": intersections,
+            "n_evaluated": int(y.shape[0]),
+        },
+    }
+
+
 def plot_compare_bars(
     model_scores: dict[str, float],
     *,
