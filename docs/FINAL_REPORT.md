@@ -19,4 +19,4 @@ Then agent resumes: SSH bootstrap → server `.env` → Deploy green → DS1 EDA
 
 ## Offline one-shot (continued)
 
-Catalogue, FE workbenches, Phase 7 reports/admin/load/ZAP, and STRESS/8.2 contracts through oneshot ~c229 (FS16–FS18 thin, Optuna/pooler, Celery recycle, REFIT/HUMILITY, hold-out reuse + audit_log persist, restore/uptime/rate-limit/JWT/CORS/AUTH_BYPASS, Contabo DL + MAX_ROWS, atlas, numbers-only FE, SSE Caddy, backup script + deploy scp, Actions Node bump, egress nft renderer) while Contabo stayed blocked. Full hosted prove and TradingLab **parity** remain open.
+Catalogue, FE workbenches, Phase 7 reports/admin/load/ZAP, and STRESS/8.2 contracts through oneshot ~c245 (FS16–FS18 thin, Optuna/pooler, Celery recycle, REFIT/HUMILITY, hold-out audit_log, AUTH_BYPASS, backup+scp, Actions Node bump, egress nft, NVIDIA 8s + resilient_chat, PV11/PV13/PV16 predict guards, Vercel e2e smoke) while Contabo stayed blocked. Full Contabo prove and TradingLab **parity** remain open.
