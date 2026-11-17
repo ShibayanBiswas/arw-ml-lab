@@ -1,4 +1,4 @@
-"""Predict monitoring workbench wires MON.T.KS_DRIFT (oneshot-c139)."""
+"""Predict monitoring workbench wires MON.T.KS_DRIFT + MON.T.PSI_DRIFT (c139/c140)."""
 
 from __future__ import annotations
 
@@ -27,3 +27,16 @@ def test_api_exports_monitoring_ks_client() -> None:
     assert "monitoringKsDriftPath" in api
     assert "runMonitoringKsDrift" in api
     assert "/api/v1/monitoring/drift/ks" in api
+
+
+def test_monitoring_panel_calls_psi_api() -> None:
+    panel = PANEL.read_text(encoding="utf-8")
+    assert "runMonitoringPsiDrift" in panel
+    assert "MON.T.PSI_DRIFT" in panel
+
+
+def test_api_exports_monitoring_psi_client() -> None:
+    api = API.read_text(encoding="utf-8")
+    assert "monitoringPsiDriftPath" in api
+    assert "runMonitoringPsiDrift" in api
+    assert "/api/v1/monitoring/drift/psi" in api

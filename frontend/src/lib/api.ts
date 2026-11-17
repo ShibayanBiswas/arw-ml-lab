@@ -608,3 +608,28 @@ export async function runMonitoringKsDrift(body: MonitoringKsBody) {
   }
   return (await res.json()) as Record<string, unknown>;
 }
+
+export type MonitoringPsiBody = {
+  reference: number[][];
+  current: number[][];
+  feature_names?: string[];
+  bins?: number;
+  drift_threshold?: number;
+};
+
+export function monitoringPsiDriftPath(): string {
+  return "/api/v1/monitoring/drift/psi";
+}
+
+export async function runMonitoringPsiDrift(body: MonitoringPsiBody) {
+  const res = await fetch(`${labApiBase()}${monitoringPsiDriftPath()}`, {
+    method: "POST",
+    headers: { ...labAuthHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(`monitoring psi: ${res.status} ${detail}`);
+  }
+  return (await res.json()) as Record<string, unknown>;
+}
