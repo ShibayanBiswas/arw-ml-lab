@@ -453,12 +453,46 @@ export async function runUnsupervisedDrPlot(plot: DrCataloguePlot, body: Unsuper
   return (await res.json()) as Record<string, unknown>;
 }
 
-export async function runSuitability(body: {
+export type SuitabilityCataloguePlot =
+  | "volatility"
+  | "price"
+  | "barriers"
+  | "uniqueness"
+  | "holding"
+  | "min-ffd"
+  | "sadf"
+  | "trendscan"
+  | "label-balance"
+  | "grid";
+
+export type SuitabilityPlotBody = {
   sample_id?: string;
   rows?: Record<string, unknown>[];
   time_col?: string;
   asset?: string;
-}) {
+  price_col?: string;
+  vol_span?: number;
+  horizon?: number;
+  pt_mult?: number;
+  sl_mult?: number;
+  n_samples?: number;
+  cusum_mult?: number;
+  d_step?: number;
+  min_window?: number;
+  max_lookback?: number;
+  sadf_maxlag?: number;
+  sadf_end_step?: number;
+  trendscan_l_min?: number;
+  trendscan_l_max?: number;
+  trendscan_step?: number;
+  label_method?: "triple_barrier" | "fixed_horizon";
+};
+
+export function suitabilityPlotPath(plot: SuitabilityCataloguePlot): string {
+  return `/api/v1/suitability/plots/${plot}`;
+}
+
+export async function runSuitability(body: SuitabilityPlotBody) {
   const res = await fetch(`${labApiBase()}/api/v1/suitability/run`, {
     method: "POST",
     headers: { ...labAuthHeaders(), "Content-Type": "application/json" },
@@ -467,6 +501,22 @@ export async function runSuitability(body: {
   if (!res.ok) {
     const detail = await res.text();
     throw new Error(`suitability: ${res.status} ${detail}`);
+  }
+  return (await res.json()) as Record<string, unknown>;
+}
+
+export async function runSuitabilityPlot(
+  plot: SuitabilityCataloguePlot,
+  body: SuitabilityPlotBody
+) {
+  const res = await fetch(`${labApiBase()}${suitabilityPlotPath(plot)}`, {
+    method: "POST",
+    headers: { ...labAuthHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(`suitability plot ${plot}: ${res.status} ${detail}`);
   }
   return (await res.json()) as Record<string, unknown>;
 }

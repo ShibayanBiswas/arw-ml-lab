@@ -2,17 +2,19 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal, cast
 
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException
 from labcore.suitability import (
     plot_daily_volatility,
     plot_holding_period_distribution,
+    plot_label_balance,
     plot_min_ffd,
     plot_price_cusum,
     plot_sadf,
     plot_sample_barriers,
+    plot_suitability_grid,
     plot_trendscan,
     plot_uniqueness_concurrency,
     run_suitability,
@@ -44,6 +46,7 @@ class SuitabilityBody(BaseModel):
     trendscan_l_min: int = Field(default=5, ge=3, le=30)
     trendscan_l_max: int = Field(default=20, ge=5, le=60)
     trendscan_step: int = Field(default=1, ge=1, le=10)
+    label_method: str = Field(default="triple_barrier")
 
 
 def _load_suitability_frame(
@@ -79,6 +82,45 @@ def suitability_run(
     df, time_col = _load_suitability_frame(body)
     try:
         return run_suitability(df, time_col=time_col, asset=body.asset)
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/api/v1/suitability/plots/label-balance")
+def suitability_label_balance_plot(
+    body: SuitabilityBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """FS.P.LABEL_BALANCE — trial label shares (−1 / 0 / +1, seed 42 grid uses same body)."""
+    _ = user
+    df, _time_col = _load_suitability_frame(body)
+    method = body.label_method
+    if method not in ("triple_barrier", "fixed_horizon"):
+        raise HTTPException(
+            status_code=422,
+            detail="label_method must be triple_barrier or fixed_horizon",
+        )
+    try:
+        return plot_label_balance(
+            df,
+            price_col=body.price_col,
+            method=cast(Literal["triple_barrier", "fixed_horizon"], method),
+            horizon=body.horizon,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/api/v1/suitability/plots/grid")
+def suitability_grid_plot(
+    body: SuitabilityBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """FS.P.GRID — §37.6 parameter heatmaps (seed 42)."""
+    _ = user
+    df, _time_col = _load_suitability_frame(body)
+    try:
+        return plot_suitability_grid(df, price_col=body.price_col, seed=42)
     except Exception as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
