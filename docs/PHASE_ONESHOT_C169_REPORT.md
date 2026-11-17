@@ -23,4 +23,4 @@
 - [x] Import allowlist green.
 - [x] Rule 70: sklearn train path only; torch seed via existing `deep.engine.set_seed`.
 
-**Ship commit:** _(after push)_
+**Ship commit:** `1ee6d42`
