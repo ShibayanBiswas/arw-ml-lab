@@ -1390,6 +1390,78 @@ def plot_coef_forest(
     }
 
 
+def plot_reg_path(
+    X: np.ndarray,
+    y: np.ndarray,
+    *,
+    kind: str = "lasso",
+    l1_ratio: float = 0.5,
+    alphas: int | np.ndarray = 30,
+    seed: int = 42,
+    feature_names: list[str] | None = None,
+) -> dict[str, Any]:
+    """REE.P.REG_PATH — coefficient paths vs log α (``lasso_path`` / ``enet_path``)."""
+    import plotly.graph_objects as go
+    from sklearn.linear_model import enet_path, lasso_path
+
+    X = np.asarray(X, dtype=float)
+    y = np.asarray(y, dtype=float).ravel()
+    n_features = X.shape[1]
+    if feature_names is None:
+        feature_names = [f"x{i}" for i in range(n_features)]
+    elif len(feature_names) != n_features:
+        msg = "feature_names length must match X.shape[1]"
+        raise ValueError(msg)
+
+    path_kind = kind.lower()
+    if path_kind == "lasso":
+        alphas_out, coefs, _ = lasso_path(X, y, alphas=alphas)
+        l1_used: float | None = None
+    elif path_kind == "enet":
+        alphas_out, coefs, _ = enet_path(X, y, alphas=alphas, l1_ratio=l1_ratio)
+        l1_used = float(l1_ratio)
+    elif path_kind == "ridge":
+        alpha_grid = np.logspace(-2, 3, alphas) if isinstance(alphas, int) else np.asarray(alphas, dtype=float)
+        alphas_out, coefs, _ = enet_path(X, y, alphas=alpha_grid, l1_ratio=0.0)
+        l1_used = 0.0
+    else:
+        msg = f"kind must be 'lasso', 'enet', or 'ridge', got {kind!r}"
+        raise ValueError(msg)
+
+    log_alpha = np.log10(alphas_out)
+    fig = go.Figure()
+    for j, name in enumerate(feature_names):
+        fig.add_trace(
+            go.Scatter(
+                x=log_alpha,
+                y=coefs[j, :],
+                mode="lines",
+                name=name,
+            )
+        )
+    title = f"Regularization path ({path_kind})"
+    fig.update_layout(
+        title=title,
+        xaxis_title="log10(α)",
+        yaxis_title="Coefficient",
+        height=max(400, 48 * min(n_features, 8)),
+    )
+    return {
+        "id": "REE.P.REG_PATH",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "path_kind": path_kind,
+            "l1_ratio": l1_used,
+            "seed": seed,
+            "alphas": alphas_out.tolist(),
+            "log10_alphas": log_alpha.tolist(),
+            "coefs": coefs.tolist(),
+            "feature_names": feature_names,
+        },
+    }
+
+
 def plot_pred_actual_folds(
     fold_preds: list[dict[str, np.ndarray]],
 ) -> dict[str, Any]:
