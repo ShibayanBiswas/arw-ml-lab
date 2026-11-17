@@ -21,4 +21,4 @@
 - [x] Import allowlist green.
 - [x] Rule 70: thin wrappers over sklearn registry + existing `assert_gpu_allowed`.
 
-**Ship commit:** _(fill after commit)_
+**Ship commit:** `fbb66d5`
