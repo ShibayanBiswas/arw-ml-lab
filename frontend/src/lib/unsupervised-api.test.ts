@@ -29,6 +29,18 @@ describe("unsupervisedClusteringPlotPath", () => {
     expect(unsupervisedClusteringPlotPath("dendrogram")).toBe(
       "/api/v1/unsupervised/clustering/dendrogram"
     );
+    expect(unsupervisedClusteringPlotPath("k-sweep")).toBe(
+      "/api/v1/unsupervised/clustering/k-sweep"
+    );
+    expect(unsupervisedClusteringPlotPath("clustermap")).toBe(
+      "/api/v1/unsupervised/clustering/clustermap"
+    );
+    expect(unsupervisedClusteringPlotPath("reachability")).toBe(
+      "/api/v1/unsupervised/clustering/reachability"
+    );
+    expect(unsupervisedClusteringPlotPath("k-distance")).toBe(
+      "/api/v1/unsupervised/clustering/k-distance"
+    );
   });
 });
 

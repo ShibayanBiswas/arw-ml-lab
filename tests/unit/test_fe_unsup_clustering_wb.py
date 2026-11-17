@@ -1,4 +1,4 @@
-"""Clustering workbench exposes CLU.P catalogue actions (oneshot-c131)."""
+"""Clustering workbench exposes CLU.P catalogue actions (oneshot-c131, c138)."""
 
 from __future__ import annotations
 
@@ -15,10 +15,14 @@ def test_clustering_workbench_wires_clu_catalogue() -> None:
     for artefact in (
         "CLU.P.ELBOW",
         "CLU.P.SILHOUETTE",
+        "CLU.P.K_SWEEP",
         "CLU.P.CH",
         "CLU.P.DB",
         "CLU.P.GAP",
         "CLU.P.DENDROGRAM",
+        "CLU.P.CLUSTERMAP",
+        "CLU.P.REACHABILITY",
+        "CLU.P.K_DISTANCE",
     ):
         assert artefact in src
     assert 'family === "clustering"' in src

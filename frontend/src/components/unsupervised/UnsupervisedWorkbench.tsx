@@ -31,10 +31,14 @@ const ANOMALY_PLOTS: { id: AnomalyCataloguePlot; label: string; artefact: string
 const CLUSTERING_PLOTS: { id: ClusteringCataloguePlot; label: string; artefact: string }[] = [
   { id: "elbow", label: "Elbow (knee)", artefact: "CLU.P.ELBOW" },
   { id: "silhouette", label: "Silhouette knife", artefact: "CLU.P.SILHOUETTE" },
+  { id: "k-sweep", label: "k-sweep (inertia + silhouette)", artefact: "CLU.P.K_SWEEP" },
   { id: "ch", label: "Calinski–Harabasz", artefact: "CLU.P.CH" },
   { id: "db", label: "Davies–Bouldin", artefact: "CLU.P.DB" },
   { id: "gap", label: "Gap statistic", artefact: "CLU.P.GAP" },
   { id: "dendrogram", label: "Dendrogram", artefact: "CLU.P.DENDROGRAM" },
+  { id: "clustermap", label: "Feature clustermap", artefact: "CLU.P.CLUSTERMAP" },
+  { id: "reachability", label: "OPTICS reachability", artefact: "CLU.P.REACHABILITY" },
+  { id: "k-distance", label: "DBSCAN k-distance", artefact: "CLU.P.K_DISTANCE" },
 ];
 
 const DR_PLOTS: { id: DrCataloguePlot; label: string; artefact: string }[] = [

@@ -376,7 +376,11 @@ export type ClusteringCataloguePlot =
   | "ch"
   | "db"
   | "gap"
-  | "dendrogram";
+  | "dendrogram"
+  | "k-sweep"
+  | "clustermap"
+  | "reachability"
+  | "k-distance";
 
 export type DrCataloguePlot =
   | "scree"
