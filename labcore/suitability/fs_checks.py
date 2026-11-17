@@ -302,14 +302,55 @@ def check_fs9_event_count(df: pd.DataFrame, price_col: str | None) -> FSResult:
     return FSResult("FS9", "FAIL", f"{events} CUSUM events (<100)", details)
 
 
-def compute_trial_tb_label_balance(
+PT_SL_GRID: tuple[tuple[int, int], ...] = ((1, 1), (1, 2), (2, 1), (2, 2))
+VERTICAL_BARRIER_GRID: tuple[int, ...] = (5, 10, 20)
+CUSUM_H_GRID: tuple[float, ...] = (0.5, 1.0, 2.0)
+
+
+def _cusum_event_starts(log_r: np.ndarray, h: float) -> list[int]:
+    """Symmetric CUSUM event bar indices (AFML ch. 2 thin)."""
+    s_pos = 0.0
+    s_neg = 0.0
+    starts: list[int] = []
+    for i, r in enumerate(log_r):
+        if not np.isfinite(r):
+            continue
+        s_pos = max(0.0, s_pos + float(r))
+        s_neg = min(0.0, s_neg + float(r))
+        if s_pos > h:
+            starts.append(i)
+            s_pos = 0.0
+        elif s_neg < -h:
+            starts.append(i)
+            s_neg = 0.0
+    return starts
+
+
+def _mean_uniqueness_from_spans(spans: list[tuple[int, int]]) -> float | None:
+    if len(spans) < 2:
+        return None
+    n_t = max(t1 for _t0, t1 in spans) + 1
+    concurrent = np.zeros(n_t, dtype=float)
+    for t0, t1 in spans:
+        concurrent[t0 : t1 + 1] += 1.0
+    uniques: list[float] = []
+    for t0, t1 in spans:
+        c = np.maximum(concurrent[t0 : t1 + 1], 1.0)
+        uniques.append(float(np.mean(1.0 / c)))
+    return float(np.mean(uniques))
+
+
+def compute_trial_tb_cell(
     df: pd.DataFrame,
     price_col: str,
     *,
     horizon: int = 5,
     vol_span: int = 100,
+    pt_mult: float = 1.0,
+    sl_mult: float = 1.0,
+    cusum_mult: float | None = None,
 ) -> dict[str, Any]:
-    """Trial triple-barrier labels (±1σ, vertical ``horizon`` bars) for FS10 / FS.P.LABEL_BALANCE."""
+    """One triple-barrier trial cell for §37.6 grid / FS10 / FS.P.*."""
     if price_col not in df.columns:
         return {"ok": False, "reason": "no price column"}
     px = pd.to_numeric(df[price_col], errors="coerce").dropna()
@@ -318,24 +359,47 @@ def compute_trial_tb_label_balance(
     log_p = np.log(px.to_numpy(dtype=float))
     rets = np.diff(log_p)
     vol = pd.Series(rets).ewm(span=vol_span, min_periods=30).std().to_numpy()
+    if cusum_mult is None:
+        starts = list(range(len(rets) - 1))
+        cusum_h: float | None = None
+        n_cusum_events = len(starts)
+    else:
+        vol_mean = float(pd.Series(rets).ewm(span=100, min_periods=50).std().dropna().mean())
+        if not np.isfinite(vol_mean) or vol_mean <= 0:
+            return {"ok": False, "reason": "CUSUM threshold not positive"}
+        cusum_h = cusum_mult * vol_mean
+        starts = _cusum_event_starts(rets, cusum_h)
+        n_cusum_events = len(starts)
     labels: list[int] = []
-    for i in range(len(rets) - 1):
+    spans: list[tuple[int, int]] = []
+    for i in starts:
+        if i >= len(rets) - 1:
+            continue
         sigma = vol[i]
         if not np.isfinite(sigma) or sigma <= 0:
             continue
-        end = min(i + 1 + horizon, len(log_p))
-        path = log_p[i + 1 : end] - log_p[i]
+        end_px = min(i + 1 + horizon, len(log_p))
+        path = log_p[i + 1 : end_px] - log_p[i]
         if len(path) == 0:
             continue
-        if np.any(path >= sigma):
+        upper = pt_mult * sigma
+        lower = sl_mult * sigma
+        t1 = end_px - 1
+        if np.any(path >= upper):
             labels.append(1)
-        elif np.any(path <= -sigma):
+            touch = int(np.argmax(path >= upper))
+            t1 = i + 1 + touch
+        elif np.any(path <= -lower):
             labels.append(-1)
+            touch = int(np.argmax(path <= -lower))
+            t1 = i + 1 + touch
         else:
             labels.append(0)
+            t1 = end_px - 1
+        spans.append((i, min(t1, len(log_p) - 1)))
     n_labels = len(labels)
     if n_labels == 0:
-        return {"ok": False, "reason": "no trial labels"}
+        return {"ok": False, "reason": "no trial labels", "n_cusum_events": n_cusum_events}
     counts = {
         -1: int(sum(1 for x in labels if x < 0)),
         0: int(sum(1 for x in labels if x == 0)),
@@ -346,16 +410,104 @@ def compute_trial_tb_label_balance(
     minority_signed = (
         float(min(counts[-1], counts[1]) / signed_n) if signed_n > 0 else None
     )
+    mean_u = _mean_uniqueness_from_spans(spans)
+    n_eff = float(n_labels * mean_u) if mean_u is not None else None
     return {
         "ok": True,
         "method": "triple_barrier",
         "horizon": horizon,
         "vol_span": vol_span,
+        "pt_mult": pt_mult,
+        "sl_mult": sl_mult,
+        "cusum_mult": cusum_mult,
+        "cusum_h": cusum_h,
+        "n_cusum_events": n_cusum_events,
         "n_labels": n_labels,
         "counts": counts,
         "shares": shares,
         "minority_signed_share": minority_signed,
         "vertical_barrier_share": shares[0],
+        "avg_uniqueness": mean_u,
+        "n_eff": n_eff,
+    }
+
+
+def compute_trial_tb_label_balance(
+    df: pd.DataFrame,
+    price_col: str,
+    *,
+    horizon: int = 5,
+    vol_span: int = 100,
+) -> dict[str, Any]:
+    """Trial triple-barrier labels (±1σ, vertical bars) for FS10 / FS.P.LABEL_BALANCE."""
+    return compute_trial_tb_cell(
+        df,
+        price_col,
+        horizon=horizon,
+        vol_span=vol_span,
+        pt_mult=1.0,
+        sl_mult=1.0,
+        cusum_mult=None,
+    )
+
+
+def compute_suitability_parameter_grid(
+    df: pd.DataFrame,
+    price_col: str | None = None,
+    *,
+    seed: int = 42,
+) -> dict[str, Any]:
+    """§37.6 — 36 trial labelling cells and default pick (max n_eff, minority ≥ 15%)."""
+    _ = seed
+    col = price_col or _detect_price_col(df)
+    if col is None:
+        raise ValueError("no price column for suitability grid")
+    cells: list[dict[str, Any]] = []
+    for pt_sl in PT_SL_GRID:
+        for vertical in VERTICAL_BARRIER_GRID:
+            for cusum_mult in CUSUM_H_GRID:
+                cell = compute_trial_tb_cell(
+                    df,
+                    col,
+                    horizon=vertical,
+                    pt_mult=float(pt_sl[0]),
+                    sl_mult=float(pt_sl[1]),
+                    cusum_mult=cusum_mult,
+                )
+                row: dict[str, Any] = {
+                    "pt_sl": list(pt_sl),
+                    "vertical": vertical,
+                    "cusum_mult": cusum_mult,
+                }
+                if cell.get("ok"):
+                    row.update(
+                        {
+                            "minority_share": cell["minority_signed_share"],
+                            "vertical_share": cell["vertical_barrier_share"],
+                            "avg_uniqueness": cell["avg_uniqueness"],
+                            "n_events": int(cell["n_labels"]),
+                            "n_cusum_events": int(cell["n_cusum_events"]),
+                            "n_eff": cell["n_eff"],
+                        }
+                    )
+                else:
+                    row["error"] = cell.get("reason", "failed")
+                cells.append(row)
+    eligible = [
+        c
+        for c in cells
+        if c.get("minority_share") is not None and float(c["minority_share"]) >= 0.15
+    ]
+    pool = eligible if eligible else [c for c in cells if c.get("n_eff") is not None]
+    default_cell = (
+        max(pool, key=lambda c: float(c.get("n_eff") or 0.0)) if pool else None
+    )
+    return {
+        "price_col": col,
+        "n_cells": len(cells),
+        "cells": cells,
+        "default_cell": default_cell,
+        "seed": seed,
     }
 
 
