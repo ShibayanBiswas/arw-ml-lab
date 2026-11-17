@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Current phase | Contabo v2.3 (blocked on host secrets) + One-shot CLE/REE → 8.2 |
-| Last completed step | oneshot-c131 FE.WB.UNSUP_CLU |
-| Last green commit | d90067b |
+| Last completed step | oneshot-c130 FS.P.SADF |
+| Last green commit | (pending push) |
 | Open failures | Contabo host/SSH/.env; Supabase migrate secrets; NVIDIA_API_KEY; Deploy cannot smoke without LAB_API_URL |
-| Next action | Shibayan: Contabo + Supabase + NVIDIA secrets (Blocked). Agent: wire **ANO.P.PARETO** in anomaly WB; ANO pairwise scatter; `FS.P.SADF` / `FS.P.TRENDSCAN`; DR catalogue gaps; remaining CLU.P.* (k-sweep, clustermap) in FE |
+| Next action | Shibayan: Contabo + Supabase + NVIDIA secrets (Blocked). Agent: wire **ANO.P.PARETO** in anomaly WB; ANO pairwise scatter; `FS.P.TRENDSCAN`; DR catalogue gaps; remaining CLU.P.* (k-sweep, clustermap) in FE |
 
 ## Blocked — needs Shibayan
 
