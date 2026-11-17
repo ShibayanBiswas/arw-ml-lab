@@ -1542,3 +1542,114 @@ def plot_pred_actual_folds(
         "plotly": fig.to_plotly_json(),
         "numbers": {"n_folds": n, "per_fold": per_fold},
     }
+
+
+def plot_alpha_cv(
+    X: np.ndarray,
+    y: np.ndarray,
+    *,
+    kind: str = "lasso",
+    cv: int = 5,
+    seed: int = 42,
+    alphas: int | np.ndarray | None = None,
+    l1_ratio: float = 0.5,
+) -> dict[str, Any]:
+    """REE.P.ALPHA_CV — CV MSE vs α from ``LassoCV`` / ``RidgeCV`` / ``ElasticNetCV``."""
+    import plotly.graph_objects as go
+    from sklearn.linear_model import ElasticNetCV, LassoCV, Ridge, RidgeCV
+    from sklearn.model_selection import KFold, validation_curve
+
+    X = np.asarray(X, dtype=float)
+    y = np.asarray(y, dtype=float).ravel()
+    cv_splitter = KFold(n_splits=cv, shuffle=True, random_state=seed)
+    path_kind = kind.lower()
+
+    fit_kwargs: dict[str, Any] = {"cv": cv_splitter}
+    if alphas is not None:
+        fit_kwargs["alphas"] = alphas
+
+    if path_kind == "lasso":
+        model = LassoCV(**fit_kwargs, random_state=seed)
+        model.fit(X, y)
+        title = "Lasso CV: MSE vs α"
+        alphas_out = np.asarray(model.alphas_, dtype=float)
+        mse_path = np.asarray(model.mse_path_, dtype=float)
+        alpha_best = float(model.alpha_)
+    elif path_kind == "ridge":
+        ridge_alphas = (
+            np.logspace(-2, 2, 50) if alphas is None else np.asarray(alphas, dtype=float)
+        )
+        if ridge_alphas.ndim == 0:
+            ridge_alphas = np.asarray([float(ridge_alphas)])
+        ridge_alphas = ridge_alphas.ravel()
+        selector = RidgeCV(alphas=ridge_alphas, cv=cv_splitter)
+        selector.fit(X, y)
+        title = "Ridge CV: MSE vs α"
+        alphas_out = ridge_alphas
+        _, neg_val = validation_curve(
+            Ridge(),
+            X,
+            y,
+            param_name="alpha",
+            param_range=ridge_alphas.tolist(),
+            cv=cv_splitter,
+            scoring="neg_mean_squared_error",
+            n_jobs=1,
+        )
+        mse_path = -np.asarray(neg_val, dtype=float)
+        alpha_best = float(selector.alpha_)
+    elif path_kind == "enet":
+        model = ElasticNetCV(l1_ratio=l1_ratio, **fit_kwargs, random_state=seed)
+        model.fit(X, y)
+        title = f"ElasticNet CV: MSE vs α (l1_ratio={l1_ratio})"
+        alphas_out = np.asarray(model.alphas_, dtype=float)
+        mse_path = np.asarray(model.mse_path_, dtype=float)
+        alpha_best = float(model.alpha_)
+    else:
+        msg = f"kind must be 'lasso', 'ridge', or 'enet', got {kind!r}"
+        raise ValueError(msg)
+
+    mse_mean = mse_path.mean(axis=1)
+    mse_std = mse_path.std(axis=1, ddof=1)
+    log_alpha = np.log10(alphas_out)
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=log_alpha,
+            y=mse_mean,
+            mode="lines+markers",
+            name="CV MSE (mean)",
+            error_y={"type": "data", "array": mse_std.tolist(), "visible": True},
+        )
+    )
+    fig.add_vline(
+        x=float(np.log10(alpha_best)),
+        line_dash="dash",
+        line_color="gold",
+        annotation_text=f"α*={alpha_best:.4g}",
+        annotation_position="top",
+    )
+    fig.update_layout(
+        title=title,
+        xaxis_title="log10(α)",
+        yaxis_title="Mean CV MSE",
+        height=420,
+    )
+    return {
+        "id": "REE.P.ALPHA_CV",
+        "kind": "plot",
+        "plotly": fig.to_plotly_json(),
+        "numbers": {
+            "path_kind": path_kind,
+            "l1_ratio": float(l1_ratio) if path_kind == "enet" else None,
+            "seed": seed,
+            "cv": cv,
+            "alphas": alphas_out.tolist(),
+            "log10_alphas": log_alpha.tolist(),
+            "mse_path": mse_path.tolist(),
+            "mse_mean": mse_mean.tolist(),
+            "mse_std": mse_std.tolist(),
+            "alpha_best": alpha_best,
+        },
+    }
