@@ -5,6 +5,10 @@ from __future__ import annotations
 from celery import Celery
 
 from backend.app.settings import get_settings
+from labcore.ops.queue_time_limits import (
+    celery_task_annotations,
+    visibility_timeout_floor_s,
+)
 
 settings = get_settings()
 
@@ -38,6 +42,8 @@ celery_app = Celery(
     ],
 )
 
+_TASK_ANNOTATIONS = celery_task_annotations()
+
 celery_app.conf.update(
     task_acks_late=True,
     task_reject_on_worker_lost=True,
@@ -50,6 +56,8 @@ celery_app.conf.update(
     result_serializer="json",
     timezone="Asia/Kolkata",
     enable_utc=True,
+    # OPS-03 / §39.3: soft → SoftTimeLimitExceeded; hard → kill
+    task_annotations=_TASK_ANNOTATIONS,
     # Known queue names (ARCHITECTURE §8 + q.predict.heavy + q.demo)
     task_routes={
         "lab.demo.progress": {"queue": "q.demo"},
@@ -62,7 +70,11 @@ celery_app.conf.update(
     },
 )
 # Expose queue catalogue for workers / docs
-celery_app.conf.broker_transport_options = {"queue_order_strategy": "priority"}
+# OPS-04: visibility_timeout must exceed max hard limit
+celery_app.conf.broker_transport_options = {
+    "queue_order_strategy": "priority",
+    "visibility_timeout": visibility_timeout_floor_s(),
+}
 celery_app.conf.worker_direct = False
 _ = QUEUES  # documented queue set; workers select via -Q
 
