@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 import pandas as pd
+from labcore.observability.json_logging import bind_context, clear_context
 from labcore.ops.cancel_flags import cancel_flag_key_for_job, default_cancel_store
 from labcore.ops.soft_time_limit import (
     PartialHolder,
@@ -37,6 +38,7 @@ def run_predict_batch_task(
     holder = PartialHolder()
     flag_key = cancel_flag_key or cancel_flag_key_for_job(job_id)
     flags = default_cancel_store()
+    bind_context(job_id=job_id, run_id=model_id, workspace_id="predict")
     JOB_STORE.update(
         job_id,
         status="running",
@@ -162,3 +164,5 @@ def run_predict_batch_task(
             event={"type": "error", "message": str(exc)},
         )
         raise
+    finally:
+        clear_context()
