@@ -63,8 +63,8 @@ def assert_celery_acks_late() -> None:
     _require_substrings(
         celery_py,
         (
-            "task_acks_late=True",
-            "task_reject_on_worker_lost=True",
+            '"task_acks_late": True',
+            '"task_reject_on_worker_lost": True',
             "backend.worker import heartbeat",
         ),
         "celery_app",

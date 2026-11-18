@@ -1,50 +1,56 @@
-# ARW ML Lab — project kit
+# ARW ML Lab
 
-Design and build kit for the **ARW ML Lab**: a world-class, general-purpose machine-learning lab for tabular data (Supervised incl. sequential/financial, Unsupervised, Time Series) with EDA, every algorithm configurable, all CV schemes, explainability, uncertainty, financial validation (purged K-fold, CPCV, PBO, DSR, walk-forward optimisation), an AI Insights layer and a VLM decision agent. Styled like the SP Workstation modules.
+General-purpose **tabular** ML lab (no NLP) for Anand Rathi Wealth: Supervised (incl. sequential/financial), Unsupervised, Time Series, EDA, explainability, uncertainty, AI Insights, and a VLM decision agent.
 
-**Status:** design + scaffolding only. No application code yet — Cursor builds it phase by phase.
+| Surface | URL / target | Status |
+|---|---|---|
+| Frontend | https://arw-ml-lab.vercel.app | Live (login 200) |
+| Backend API | Contabo VPS (`docs/DEPLOY_CONTABO.md`) | **Not live** — waiting on host secrets |
+| Data / Auth / Storage | Supabase | Project linked; migrate secrets still needed for Deploy |
+| AI | NVIDIA API catalog (server-side only) | Key not yet on VPS |
 
-## Start here
-1. Open this folder in Cursor.
-2. Open a new Agent chat and paste the message in **`CURSOR_KICKOFF.md`** (it makes the agent read `AGENTS.md`, `CURSOR_PROMPT.md` and `docs/ARCHITECTURE.md`, use the strongest reasoning model, and stop after each phase). After each phase report, send the one-line "continue" message from the same file.
-3. Before Phase 6, create an NVIDIA Developer account at build.nvidia.com and an API key (free trial key for development/testing). Put it in your local `.env` and later in the backend server env file (`/opt/arw-ml-lab/.env` on the Contabo VPS; Render env group only on the legacy path) as `NVIDIA_API_KEY`. Never put it in Vercel.
-4. **Backend hosting (v2.3):** get a Contabo Cloud VPS and hand it to Cursor — follow the USER section of `docs/DEPLOY_CONTABO.md`, then paste `CURSOR_CONTABO_FOLLOWUP.md` into Cursor Agent.
+Tip of `main`: see `docs/PROGRESS.md`. Spec: `docs/ARCHITECTURE.md` v2.3 (§1–§46).
 
-## What is inside
-| Path | Contents |
+## Start here (humans)
+
+1. Clone the repo; Python 3.12 + `uv`, Node + `pnpm`.
+2. Copy `.env.example` → `.env`. Fill Supabase + `JWT_SECRET`. Contabo / `NVIDIA_API_KEY` only when ready for the VPS.
+3. Local API: `uv sync` / install from `backend/requirements/*`, then `uvicorn backend.app.main:app --reload`.
+4. Frontend: `cd frontend && pnpm install && pnpm dev` (Root Directory on Vercel = `frontend`).
+5. Contabo go-live: follow the **USER** section of [`docs/DEPLOY_CONTABO.md`](docs/DEPLOY_CONTABO.md), then clear the Blocked table in `docs/PROGRESS.md`.
+
+Agents: read `AGENTS.md`, `.cursor/rules/`, and `CURSOR_PROMPT.md` §000. Resume from `docs/PROGRESS.md`.
+
+## Layout
+
+| Path | Purpose |
 |---|---|
-| `CURSOR_CONTABO_FOLLOWUP.md` | One copy-paste prompt: Cursor bootstraps the Contabo VPS, switches deploy to SSH/GHCR, wires secrets, deploys, smoke-tests, then continues `CURSOR_ONE_SHOT.md` |
-| `CURSOR_ONE_SHOT.md` | One copy-paste prompt to finish all remaining phases autonomously |
-| `CURSOR_KICKOFF.md` | Short copy-paste kickoff message for Cursor Agent + the one-line "continue" message |
-| `CURSOR_PROMPT.md` | Phase-by-phase build prompt (18 phases incl. 3A Prediction Studio) with acceptance criteria, execution protocol (definition of done, no-stub rules, self-check, resume) |
-| `AGENTS.md` | Agent instructions |
-| `.cursor/rules/*.mdc` | 11 project rules: core, stack, Python, frontend, ML integrity (incl. evaluation integrity), AI provider, testing, phase order, deployment, security, use-established-libraries |
-| `docs/DEPLOY_CONTABO.md`, `docs/adr/ADR-contabo.md` | Backend runbook for the Contabo VPS (hardening, compose design, Caddy HTTPS, SSH deploy with rollback, secrets, backups, monitoring, limits, user steps) and its ADR |
-| `docs/ARCHITECTURE.md` | Full architecture v2.3, §1–§46 (incl. §45 Prediction Studio — batch upload + custom input form, §46 Hardening — ML integrity, ops, security, UX, feature parity; §34 Deep Learning, §35 Time Series, §36 metrics/tables/plots per family, §37 financial label suitability, §38 VLM decision agent, §39 deployment, §40 hosted AI provider layer, §41 Classification Evaluation Suite, §42 Regression Evaluation Suite, §43 library gap audit, §44 Library Matrix) |
-| `docs/FLOWCHART.md`, `docs/diagrams/` | 21 Mermaid diagrams (PNG + `.mmd` source; 21 = Contabo deploy) |
-| `docs/STRESS_TEST.md` | Round-4 red-team audit: every finding with severity, fix and where it was fixed |
-| `docs/contracts/` | Feature-contract JSON Schema used by the Prediction Studio |
-| `docs/PROGRESS.md` | Build progress tracker the agent keeps current (resume point) |
-| `docs/GAP_AUDIT.md` | Round-3 library gap audit: what was added, re-backed, isolated or flagged, and the dependency-resolution results |
-| `backend/requirements/` | Pinned Python requirements per Render service (api, worker-light, worker-train, optional images) + `uv` lock files; see its README |
-| `data/samples/` | 19 bundled sample datasets, `urls.txt`, `datasets_manifest.json/.csv`, 33 `presets/*.yaml`, and `predict/`: 35 prediction sample files for all 33 datasets (target removed, seed 42) + feature contracts |
-| `scripts/make_predict_samples.py` | Regenerates the prediction samples (downloads cached; `--offline`) |
-| `render.yaml` | **Legacy / alternative** Render Blueprint (primary backend is the Contabo VPS, see `docs/DEPLOY_CONTABO.md`): lab-api (web), lab-worker-light and lab-worker-train (background workers), lab-beat (hourly cron), lab-kv (Key Value) |
-| `frontend/vercel.json` | Vercel config for the Next.js app |
-| `supabase/` | `config.toml`, 6 migrations (schema, RLS, storage buckets, helpers, Prediction Studio, hardening), seed, pgTAP RLS tests (core + prediction) |
-| `tests/` | `unit/test_predict_samples.py` (38 checks) and `db_harness/` (runs the migrations and pgTAP tests on a throw-away Postgres without Docker) |
-| `.github/workflows/` | `ci.yml` (lint/type/test/RLS), `deploy.yml` (migrations → GHCR images → SSH deploy to the Contabo VPS → smoke test, per `docs/DEPLOY_CONTABO.md` §8; the Render hooks are the legacy path) |
-| `.env.example` | Environment variables per platform |
-| `frontend/ backend/ labcore/ infra/ vendor/` | Skeleton folders (only `backend/requirements/` is filled) |
+| `frontend/` | Next.js 16 App Router (Vercel) |
+| `backend/` | FastAPI `lab-api` + Celery workers |
+| `labcore/` | Pure-Python ML library (registries, CV, metrics, plots, finance, AI, predict) |
+| `supabase/` | Migrations, RLS, storage, pgTAP |
+| `tests/` | unit, e2e, load, security, `db_harness/`, `contract_tradinglab/` |
+| `data/samples/` | Sample datasets + `predict/` contracts (seed 42) |
+| `docker-compose.prod.yml`, `infra/` | Contabo compose, Caddy, deploy.sh |
+| `docs/` | Architecture, deploy, stress test, phase reports, `FINAL_REPORT.md`, `PROGRESS.md` |
+| `CURSOR_PROMPT.md` / `CURSOR_ONE_SHOT.md` | Build / finish reference prompts |
+| `render.yaml` | **Legacy** Render Blueprint (do not delete) |
 
-## Deployment target
-GitHub (private monorepo) → **Vercel** (frontend only) + **Contabo Cloud VPS** (FastAPI API, Celery workers, Redis, Caddy HTTPS via Docker Compose; v2.3 primary) + **Supabase** (Postgres, Auth, Storage, RLS). AI calls go from the VPS to the **NVIDIA API catalog** (OpenAI-compatible). **Render** (`render.yaml`) is kept as the alternative / legacy backend path. See `docs/ARCHITECTURE.md §39.0–§40` and `docs/DEPLOY_CONTABO.md`.
+## Commands
 
-## Things to decide before production
-- The NVIDIA API free key is a trial (dev/test). Production needs an NVIDIA AI Enterprise licence, a paid endpoint or another provider.
-- Confirm with compliance that aggregate plots and metrics may be sent to the hosted AI provider (raw rows are never sent).
-- TabPFN stays disabled (non-commercial weights for v2.5+).
-- Re-check Contabo (and, for the legacy path, Render), Vercel and Supabase plan prices and limits (checked Nov 2026). Supabase must be on **Pro** with the global file size limit raised (Free caps uploads at 50 MB).
-- Yahoo Finance data (NIFTY sample) is for research only; use an NSE/vendor feed in production.
+- `make test` — pytest + vitest + DB tests (or `python tests/db_harness/run_db_tests.py`)
+- `make lint` — ruff, mypy, eslint, tsc
+- `make dev` — local stack when Docker/Supabase CLI are available
 
-The private reference repositories (sp-workstation, blackcarbon-saas, ml-for-trading) are **not** included. Clone them into `refs/` (git-ignored) with your GitHub access when Cursor needs them.
+## Hard rules (short)
+
+- Never fabricate metrics. Seed **42**. Leakage-safe pipelines.
+- `NVIDIA_API_KEY` only on the Contabo backend `.env` — never Vercel / `NEXT_PUBLIC_*`.
+- Libraries only from `backend/requirements/*.txt` + ARCHITECTURE §44 (rule 70).
+- Prediction Studio (§45) never refits at serve time; feature contracts drive forms/batch.
+
+## Honest status (wind-up)
+
+**Code on `main` is far past a kit** — full app modules, Contabo infra files, GHCR+SSH `deploy.yml`, offline STRESS/8.2 contracts through oneshot ~c281.
+
+**Production E2E is incomplete** until you supply Contabo SSH + GitHub Actions billing + Supabase migrate secrets + `NVIDIA_API_KEY`. See `docs/PROGRESS.md` → Blocked and `docs/FINAL_REPORT.md`.

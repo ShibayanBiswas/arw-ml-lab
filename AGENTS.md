@@ -7,9 +7,9 @@ A general-purpose Machine Learning Lab web app for tabular data (no NLP) for Ana
 
 ## How to work
 1. Read `CURSOR_PROMPT.md` §00 and §000 (execution protocol: definition of done, no-stub rules, self-check, resume) and the rules in `.cursor/rules/`. If resuming, read `docs/PROGRESS.md` first.
-2. Plan every phase in **Plan mode with the strongest reasoning model available, at its highest effort**; write `docs/plans/PHASE_<n>_PLAN.md`; get user approval.
-3. Build in Agent mode, phase by phase, in this order: 0 → 1 → 8.1 → 1A → 2 → 2A → 3 → 3A → 4 → 4A → 5B → 5 → 5A → 6 → 6A → 6B → 7 → 8.2 (18 phases).
-4. Run the tests and the acceptance criteria yourself. Write `docs/PHASE_<n>_REPORT.md` with real output, update `docs/PROGRESS.md`, commit. Stop and wait for "continue".
+2. For new work, plan with the strongest reasoning model when the change is large; resume from `docs/PROGRESS.md` (do not re-open finished phases).
+3. Phase order (historical): 0 → 1 → 8.1 → 1A → 2 → 2A → 3 → 3A → 4 → 4A → 5B → 5 → 5A → 6 → 6A → 6B → 7 → 8.2. Contabo go-live is the open gate — see Blocked in `docs/PROGRESS.md`.
+4. Run tests and acceptance criteria yourself. Keep `docs/PROGRESS.md` and `docs/FINAL_REPORT.md` current; formal phase reports live under `docs/PHASE_*_REPORT.md`.
 
 ## Layout
 | Path | Purpose |

@@ -2,7 +2,7 @@
 
 Status: primary backend target from 16 Nov 2026 (IST); see ADR `docs/adr/ADR-contabo.md` and diagram `docs/diagrams/21_contabo_deploy.png`.
 Frontend stays on **Vercel**, database/auth/storage stay on **Supabase**. **Render** (`render.yaml`) is the **alternative / legacy** path; keep the file, do not delete it.
-Scope: docs only. The files named below (`docker-compose.prod.yml`, `infra/caddy/Caddyfile`, Dockerfile targets, the SSH deploy job) are **designed here and created by Cursor** (see `CURSOR_CONTABO_FOLLOWUP.md`).
+Scope: Contabo VPS runbook. Compose/Caddy/deploy files live in-repo (`docker-compose.prod.yml`, `infra/caddy/Caddyfile`, `infra/contabo/deploy.sh`, `.github/workflows/deploy.yml`).
 
 Contents
 1. User section: how to get a Contabo server and hand it to Cursor
@@ -23,7 +23,7 @@ Contents
 
 ## 1. USER SECTION — How to get a Contabo server and hand it to Cursor
 
-Do these steps once. After step 6, Cursor (with `CURSOR_CONTABO_FOLLOWUP.md`) does everything else on its own: hardening, Docker, HTTPS, GitHub secrets, Vercel env, deploys and smoke tests.
+Do these steps once. After step 6, paste a Contabo bootstrap ask into Cursor Agent (or run `scripts/bootstrap_contabo.sh` yourself): hardening, Docker, HTTPS, GitHub secrets, Vercel env, deploys and smoke tests.
 
 **1. Make an SSH key on your Windows PC** (PowerShell):
 
@@ -74,7 +74,7 @@ supabase login         # used for SUPABASE_ACCESS_TOKEN / migration checks
 
 **6. Optional: your own domain.** In your DNS add an `A` record `api.<yourdomain>` → `<SERVER_IP>` and put `LAB_API_HOSTNAME=api.<yourdomain>` in `.env`. Without a domain Cursor uses the free `https://<ip-with-dashes>.sslip.io` hostname (e.g. `https://203-0-113-10.sslip.io`); Caddy gets a Let's Encrypt certificate for it automatically.
 
-**7. Paste `CURSOR_CONTABO_FOLLOWUP.md` into Cursor Agent.** You only come back if Cursor writes a line under "Blocked — needs Shibayan" in `docs/PROGRESS.md` (e.g. a missing key value or an expired login).
+**7. Ask Cursor Agent to finish Contabo bootstrap + Deploy prove** (secrets already in `.env`). You only come back if it writes under "Blocked — needs Shibayan" in `docs/PROGRESS.md`.
 
 What Cursor will never need from you in chat: passwords, keys or tokens. They stay in files (`.env`, `~/.ssh`) and in GitHub/Vercel secret stores.
 
