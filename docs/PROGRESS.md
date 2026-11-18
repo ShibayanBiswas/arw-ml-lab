@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Tip | (see `git rev-parse --short HEAD` after push) |
+| Tip | `c2e636b` phase-MD purge + verify |
 | Frontend | https://arw-ml-lab.vercel.app — login **200**; `/train` **307**→login |
 | Backend | Contabo VPS — **not live** |
 | Local API smoke | TestClient `/healthz` **200** seed 42; catalog **83**; samples **200**; OpenAPI **107** paths |

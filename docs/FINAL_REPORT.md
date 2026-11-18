@@ -1,7 +1,7 @@
 # ARW ML Lab — Final wind-up report
 
 **Date:** 18 Nov 2026 (IST)  
-**Tip:** `d1f6b61` (wind-up final)  
+**Tip:** `c2e636b` (phase-MD purge + verify)
 **Repo:** https://github.com/ShibayanBiswas/arw-ml-lab (`main`)
 
 ## Verdict
