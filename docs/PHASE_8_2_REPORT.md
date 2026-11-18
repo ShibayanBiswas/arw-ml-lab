@@ -1,6 +1,6 @@
 # Phase 8.2 — Production hardening (offline ledger)
 
-**Status:** offline kit advanced through oneshot-c276; Contabo hosted prove **blocked** (see `docs/PROGRESS.md` → Blocked).
+**Status:** offline kit advanced through oneshot-c278; Contabo hosted prove **blocked** (see `docs/PROGRESS.md` → Blocked).
 
 ## §39.13 AC (offline vs blocked)
 
@@ -25,6 +25,7 @@
 - REP.T.BUNDLE runnable `reproduce.py` — c274
 - JSON logs + OTLP pin + Celery instrument — c275
 - Admin workers / Locust auth / in-lab finance oracles — c276
+- Playwright journey gates + tune log context — c278
 - Contabo DL presets — c271
 
 ## Still blocked on Shibayan
