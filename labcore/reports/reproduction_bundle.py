@@ -47,16 +47,54 @@ def _core_pins_from_lock() -> str:
     return "".join(lines)
 
 
-def _reproduce_py_stub(*, dataset_id: str, algorithm_key: str, seed: int) -> str:
+def _reproduce_py(*, dataset_id: str, algorithm_key: str, seed: int) -> str:
+    """Runnable skeleton: pin check + seed 42 + load config (never refits on hold-out)."""
     return (
         "#!/usr/bin/env python3\n"
-        '"""Re-run hook — load dataset + contract from the lab store (do not refit on test)."""\n\n'
-        f"SEED = {seed}\n"
+        '"""REP.T.BUNDLE reproduce.py — install environment/core-pins.txt first.\n\n'
+        "Leakage-safe: use the feature contract + saved pipeline from the lab store;\n"
+        "do not refit encoders/models on the locked hold-out test split.\n"
+        '"""\n\n'
+        "from __future__ import annotations\n\n"
+        "import json\n"
+        "import random\n"
+        "from pathlib import Path\n\n"
+        "import numpy as np\n\n"
+        f"SEED = {int(seed)}\n"
         f'DATASET_ID = "{dataset_id}"\n'
-        f'ALGORITHM_KEY = "{algorithm_key}"\n\n'
+        f'ALGORITHM_KEY = "{algorithm_key}"\n'
+        'BUNDLE_ROOT = Path(__file__).resolve().parents[1]\n\n'
+        "\n"
+        "def _set_seed(seed: int = SEED) -> None:\n"
+        "    random.seed(seed)\n"
+        "    np.random.seed(seed)\n"
+        "\n"
+        "\n"
+        "def _load_config() -> dict:\n"
+        '    path = BUNDLE_ROOT / "config" / "run.json"\n'
+        '    return json.loads(path.read_text(encoding="utf-8"))\n'
+        "\n"
+        "\n"
+        "def _check_pins() -> list[str]:\n"
+        '    pins = BUNDLE_ROOT / "environment" / "core-pins.txt"\n'
+        '    lines = [ln.strip() for ln in pins.read_text(encoding="utf-8").splitlines()\n'
+        '             if ln.strip() and not ln.strip().startswith("#")]\n'
+        "    return lines\n"
+        "\n"
+        "\n"
         "def main() -> None:\n"
-        "    print('REP.T.BUNDLE stub', DATASET_ID, ALGORITHM_KEY, SEED)\n"
-        "    print('Install environment/core-pins.txt then run the notebook.')\n\n"
+        "    _set_seed(SEED)\n"
+        "    cfg = _load_config()\n"
+        "    pins = _check_pins()\n"
+        "    assert int(cfg.get('seed', SEED)) == SEED\n"
+        "    assert cfg.get('dataset_id') == DATASET_ID\n"
+        "    assert cfg.get('algorithm_key') == ALGORITHM_KEY\n"
+        "    print('REP.T.BUNDLE reproduce ready')\n"
+        "    print('dataset=', DATASET_ID, 'algorithm=', ALGORITHM_KEY, 'seed=', SEED)\n"
+        "    print('core_pins=', len(pins), 'timezone=', cfg.get('timezone'))\n"
+        "    print('Next: open notebook/reproduction.ipynb or load the saved pipeline from the lab.')\n"
+        "\n"
+        "\n"
         'if __name__ == "__main__":\n'
         "    main()\n"
     )
@@ -135,7 +173,10 @@ def build_reproduction_bundle_zip(
         zf.writestr("manifest.json", json.dumps(manifest, indent=2, sort_keys=True) + "\n")
         zf.writestr("config/run.json", json.dumps(config, indent=2, sort_keys=True) + "\n")
         zf.writestr("data/sha256.txt", digest + "\n")
-        zf.writestr("code/reproduce.py", _reproduce_py_stub(dataset_id=dataset_id, algorithm_key=algorithm_key, seed=seed))
+        zf.writestr(
+            "code/reproduce.py",
+            _reproduce_py(dataset_id=dataset_id, algorithm_key=algorithm_key, seed=seed),
+        )
         zf.writestr("notebook/reproduction.ipynb", notebook_text)
         zf.writestr("environment/core-pins.txt", _core_pins_from_lock())
     return buf.getvalue()
@@ -177,6 +218,22 @@ def assert_rep_bundle_zip_contract(*, seed: int = LAB_DEFAULT_SEED) -> dict[str,
         nb_text = zf.read("notebook/reproduction.ipynb").decode("utf-8")
         if "DS1" not in nb_text or "lightgbm" not in nb_text:
             raise ValueError("REP.T.BUNDLE: notebook must embed dataset + algorithm")
+        repro = zf.read("code/reproduce.py").decode("utf-8")
+        if "stub" in repro.lower():
+            raise ValueError("REP.T.BUNDLE: reproduce.py must not be a stub")
+        if "np.random.seed" not in repro or "core-pins.txt" not in repro:
+            raise ValueError("REP.T.BUNDLE: reproduce.py must set seed and check pins")
+        # Execute the skeleton against the extracted layout in-memory via temp dir
+        import tempfile
+        import runpy
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for name in zf.namelist():
+                target = root / name
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(zf.read(name))
+            runpy.run_path(str(root / "code" / "reproduce.py"), run_name="__main__")
     return {"format": "zip", "byte_len": len(blob), "seed": seed, "n_files": len(_REQUIRED_ZIP_ENTRIES)}
 
 
