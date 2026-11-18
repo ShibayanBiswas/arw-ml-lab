@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[2]
 TRAIN_TASK = ROOT / "backend" / "worker" / "tasks" / "train.py"
 TUNE_TASK = ROOT / "backend" / "worker" / "tasks" / "tune.py"
 PREDICT_TASK = ROOT / "backend" / "worker" / "tasks" / "predict.py"
+EDA_TASK = ROOT / "backend" / "worker" / "tasks" / "eda.py"
 TRAIN_RUN = ROOT / "labcore" / "train" / "run.py"
 TUNE_RUN = ROOT / "labcore" / "train" / "tune.py"
 
@@ -128,6 +129,14 @@ def assert_predict_task_handles_soft() -> dict[str, object]:
     return {"predict_wired": True}
 
 
+def assert_eda_task_handles_soft() -> dict[str, object]:
+    src = EDA_TASK.read_text(encoding="utf-8")
+    for needle in ("is_soft_time_limit_exc", "save_best_so_far", "PartialHolder"):
+        if needle not in src:
+            raise SoftTimeLimitContractError(f"eda task missing {needle}")
+    return {"eda_wired": True}
+
+
 def assert_soft_time_limit_contract(*, seed: int = 42) -> list[dict[str, object]]:
     return [
         assert_truncated_payload(seed=seed),
@@ -137,6 +146,7 @@ def assert_soft_time_limit_contract(*, seed: int = 42) -> list[dict[str, object]
         assert_tune_task_handles_soft(),
         assert_mid_run_partial_hooks(),
         assert_predict_task_handles_soft(),
+        assert_eda_task_handles_soft(),
     ]
 
 

@@ -9,6 +9,12 @@ from labcore.data.infer import ColumnProfile
 from labcore.data.task_detect import TaskSpec
 from labcore.eda.run import run_eda
 from labcore.insights.rules import run_eda_rules
+from labcore.observability.json_logging import bind_context, clear_context
+from labcore.ops.soft_time_limit import (
+    PartialHolder,
+    is_soft_time_limit_exc,
+    save_best_so_far,
+)
 
 from backend.app.dataset_store import DATASET_STORE
 from backend.app.jobs_store import JOB_STORE
@@ -18,6 +24,8 @@ from backend.worker.celery_app import celery_app
 @celery_app.task(name="lab.eda.run", bind=True, queue="q.eda")
 def run_eda_task(self, job_id: str, eda_run_id: str, dataset_id: str) -> dict[str, object]:  # noqa: ANN001
     _ = self
+    holder = PartialHolder()
+    bind_context(job_id=job_id, run_id=eda_run_id, workspace_id="eda")
     JOB_STORE.update(
         job_id,
         status="running",
@@ -32,6 +40,7 @@ def run_eda_task(self, job_id: str, eda_run_id: str, dataset_id: str) -> dict[st
         df = pd.read_parquet(ds.parquet_path)
         schema = [ColumnProfile.model_validate(c) for c in ds.schema] if ds.schema else None
         task = TaskSpec.model_validate(ds.task) if ds.task else None
+        holder.update({"dataset_id": dataset_id, "eda_run_id": eda_run_id, "n_rows": int(len(df))})
         JOB_STORE.update(
             job_id,
             progress=0.35,
@@ -60,6 +69,7 @@ def run_eda_task(self, job_id: str, eda_run_id: str, dataset_id: str) -> dict[st
             "n_insights": len(insights),
             "task": result.task.model_dump(),
         }
+        holder.update(summary)
         DATASET_STORE.update_eda(
             eda_run_id,
             status="done",
@@ -77,6 +87,15 @@ def run_eda_task(self, job_id: str, eda_run_id: str, dataset_id: str) -> dict[st
         )
         return summary
     except Exception as exc:
+        if is_soft_time_limit_exc(exc):
+            return save_best_so_far(
+                job_update=JOB_STORE.update,
+                experiment_update=None,
+                job_id=job_id,
+                experiment_id=None,
+                partial=holder.value,
+                seed=42,
+            )
         DATASET_STORE.update_eda(eda_run_id, status="error")
         JOB_STORE.update(
             job_id,
@@ -85,6 +104,8 @@ def run_eda_task(self, job_id: str, eda_run_id: str, dataset_id: str) -> dict[st
             event={"type": "error", "message": str(exc)},
         )
         raise
+    finally:
+        clear_context()
 
 
 _ = Path
