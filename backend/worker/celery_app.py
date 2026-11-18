@@ -89,3 +89,20 @@ _ = QUEUES  # documented queue set; workers select via -Q
 from backend.worker import heartbeat as _heartbeat  # noqa: E402, F401
 
 _ = _heartbeat.HEARTBEAT_SEED
+
+# OPS-12 / ST-OPS-09: structured logs + Celery OTel when enabled
+from labcore.observability.json_logging import configure_json_logging  # noqa: E402
+
+configure_json_logging(service=f"lab-worker-{settings.service_role}")
+if settings.otel_enabled:
+    from labcore.observability.otel_stub import (  # noqa: E402
+        init_opentelemetry,
+        instrument_celery,
+    )
+
+    init_opentelemetry(
+        enabled=True,
+        service_name=settings.otel_service_name or f"lab-worker-{settings.service_role}",
+        otlp_endpoint=settings.otel_exporter_otlp_endpoint,
+    )
+    instrument_celery()

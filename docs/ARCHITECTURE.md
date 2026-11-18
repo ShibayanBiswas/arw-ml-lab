@@ -4292,6 +4292,7 @@ Licence policy: permissive licences (MIT, BSD, Apache-2.0, NCSA, MPL-2.0 for tes
 | numpy | 2.4.6 | BSD-3-Clause | arrays; thin arithmetic on library outputs | `ml-core` | https://pypi.org/project/numpy/ |
 | openai | 3.51.0 | Apache-2.0 | OpenAI-compatible client for NVIDIA API catalog | `api` | https://pypi.org/project/openai/ |
 | openpyxl | 3.1.5 | MIT | XLSX template/output writing (§45) | `ml-core` | https://pypi.org/project/openpyxl/ |
+| opentelemetry-exporter-otlp-proto-http | 1.45.2 | Apache-2.0 | OTLP HTTP span export when `OTEL_EXPORTER_OTLP_ENDPOINT` set (§46.2) | `api` | https://pypi.org/project/opentelemetry-exporter-otlp-proto-http/ |
 | opentelemetry-instrumentation-celery | 0.66b2 | Apache-2.0 | Celery task tracing (§46.2) | `api` | https://pypi.org/project/opentelemetry-instrumentation-celery/ |
 | opentelemetry-instrumentation-fastapi | 0.66b2 | Apache-2.0 | FastAPI tracing (§46.2) | `api` | https://pypi.org/project/opentelemetry-instrumentation-fastapi/ |
 | opentelemetry-sdk | 1.45.2 | Apache-2.0 | tracing SDK (§46.2) | `api` | https://pypi.org/project/opentelemetry-sdk/ |

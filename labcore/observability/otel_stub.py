@@ -16,6 +16,7 @@ _PINNED_PACKAGES: tuple[str, ...] = (
     "opentelemetry-sdk",
     "opentelemetry-instrumentation-fastapi",
     "opentelemetry-instrumentation-celery",
+    "opentelemetry-exporter-otlp-proto-http",
 )
 
 _PIN_LINE = re.compile(r"^opentelemetry[^\s=]+==", re.MULTILINE)
@@ -44,6 +45,23 @@ def assert_api_txt_opentelemetry_pins(api_txt: Path | None = None) -> list[dict[
     return checks
 
 
+def _build_exporter(otlp_endpoint: str) -> Any:
+    """OTLP HTTP when endpoint set and exporter pinned; else console spans."""
+    endpoint = (otlp_endpoint or "").strip()
+    if endpoint:
+        try:
+            from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+                OTLPSpanExporter,
+            )
+
+            return OTLPSpanExporter(endpoint=endpoint)
+        except Exception:  # noqa: BLE001 — console fallback if exporter missing
+            pass
+    from opentelemetry.sdk.trace.export import ConsoleSpanExporter
+
+    return ConsoleSpanExporter()
+
+
 def init_opentelemetry(
     *,
     enabled: bool,
@@ -57,12 +75,11 @@ def init_opentelemetry(
     from opentelemetry import trace
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider
-    from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+    from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
     resource = Resource.create({"service.name": service_name.strip() or "lab-api"})
     provider = TracerProvider(resource=resource)
-    _ = otlp_endpoint  # OTLP HTTP exporter ships in hosted Phase 8.2 when collector URL is set
-    exporter: Any = ConsoleSpanExporter()
+    exporter = _build_exporter(otlp_endpoint)
     provider.add_span_processor(BatchSpanProcessor(exporter))
     trace.set_tracer_provider(provider)
     return True

@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def test_api_txt_pins() -> None:
     pins = assert_api_txt_opentelemetry_pins(ROOT / "backend" / "requirements" / "api.txt")
-    assert len(pins) == 3
+    assert len(pins) == 4
 
 
 def test_rejects_missing_pin(tmp_path: Path) -> None:
@@ -47,4 +47,10 @@ def test_manifest_seed_42() -> None:
     manifest = otel_stub_manifest(seed=42)
     assert manifest["id"] == ARTEFACT_ID
     assert manifest["seed"] == 42
-    assert len(manifest["pins"]) == 3
+    assert len(manifest["pins"]) == 4
+
+
+def test_celery_app_wires_instrument() -> None:
+    src = (ROOT / "backend" / "worker" / "celery_app.py").read_text(encoding="utf-8")
+    assert "instrument_celery" in src
+    assert "configure_json_logging" in src

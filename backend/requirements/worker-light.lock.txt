@@ -119,6 +119,8 @@ colorama==0.4.6
     #   colorlog
     #   ipython
     #   tqdm
+coloredlogs==15.0.1
+    # via onnxruntime
 colorlog==6.12.0
     # via optuna
 colour==0.1.5
@@ -202,6 +204,8 @@ flask==3.1.3
     #   mlflow
 flask-cors==6.0.5
     # via mlflow
+flatbuffers==25.12.19
+    # via onnxruntime
 fonttools==4.68.0
     # via
     #   matplotlib
@@ -230,6 +234,8 @@ glum==3.4.1
     # via -r backend/requirements/ml-core.txt
 google-auth==2.62.2
     # via databricks-sdk
+googleapis-common-protos==1.76.0
+    # via opentelemetry-exporter-otlp-proto-http
 gpboost==1.8.0
     # via -r backend/requirements/ml-core.txt
 gplearn==0.4.3
@@ -282,6 +288,8 @@ httpx2==2.16.0
     # via openai
 huey==3.5.4
     # via mlflow
+humanfriendly==10.0
+    # via coloredlogs
 hyperframe==6.1.0
     # via h2
 idna==3.20
@@ -440,6 +448,8 @@ matplotlib-inline==0.2.2
     # via ipython
 missingno==0.5.2
     # via -r backend/requirements/eda.txt
+ml-dtypes==0.7.0
+    # via onnx
 mlflow==3.18.0
     # via -r backend/requirements/ml-core.txt
 mlflow-skinny==3.18.0
@@ -531,6 +541,7 @@ numpy==2.4.6
     #   mapie
     #   matplotlib
     #   missingno
+    #   ml-dtypes
     #   mlflow
     #   mlstatkit
     #   mlxtend
@@ -540,6 +551,8 @@ numpy==2.4.6
     #   nolds
     #   numba
     #   numexpr
+    #   onnx
+    #   onnxruntime
     #   optbinning
     #   optuna
     #   ortools
@@ -578,6 +591,12 @@ numpy==2.4.6
     #   venn-abers
     #   wittgenstein
     #   xgboost
+onnx==1.23.2
+    # via
+    #   -r backend/requirements/ml-core.txt
+    #   skl2onnx
+onnxruntime==1.23.0
+    # via -r backend/requirements/ml-core.txt
 openai==3.51.0
     # via -r backend/requirements/api.txt
 openpyxl==3.1.5
@@ -587,12 +606,22 @@ opentelemetry-api==1.45.2
     #   fastapi
     #   mlflow-skinny
     #   mlflow-tracing
+    #   opentelemetry-exporter-http-transport
+    #   opentelemetry-exporter-otlp-proto-http
     #   opentelemetry-instrumentation
     #   opentelemetry-instrumentation-asgi
     #   opentelemetry-instrumentation-celery
     #   opentelemetry-instrumentation-fastapi
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
+opentelemetry-exporter-http-transport==0.66b2
+    # via opentelemetry-exporter-otlp-proto-http
+opentelemetry-exporter-otlp-common==0.66b2
+    # via opentelemetry-exporter-otlp-proto-http
+opentelemetry-exporter-otlp-proto-common==1.45.2
+    # via opentelemetry-exporter-otlp-proto-http
+opentelemetry-exporter-otlp-proto-http==1.45.2
+    # via -r backend/requirements/api.txt
 opentelemetry-instrumentation==0.66b2
     # via
     #   opentelemetry-instrumentation-asgi
@@ -608,11 +637,15 @@ opentelemetry-proto==1.45.2
     # via
     #   mlflow-skinny
     #   mlflow-tracing
+    #   opentelemetry-exporter-otlp-proto-common
+    #   opentelemetry-exporter-otlp-proto-http
 opentelemetry-sdk==1.45.2
     # via
     #   -r backend/requirements/api.txt
     #   mlflow-skinny
     #   mlflow-tracing
+    #   opentelemetry-exporter-otlp-common
+    #   opentelemetry-exporter-otlp-proto-http
 opentelemetry-semantic-conventions==0.66b2
     # via
     #   opentelemetry-instrumentation
@@ -652,6 +685,7 @@ packaging==26.3
     #   mlflow-skinny
     #   mlflow-tracing
     #   model-diagnostics
+    #   onnxruntime
     #   opentelemetry-instrumentation
     #   optuna
     #   pandera
@@ -757,8 +791,11 @@ properscoring==0.1
 protobuf==6.33.6
     # via
     #   databricks-sdk
+    #   googleapis-common-protos
     #   mlflow-skinny
     #   mlflow-tracing
+    #   onnx
+    #   onnxruntime
     #   opentelemetry-proto
     #   ortools
     #   tensorboard
@@ -824,6 +861,8 @@ pyparsing==3.3.3
     #   pydot
 pyphen==0.18.1
     # via weasyprint
+pyreadline3==3.5.6
+    # via humanfriendly
 pyro-api==0.1.2
     # via pyro-ppl
 pyro-ppl==1.9.2
@@ -885,6 +924,8 @@ requests==2.34.2
     #   imodels
     #   interpret-core
     #   mlflow-skinny
+    #   opentelemetry-exporter-http-transport
+    #   opentelemetry-exporter-otlp-proto-http
     #   raiutils
     #   shapiq
     #   skrub
@@ -938,6 +979,7 @@ scikit-learn==1.9.1
     #   scikit-plots
     #   shap
     #   shapiq
+    #   skl2onnx
     #   sklearn-compat
     #   skops
     #   skrub
@@ -1037,6 +1079,8 @@ six==1.17.0
     # via
     #   catboost
     #   python-dateutil
+skl2onnx==1.20.0
+    # via -r backend/requirements/ml-core.txt
 sklearn-compat==0.1.6
     # via imbalanced-learn
 skops==0.16.0
@@ -1091,6 +1135,7 @@ sweetviz==2.3.3
 sympy==1.14.0
     # via
     #   ngboost
+    #   onnxruntime
     #   torch
 tabmat==4.3.1
     # via glum
@@ -1165,8 +1210,10 @@ typing-extensions==4.16.0
     #   httpx2
     #   limits
     #   mlflow-skinny
+    #   onnx
     #   openai
     #   opentelemetry-api
+    #   opentelemetry-exporter-otlp-proto-http
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
     #   ortools

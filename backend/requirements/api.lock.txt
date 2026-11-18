@@ -24,9 +24,12 @@ certifi==2026.10.23
     # via
     #   httpcore
     #   httpx
+    #   requests
     #   sentry-sdk
 cffi==2.1.1
     # via cryptography
+charset-normalizer==3.5.2
+    # via requests
 click==8.5.1
     # via
     #   celery
@@ -50,6 +53,8 @@ deprecation==2.1.0
     #   storage3
 fastapi==0.163.0
     # via -r backend/requirements/api.txt
+googleapis-common-protos==1.76.0
+    # via opentelemetry-exporter-otlp-proto-http
 h11==0.16.0
     # via
     #   httpcore
@@ -83,6 +88,7 @@ idna==3.20
     #   anyio
     #   httpx
     #   httpx2
+    #   requests
     #   yarl
 jinja2==3.1.6
     # via -r backend/requirements/api.txt
@@ -101,12 +107,22 @@ openai==3.51.0
 opentelemetry-api==1.45.2
     # via
     #   fastapi
+    #   opentelemetry-exporter-http-transport
+    #   opentelemetry-exporter-otlp-proto-http
     #   opentelemetry-instrumentation
     #   opentelemetry-instrumentation-asgi
     #   opentelemetry-instrumentation-celery
     #   opentelemetry-instrumentation-fastapi
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
+opentelemetry-exporter-http-transport==0.66b2
+    # via opentelemetry-exporter-otlp-proto-http
+opentelemetry-exporter-otlp-common==0.66b2
+    # via opentelemetry-exporter-otlp-proto-http
+opentelemetry-exporter-otlp-proto-common==1.45.2
+    # via opentelemetry-exporter-otlp-proto-http
+opentelemetry-exporter-otlp-proto-http==1.45.2
+    # via -r backend/requirements/api.txt
 opentelemetry-instrumentation==0.66b2
     # via
     #   opentelemetry-instrumentation-asgi
@@ -118,8 +134,15 @@ opentelemetry-instrumentation-celery==0.66b2
     # via -r backend/requirements/api.txt
 opentelemetry-instrumentation-fastapi==0.66b2
     # via -r backend/requirements/api.txt
+opentelemetry-proto==1.45.2
+    # via
+    #   opentelemetry-exporter-otlp-proto-common
+    #   opentelemetry-exporter-otlp-proto-http
 opentelemetry-sdk==1.45.2
-    # via -r backend/requirements/api.txt
+    # via
+    #   -r backend/requirements/api.txt
+    #   opentelemetry-exporter-otlp-common
+    #   opentelemetry-exporter-otlp-proto-http
 opentelemetry-semantic-conventions==0.66b2
     # via
     #   opentelemetry-instrumentation
@@ -145,6 +168,10 @@ prompt-toolkit==3.0.53
     # via click-repl
 propcache==0.5.4
     # via yarl
+protobuf==7.36.2
+    # via
+    #   googleapis-common-protos
+    #   opentelemetry-proto
 psycopg==3.3.9
     # via -r backend/requirements/api.txt
 psycopg-binary==3.3.9
@@ -185,6 +212,10 @@ redis==8.1.0
     # via
     #   -r backend/requirements/api.txt
     #   kombu
+requests==2.34.2
+    # via
+    #   opentelemetry-exporter-http-transport
+    #   opentelemetry-exporter-otlp-proto-http
 sentry-sdk==2.75.0
     # via -r backend/requirements/api.txt
 six==1.17.0
@@ -222,6 +253,7 @@ typing-extensions==4.16.0
     #   limits
     #   openai
     #   opentelemetry-api
+    #   opentelemetry-exporter-otlp-proto-http
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
     #   psycopg
@@ -245,7 +277,9 @@ tzdata==2026.6
 tzlocal==5.4.5
     # via celery
 urllib3==2.8.0
-    # via sentry-sdk
+    # via
+    #   requests
+    #   sentry-sdk
 uvicorn==0.54.0
     # via -r backend/requirements/api.txt
 vine==5.1.0

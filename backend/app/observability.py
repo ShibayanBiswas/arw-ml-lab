@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from labcore.observability.json_logging import configure_json_logging
 from labcore.observability.otel_stub import init_opentelemetry, instrument_fastapi_app
 from labcore.observability.sentry_scrub import scrub_event
 
@@ -20,6 +21,7 @@ def init_otel(
     otlp_endpoint: str,
     app: Any | None = None,
 ) -> bool:
+    configure_json_logging(service=service_name or "lab-api")
     active = init_opentelemetry(
         enabled=enabled,
         service_name=service_name,
