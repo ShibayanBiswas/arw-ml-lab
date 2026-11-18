@@ -87,6 +87,9 @@ async def job_events(
 @router.post("/{job_id}/cancel", status_code=status.HTTP_202_ACCEPTED)
 def cancel_job(job_id: str, user: AuthUser = Depends(require_write_role)) -> dict[str, str]:
     _ = user
+    from labcore.ops.cancel_flags import cancel_flag_key_for_job, default_cancel_store
+
+    default_cancel_store().set_cancelled(cancel_flag_key_for_job(job_id))
     rec = JOB_STORE.update(
         job_id,
         status="cancelled",

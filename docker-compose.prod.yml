@@ -51,6 +51,7 @@ services:
       SERVICE_ROLE: api
       AUTH_TEST_BYPASS: "false"
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      LAB_CANCEL_USE_REDIS: "true"
     command:
       - uvicorn
       - backend.app.main:app
@@ -89,6 +90,7 @@ services:
       SERVICE_ROLE: worker-light
       AUTH_TEST_BYPASS: "false"
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      LAB_CANCEL_USE_REDIS: "true"
     command:
       - celery
       - -A

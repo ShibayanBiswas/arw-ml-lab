@@ -17,6 +17,7 @@ from labcore.ops.soft_time_limit import (
 ROOT = Path(__file__).resolve().parents[2]
 TRAIN_TASK = ROOT / "backend" / "worker" / "tasks" / "train.py"
 TUNE_TASK = ROOT / "backend" / "worker" / "tasks" / "tune.py"
+PREDICT_TASK = ROOT / "backend" / "worker" / "tasks" / "predict.py"
 TRAIN_RUN = ROOT / "labcore" / "train" / "run.py"
 TUNE_RUN = ROOT / "labcore" / "train" / "tune.py"
 
@@ -113,6 +114,20 @@ def assert_mid_run_partial_hooks() -> dict[str, object]:
     return {"mid_run_hooks": True, "holder_ok": True}
 
 
+def assert_predict_task_handles_soft() -> dict[str, object]:
+    src = PREDICT_TASK.read_text(encoding="utf-8")
+    for needle in (
+        "is_soft_time_limit_exc",
+        "save_best_so_far",
+        "PartialHolder",
+        "default_cancel_store",
+        "cancel_flag_key",
+    ):
+        if needle not in src:
+            raise SoftTimeLimitContractError(f"predict task missing {needle}")
+    return {"predict_wired": True}
+
+
 def assert_soft_time_limit_contract(*, seed: int = 42) -> list[dict[str, object]]:
     return [
         assert_truncated_payload(seed=seed),
@@ -121,6 +136,7 @@ def assert_soft_time_limit_contract(*, seed: int = 42) -> list[dict[str, object]
         assert_train_task_handles_soft(),
         assert_tune_task_handles_soft(),
         assert_mid_run_partial_hooks(),
+        assert_predict_task_handles_soft(),
     ]
 
 

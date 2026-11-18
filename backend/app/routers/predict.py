@@ -344,6 +344,9 @@ def predict_batch_cancel(
     job = JOB_STORE.get(job_id)
     if job is None:
         raise HTTPException(status_code=404, detail="job not found")
+    from labcore.ops.cancel_flags import cancel_flag_key_for_job, default_cancel_store
+
+    default_cancel_store().set_cancelled(cancel_flag_key_for_job(job_id))
     JOB_STORE.update(job_id, status="cancelled", error="cancelled by user")
     return {"job_id": job_id, "status": "cancelled"}
 
