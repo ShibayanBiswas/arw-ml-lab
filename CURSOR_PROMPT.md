@@ -3,7 +3,7 @@
 > **How to use:** open the project folder in Cursor; read `AGENTS.md`, `docs/PROGRESS.md`, and this file. Resume Contabo go-live from `docs/DEPLOY_CONTABO.md` + Blocked in `docs/PROGRESS.md`. Historical phase build instructions remain below for reference.
 > This prompt is self-contained, but `docs/ARCHITECTURE.md` holds the full catalogues — algorithm IDs R*, C*, S*, T*, Q*, D*, K*, A*, F*, encoder IDs E*, dataset IDs DS*, check IDs FS*, decision IDs VD*, evaluation artefact IDs CLE.* (classification, §41) and REE.* (regression, §42), section numbers §n — which you must implement exactly. **§44 is the Library Matrix: every algorithm, encoder, metric, test and plot computation comes from a library listed there (rule `.cursor/rules/70-use-established-libraries.mdc`).**
 > **Phase order (18 phases):** 0 → 1 → **8.1** (hosted skeleton) → 1A → 2 → **2A** → 3 → **3A** (Prediction Studio) → 4 → **4A** → **5B** → 5 → 5A → 6 → **6A** → **6B** → 7 → **8.2** (production hardening). The execution protocol (§000) defines done, the no-stub rules, the self-check and how to resume.
-> Work **phase by phase**. Do not start a phase until the previous phase's acceptance criteria pass in CI. After each phase write `docs/PHASE_<n>_REPORT.md` (what was built, test results, deviations, TODOs), update `docs/PROGRESS.md`, commit, then stop and wait for the user to say "continue".
+> Work **phase by phase**. Do not start a phase until the previous phase's acceptance criteria pass in CI. After each phase update `docs/PROGRESS.md` and `docs/FINAL_REPORT.md` with real test evidence, commit, then stop and wait for the user to say "continue". (Historical `docs/PHASE_*_REPORT.md` files were removed at wind-up.)
 
 
 > **v2.3 hosting note (16 Nov 2026):** the backend deploys to a **Contabo Cloud VPS** (`docs/DEPLOY_CONTABO.md`). Wherever this prompt says Render, `render.yaml`, Render deploy hooks or the Render env group, use the Contabo equivalent from ARCHITECTURE §39.0; `render.yaml` stays as the legacy alternative and must not be deleted.
@@ -61,7 +61,7 @@
 | 18 | 8.2 Production hardening | §39, **§46** | 7 | §39.13 AC, `docs/STRESS_TEST.md` items closed |
 
 **Definition of done for every phase** — a phase is done only when all of these hold:
-1. Every AC checkbox of the phase passes, run by you in the terminal; the command and its real output are pasted into `docs/PHASE_<n>_REPORT.md`.
+1. Every AC checkbox of the phase passes, run by you in the terminal; the command and its real output are pasted into `docs/PROGRESS.md` / `docs/FINAL_REPORT.md`.
 2. All earlier phases' tests still pass (`make test`), lint and type checks are clean, the frontend builds.
 3. New code has tests in the layers listed above; new registry keys have ExplainCards; new libraries are in §44 and `backend/requirements/` (rule 70).
 4. Migrations apply on an empty database (`supabase db reset`) and pgTAP tests pass; RLS covers every new table and bucket.
@@ -84,7 +84,7 @@
 - [ ] Seed 42 used in every new random path; library versions recorded on runs.
 - [ ] Screens added this phase have empty, loading and error states, keyboard access, and pass axe-core in Playwright.
 
-**Resume after an interruption (new chat, crash, context limit):** keep `docs/PROGRESS.md` current with: current phase, last completed step, last green commit hash, open failures, next action. On restart: read `AGENTS.md`, this file's §00/§000, `docs/PROGRESS.md` and the last `docs/PHASE_<n>_REPORT.md`; run `git status` and `make test`; continue from "next action". Never restart a finished phase or rewrite finished work unless a test proves it broken.
+**Resume after an interruption (new chat, crash, context limit):** keep `docs/PROGRESS.md` current with: current phase, last completed step, last green commit hash, open failures, next action. On restart: read `AGENTS.md`, this file's §00/§000, `docs/PROGRESS.md` and `docs/FINAL_REPORT.md`; run `git status` and `make test`; continue from "next action". Never restart a finished phase or rewrite finished work unless a test proves it broken.
 
 ---
 
@@ -268,7 +268,7 @@ Machine Learning Lab/                 (git repo root → GitHub monorepo "arw-ml
 ├─ scripts/make_predict_samples.py      regenerates data/samples/predict (seed 42)
 ├─ tests/{unit,contract_tradinglab,golden,e2e,load,db_harness}
 ├─ infra/{docker-compose.yml, k8s/ (optional)}
-└─ docs/{ARCHITECTURE.md, FLOWCHART.md, STRESS_TEST.md, GAP_AUDIT.md, contracts/, diagrams/, plans/, PHASE_<n>_REPORT.md, PROGRESS.md, DECISIONS.md}
+└─ docs/{ARCHITECTURE.md, FLOWCHART.md, STRESS_TEST.md, GAP_AUDIT.md, contracts/, diagrams/, plans/, PROGRESS.md, FINAL_REPORT.md, DECISIONS.md}
 ```
 
 ---

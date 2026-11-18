@@ -13,7 +13,8 @@
 |---|---|---|
 | Repo `main` | Up to date with Contabo infra + app | Tip `f95dfbe` |
 | Local API (TestClient) | Pass | `/healthz` 200 seed **42**; `/api/v1/catalog/algorithms` **83**; samples 200 |
-| Local unit/e2e slice | Pass | import allowlist, cost guards, GPU guard, soft-limit contract, nav coverage, feature-contract UQ, hosted FE + journey HTTP |
+| Local unit suite | 732 pass / 4 fail | Failures: Win memory on 1M benches + EBM joblib pool + tkinter TclError on REE curve — env, not product regressions |
+| Phase MD files | Deleted | All `docs/PHASE_*_REPORT.md` removed; status in FINAL/PROGRESS only |
 | Frontend tsc | Pass | `pnpm exec tsc --noEmit` clean |
 | Vercel frontend | Live | `https://arw-ml-lab.vercel.app/login` → **200**; `/` → **307** |
 | Vercel → Contabo API | Missing | `NEXT_PUBLIC_LAB_API_URL` is localhost/placeholder; no Contabo hostname |
@@ -42,4 +43,4 @@ Then agent can: SSH bootstrap → server `.env` → Deploy green → curl `/heal
 
 ## Docs after prune
 
-Canonical: `README.md`, `AGENTS.md`, `CURSOR_PROMPT.md`, `CURSOR_ONE_SHOT.md`, `docs/ARCHITECTURE.md`, `docs/DEPLOY_CONTABO.md`, `docs/DEPLOY.md`, `docs/DECISIONS.md`, `docs/PROGRESS.md`, `docs/STRESS_TEST.md`, `docs/GAP_AUDIT.md`, formal `docs/PHASE_*_REPORT.md`, `docs/FINAL_REPORT.md`, `docs/diagrams/`, `docs/contracts/`.
+Canonical: `README.md`, `AGENTS.md`, `CURSOR_PROMPT.md`, `CURSOR_ONE_SHOT.md`, `docs/ARCHITECTURE.md`, `docs/DEPLOY_CONTABO.md`, `docs/DEPLOY.md`, `docs/DECISIONS.md`, `docs/PROGRESS.md`, `docs/STRESS_TEST.md`, `docs/GAP_AUDIT.md`, `docs/FINAL_REPORT.md`, `docs/diagrams/`, `docs/contracts/`. (All `PHASE_*.md` reports deleted.)

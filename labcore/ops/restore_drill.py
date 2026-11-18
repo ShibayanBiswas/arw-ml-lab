@@ -37,7 +37,7 @@ DRILL_STEPS: tuple[dict[str, str], ...] = (
     },
     {
         "id": "RD5",
-        "action": "Document outcome in docs/PHASE_8_1_REPORT.md restore drill section",
+        "action": "Document outcome in docs/FINAL_REPORT.md restore drill section",
     },
 )
 

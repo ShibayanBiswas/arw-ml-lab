@@ -2,10 +2,12 @@
 
 | Field | Value |
 |---|---|
-| Tip | `d1f6b61` wind-up final |
-| Frontend | https://arw-ml-lab.vercel.app — login **200** |
+| Tip | (see `git rev-parse --short HEAD` after push) |
+| Frontend | https://arw-ml-lab.vercel.app — login **200**; `/train` **307**→login |
 | Backend | Contabo VPS — **not live** |
-| Local API smoke | TestClient `/healthz` **200** seed 42; catalog **83** algorithms; samples **200** |
+| Local API smoke | TestClient `/healthz` **200** seed 42; catalog **83**; samples **200**; OpenAPI **107** paths |
+| Local unit | **732 passed / 4 failed** — failures are Windows memory/tkinter env (EDA/Intake 1M benches, EBM joblib, REE validation curve), not app logic |
+| Frontend tsc | **Pass** |
 | CI / Deploy | **Failing** — Actions billing (~2s empty jobs); Deploy skipped |
 | Next action | Shibayan clears Blocked below → agent bootstraps Contabo → Deploy green → DS1 EDA |
 
@@ -29,12 +31,12 @@
 - [ ] Deploy green + smoke + rollback + backup cron + DS1 EDA
 - [x] Offline oneshot → `docs/FINAL_REPORT.md` + docs wind-up prune
 
-## Cleanup (this wind-up)
+## Cleanup
 
 | Deleted | Reason |
 |---|---|
-| `docs/PHASE_ONESHOT_C*.md` (~252) | One-shot micro-reports; facts folded into FINAL_REPORT |
-| `docs/plans/PHASE_*.md`, `build_plan_page.tsx` | Superseded by shipped code + `docs/plans/BUILD_PLAN.md` |
-| `CURSOR_KICKOFF.md`, `CURSOR_CONTABO_FOLLOWUP.md` | Finished one-time prompts |
+| `docs/PHASE_ONESHOT_C*.md` (~252) | One-shot micro-reports; facts in FINAL_REPORT |
+| All `docs/PHASE_*_REPORT.md` | Historical phase reports removed; status lives in FINAL_REPORT + PROGRESS |
+| `docs/plans/PHASE_*.md`, kickoff/followup prompts | Superseded |
 
-**Kept:** formal `docs/PHASE_*_REPORT.md` (0–8.2), `FINAL_REPORT.md`, ARCHITECTURE / DEPLOY* / STRESS / GAP_AUDIT / diagrams / contracts, `CURSOR_PROMPT.md`, `CURSOR_ONE_SHOT.md`.
+**Canonical docs:** `README.md`, `AGENTS.md`, `docs/FINAL_REPORT.md`, `docs/PROGRESS.md`, `docs/ARCHITECTURE.md`, `docs/DEPLOY_CONTABO.md`, `docs/STRESS_TEST.md`, `docs/GAP_AUDIT.md`, `docs/DECISIONS.md`, diagrams/contracts.
