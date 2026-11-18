@@ -5,7 +5,11 @@ from __future__ import annotations
 from typing import Any
 
 import pandas as pd
-from labcore.ops.soft_time_limit import is_soft_time_limit_exc, save_best_so_far
+from labcore.ops.soft_time_limit import (
+    PartialHolder,
+    is_soft_time_limit_exc,
+    save_best_so_far,
+)
 from labcore.preprocess.recipe import RecipeSpec
 from labcore.train.tune import run_optuna_tune
 
@@ -19,7 +23,7 @@ from backend.worker.celery_app import celery_app
 @celery_app.task(name="lab.tune.run", bind=True, queue="q.tune")
 def run_tune_task(self, job_id: str, experiment_id: str, body: dict[str, Any]) -> dict[str, Any]:  # noqa: ANN001
     _ = self
-    partial: dict[str, Any] | None = None
+    holder = PartialHolder()
     JOB_STORE.update(
         job_id,
         status="running",
@@ -42,6 +46,25 @@ def run_tune_task(self, job_id: str, experiment_id: str, body: dict[str, Any]) -
         settings = get_settings()
         storage = body.get("storage") or (settings.resolved_optuna_storage_url() or None)
         study_name = body.get("study_name") or f"exp-{experiment_id}"
+
+        def _on_partial(snap: dict[str, Any]) -> None:
+            holder.update({**snap, "experiment_id": experiment_id, "leaderboard": []})
+            n_done = int(snap.get("n_trials_completed") or 0)
+            n_tot = max(1, int(snap.get("n_trials") or 1))
+            pct = min(0.9, 0.3 + 0.6 * (n_done / n_tot))
+            JOB_STORE.update(
+                job_id,
+                progress=pct,
+                step="tune",
+                event={
+                    "type": "progress",
+                    "pct": pct,
+                    "step": "tune",
+                    "n_trials_completed": n_done,
+                    "best_value": snap.get("best_value"),
+                },
+            )
+
         result = run_optuna_tune(
             df,
             target=body["target"],
@@ -55,6 +78,7 @@ def run_tune_task(self, job_id: str, experiment_id: str, body: dict[str, Any]) -
             n_trials=body.get("n_trials"),
             storage=storage,
             study_name=study_name,
+            on_partial=_on_partial,
         )
         EXPERIMENT_STORE.update(
             experiment_id,
@@ -67,7 +91,7 @@ def run_tune_task(self, job_id: str, experiment_id: str, body: dict[str, Any]) -
             "best_value": result.get("best_value"),
             "best_params": result.get("best_params"),
         }
-        partial = {**result, **out, "leaderboard": []}
+        holder.update({**result, **out, "leaderboard": []})
         JOB_STORE.update(
             job_id,
             status="done",
@@ -84,7 +108,7 @@ def run_tune_task(self, job_id: str, experiment_id: str, body: dict[str, Any]) -
                 experiment_update=EXPERIMENT_STORE.update,
                 job_id=job_id,
                 experiment_id=experiment_id,
-                partial=partial,
+                partial=holder.value,
                 seed=42,
             )
         EXPERIMENT_STORE.update(experiment_id, status="error")

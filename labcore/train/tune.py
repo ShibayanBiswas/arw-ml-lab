@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
 from typing import Any
 
 import numpy as np
@@ -91,6 +92,7 @@ def run_optuna_tune(
     use_hyperband: bool = False,
     storage: str | None = None,
     study_name: str | None = None,
+    on_partial: Callable[[dict[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
     """Optuna study; objective = CV mean primary metric. Returns best params + history.
 
@@ -98,6 +100,7 @@ def run_optuna_tune(
     ``use_hyperband``: attach ``HyperbandPruner`` (requires intermediate reports — thin
     path still evaluates full CV per trial; pruner is wired for future step reports).
     ``storage`` / ``OPTUNA_STORAGE_URL``: RDB/SQLite URL for resumable studies (§39.3).
+    ``on_partial``: after each trial, emit best-so-far for soft-limit handlers (OPS-03).
     """
     import optuna
     from optuna.pruners import HyperbandPruner, NopPruner
@@ -178,8 +181,43 @@ def run_optuna_tune(
             return mean, complexity
         return mean
 
+    def _trial_callback(study: Any, trial: Any) -> None:  # noqa: ANN401
+        if on_partial is None:
+            return
+        try:
+            if multi:
+                pareto = study.best_trials
+                best_trial = max(pareto, key=lambda t: float(t.values[0])) if pareto else None
+                best_value = float(best_trial.values[0]) if best_trial else None
+                best_params = dict(best_trial.params) if best_trial else {}
+            else:
+                best_value = float(study.best_value) if study.best_trial else None
+                best_params = dict(study.best_params) if study.best_trial else {}
+        except Exception:  # noqa: BLE001 — never break Optuna on checkpoint
+            best_value, best_params = None, {}
+        on_partial(
+            {
+                "algorithm_key": algorithm_key,
+                "preset": preset,
+                "best_value": best_value,
+                "best_params": best_params,
+                "n_trials_completed": len(study.trials),
+                "n_trials": trials,
+                "seed": seed,
+                "leaderboard": [],
+                "partial_checkpoint": True,
+                "last_trial": int(getattr(trial, "number", -1)),
+            }
+        )
+
     if remaining > 0:
-        study.optimize(objective, n_trials=remaining, show_progress_bar=False)
+        cbs = [_trial_callback] if on_partial is not None else None
+        study.optimize(
+            objective,
+            n_trials=remaining,
+            show_progress_bar=False,
+            callbacks=cbs,
+        )
 
     history = [
         {

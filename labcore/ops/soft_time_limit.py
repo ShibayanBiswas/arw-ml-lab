@@ -3,6 +3,9 @@
 Celery raises ``SoftTimeLimitExceeded`` at the soft limit. Tasks should catch it,
 persist whatever partial result exists, and return a truncated payload instead of
 losing the run. Hard limit still kills the process.
+
+Mid-run: train/tune pass a ``PartialHolder`` into CV/Optuna callbacks so a soft
+kill mid-loop still has completed algorithms/trials, not an empty ``partial``.
 """
 
 from __future__ import annotations
@@ -11,6 +14,27 @@ from typing import Any
 
 ARTEFACT_ID = "OPS.SOFT.TIME_LIMIT"
 STRESS_ID = "ST-OPS-03"
+
+
+class PartialHolder:
+    """Mutable best-so-far bag shared by the task body and mid-run callbacks."""
+
+    __slots__ = ("value",)
+
+    def __init__(self, initial: dict[str, Any] | None = None) -> None:
+        self.value: dict[str, Any] | None = dict(initial) if initial else None
+
+    def update(self, snapshot: dict[str, Any]) -> None:
+        """Replace the held partial with a JSON-safe snapshot (no pipelines)."""
+        self.value = dict(snapshot)
+
+
+def sanitize_leaderboard_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Drop private ``_pipeline`` / ``_oof`` keys before persisting best-so-far."""
+    clean: list[dict[str, Any]] = []
+    for row in rows:
+        clean.append({k: v for k, v in row.items() if not str(k).startswith("_")})
+    return clean
 
 
 def truncated_result(

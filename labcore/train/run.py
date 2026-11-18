@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any, Literal
 
 import numpy as np
@@ -98,8 +99,13 @@ def run_supervised_cv(
     config: TrainConfig,
     *,
     spy_fit_counts: dict[str, int] | None = None,
+    on_partial: Callable[[dict[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
-    """Hold-out test + CV on train; leaderboard + optional §41/§42 eval on champion."""
+    """Hold-out test + CV on train; leaderboard + optional §41/§42 eval on champion.
+
+    ``on_partial``: called after each finished algorithm with a JSON-safe snapshot
+    (leaderboard so far). Soft-limit handlers use this as best-so-far (OPS-03).
+    """
     if config.target not in df.columns:
         raise ValueError(f"target missing: {config.target}")
     y_all = df[config.target]
@@ -248,6 +254,24 @@ def run_supervised_cv(
             },
         }
         rows.append(row)
+        if on_partial is not None:
+            from labcore.ops.soft_time_limit import sanitize_leaderboard_rows
+
+            ranked = sorted(
+                rows,
+                key=lambda r: r["cv_mean"].get(r["primary_metric"], float("-inf")),
+                reverse=True,
+            )
+            on_partial(
+                {
+                    "leaderboard": sanitize_leaderboard_rows(ranked),
+                    "n_models_done": len(rows),
+                    "n_models_total": len(specs),
+                    "seed": config.seed,
+                    "cv_scheme": scheme,
+                    "partial_checkpoint": True,
+                }
+            )
 
     rows.sort(key=lambda r: r["cv_mean"].get(r["primary_metric"], float("-inf")), reverse=True)
     for i, r in enumerate(rows, start=1):

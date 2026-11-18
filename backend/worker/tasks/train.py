@@ -5,7 +5,11 @@ from __future__ import annotations
 from typing import Any
 
 import pandas as pd
-from labcore.ops.soft_time_limit import is_soft_time_limit_exc, save_best_so_far
+from labcore.ops.soft_time_limit import (
+    PartialHolder,
+    is_soft_time_limit_exc,
+    save_best_so_far,
+)
 from labcore.preprocess.recipe import RecipeSpec
 from labcore.train.run import TrainConfig, run_supervised_cv
 
@@ -18,7 +22,7 @@ from backend.worker.celery_app import celery_app
 @celery_app.task(name="lab.train.run", bind=True, queue="q.train.cpu")
 def run_train_task(self, job_id: str, experiment_id: str, body: dict[str, Any]) -> dict[str, Any]:  # noqa: ANN001
     _ = self
-    partial: dict[str, Any] | None = None
+    holder = PartialHolder()
     JOB_STORE.update(
         job_id,
         status="running",
@@ -50,7 +54,25 @@ def run_train_task(self, job_id: str, experiment_id: str, body: dict[str, Any]) 
             step="cv",
             event={"type": "progress", "pct": 0.4, "step": "cv"},
         )
-        result = run_supervised_cv(df, cfg)
+
+        def _on_partial(snap: dict[str, Any]) -> None:
+            holder.update({**snap, "experiment_id": experiment_id})
+            n_done = int(snap.get("n_models_done") or 0)
+            n_tot = max(1, int(snap.get("n_models_total") or 1))
+            pct = min(0.9, 0.4 + 0.5 * (n_done / n_tot))
+            JOB_STORE.update(
+                job_id,
+                progress=pct,
+                step="cv",
+                event={
+                    "type": "progress",
+                    "pct": pct,
+                    "step": "cv",
+                    "n_models_done": n_done,
+                },
+            )
+
+        result = run_supervised_cv(df, cfg, on_partial=_on_partial)
         # MI-16: best-effort audit_log write when Postgres is reachable (oneshot-c225)
         try:
             from labcore.integrity.holdout_reuse import persist_holdout_audit_row
@@ -104,7 +126,7 @@ def run_train_task(self, job_id: str, experiment_id: str, body: dict[str, Any]) 
             "n_models": len(result["leaderboard"]),
             "model_id": model_id,
         }
-        partial = {**result, **out}
+        holder.update({**result, **out})
         JOB_STORE.update(
             job_id,
             status="done",
@@ -121,7 +143,7 @@ def run_train_task(self, job_id: str, experiment_id: str, body: dict[str, Any]) 
                 experiment_update=EXPERIMENT_STORE.update,
                 job_id=job_id,
                 experiment_id=experiment_id,
-                partial=partial,
+                partial=holder.value,
                 seed=42,
             )
         EXPERIMENT_STORE.update(experiment_id, status="error")
