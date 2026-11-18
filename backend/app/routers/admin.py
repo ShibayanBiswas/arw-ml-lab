@@ -70,6 +70,29 @@ def admin_audit_list(
     }
 
 
+@router.get("/api/v1/admin/workers")
+def admin_workers(
+    user: AuthUser = Depends(require_admin_role),
+    settings: Settings = Depends(get_settings),
+) -> dict[str, Any]:
+    """Workers & queue depths (OPS-12) — Celery inspect when broker is up."""
+    _ = user
+    from labcore.ops.queue_stats import collect_queue_stats
+
+    def _inspect() -> Any:
+        from backend.worker.celery_app import celery_app
+
+        return celery_app.control.inspect(timeout=1.0)
+
+    snap = collect_queue_stats(
+        inspect_factory=_inspect,
+        seed=settings.lab_default_seed,
+    )
+    snap["lab_gpu_worker"] = False  # Contabo CPU-only default
+    snap["service_role"] = settings.service_role
+    return snap
+
+
 @router.get("/api/v1/admin/audit/export")
 def admin_audit_export(
     user: AuthUser = Depends(require_admin_role),

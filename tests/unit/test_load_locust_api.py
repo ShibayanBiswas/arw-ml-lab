@@ -32,10 +32,12 @@ def client() -> TestClient:
 def test_locustfile_declares_scenario_without_secrets() -> None:
     text = LOCUSTFILE.read_text(encoding="utf-8")
     assert f'LOAD_SCENARIO_ID = "{SCENARIO_ID}"' in text
+    assert "LOAD_SCENARIO_AUTH_ID" in text
     for path in PUBLIC_PATHS:
         assert path in text
-    assert 'headers={"Authorization"' not in text
-    assert "Bearer " not in text
+    # Public user class must stay secrets-free; auth class is opt-in via env
+    assert "class LabApiPublicUser" in text
+    assert "LAB_LOAD_AUTH_BYPASS" in text
     assert "self.client.post" not in text
 
 

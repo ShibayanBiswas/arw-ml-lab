@@ -12,9 +12,12 @@ Headless smoke:
 
 from __future__ import annotations
 
+import os
+
 from locust import HttpUser, between, task
 
 LOAD_SCENARIO_ID = "LOAD.P.HEALTHZ_CATALOG"
+LOAD_SCENARIO_AUTH_ID = "LOAD.P.AUTH_BYPASS_EDA"
 
 
 class LabApiPublicUser(HttpUser):
@@ -55,3 +58,40 @@ class LabApiPublicUser(HttpUser):
     @task(1)
     def catalog_root(self) -> None:
         self.client.get("/api/v1/catalog", name="GET /api/v1/catalog")
+
+
+class LabApiAuthBypassUser(HttpUser):
+    """Opt-in authenticated probes when ``LAB_LOAD_AUTH_BYPASS=1`` (local only).
+
+    Skips itself unless the env flag is set so public Contabo smoke stays secrets-free.
+    """
+
+    wait_time = between(0.5, 1.5)
+    weight = 0 if os.environ.get("LAB_LOAD_AUTH_BYPASS", "").lower() not in {
+        "1",
+        "true",
+        "yes",
+    } else 1
+
+    def on_start(self) -> None:
+        self._headers = {"Authorization": "Bearer test"}
+
+    @task(2)
+    def samples_list(self) -> None:
+        if os.environ.get("LAB_LOAD_AUTH_BYPASS", "").lower() not in {"1", "true", "yes"}:
+            return
+        self.client.get(
+            "/api/v1/datasets/samples",
+            headers=self._headers,
+            name="GET /api/v1/datasets/samples",
+        )
+
+    @task(1)
+    def admin_workers(self) -> None:
+        if os.environ.get("LAB_LOAD_AUTH_BYPASS", "").lower() not in {"1", "true", "yes"}:
+            return
+        self.client.get(
+            "/api/v1/admin/workers",
+            headers=self._headers,
+            name="GET /api/v1/admin/workers",
+        )

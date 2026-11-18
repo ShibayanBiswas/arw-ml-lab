@@ -16,6 +16,7 @@ type Mode =
 
 export function AdminWorkbench({ mode }: { mode: Mode }) {
   const [health, setHealth] = useState<Record<string, unknown> | null>(null);
+  const [workers, setWorkers] = useState<Record<string, unknown> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [insight, setInsight] = useState<Record<string, unknown> | null>(null);
   const [decision, setDecision] = useState<Record<string, unknown> | null>(null);
@@ -23,13 +24,23 @@ export function AdminWorkbench({ mode }: { mode: Mode }) {
   const [vlmBusy, setVlmBusy] = useState(false);
 
   useEffect(() => {
-    if (mode !== "health" && mode !== "workers") return;
-    void fetch(`${labApiBase()}/healthz`)
-      .then(async (r) => {
-        if (!r.ok) throw new Error(String(r.status));
-        setHealth((await r.json()) as Record<string, unknown>);
-      })
-      .catch((e) => setError(String(e)));
+    if (mode === "health") {
+      void fetch(`${labApiBase()}/healthz`)
+        .then(async (r) => {
+          if (!r.ok) throw new Error(String(r.status));
+          setHealth((await r.json()) as Record<string, unknown>);
+        })
+        .catch((e) => setError(String(e)));
+      return;
+    }
+    if (mode === "workers") {
+      void fetch(`${labApiBase()}/api/v1/admin/workers`, { headers: labAuthHeaders() })
+        .then(async (r) => {
+          if (!r.ok) throw new Error(String(r.status));
+          setWorkers((await r.json()) as Record<string, unknown>);
+        })
+        .catch((e) => setError(String(e)));
+    }
   }, [mode]);
 
   async function onNumbersOnlyProbe() {
@@ -82,8 +93,23 @@ export function AdminWorkbench({ mode }: { mode: Mode }) {
           </span>
         </p>
       )}
-      {(mode === "health" || mode === "workers") && health && (
+      {mode === "health" && health && (
         <pre className="border border-[var(--line)] p-3 text-xs">{JSON.stringify(health, null, 2)}</pre>
+      )}
+      {mode === "workers" && (
+        <div className="space-y-2" data-artefact="OPS.ADMIN.WORKERS">
+          <p className="text-sm text-[var(--muted)]">
+            Celery workers &amp; queue depths (Contabo CPU-only). Flower remains optional behind admin
+            auth.
+          </p>
+          {workers ? (
+            <pre className="border border-[var(--line)] p-3 text-xs overflow-auto">
+              {JSON.stringify(workers, null, 2)}
+            </pre>
+          ) : (
+            <p className="text-sm text-[var(--muted)]">Loading workers…</p>
+          )}
+        </div>
       )}
       {mode === "vlm" && (
         <div className="space-y-3" data-artefact="AI.NUMBERS.ONLY">
