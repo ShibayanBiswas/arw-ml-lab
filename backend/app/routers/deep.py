@@ -94,3 +94,28 @@ def mc_dropout_smoke(
     x = torch.randn(body.n_rows, 2)
     out = mc_dropout_predict(model, x, n_samples=body.n_samples, seed=body.seed)
     return out
+
+
+class DeepEnsembleSmokeBody(BaseModel):
+    seed: int = 42
+    n_rows: int = Field(default=8, ge=2, le=64)
+
+
+@router.post("/api/v1/deep/ensemble/smoke")
+def deep_ensemble_smoke(
+    body: DeepEnsembleSmokeBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """Two constant offset callables → mean/std (never refits)."""
+    _ = user
+    from labcore.uncertainty.deep_ensemble import deep_ensemble_predict
+
+    x = np.linspace(0.0, 1.0, body.n_rows).reshape(-1, 1)
+
+    def m1(z: np.ndarray) -> np.ndarray:
+        return z * 2.0
+
+    def m2(z: np.ndarray) -> np.ndarray:
+        return z * 2.0 + 0.5
+
+    return deep_ensemble_predict([m1, m2], x, seed=body.seed)
