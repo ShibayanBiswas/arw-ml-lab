@@ -45,11 +45,22 @@ def assert_doc_dl_defaults() -> dict[str, object]:
     return {"doc": "DEPLOY_CONTABO §12"}
 
 
+def assert_deep_router_small_epochs() -> dict[str, object]:
+    """Smoke API must keep max_epochs default 1 and cap ≤ 5 (Contabo CPU)."""
+    text = (_repo_root() / "backend" / "app" / "routers" / "deep.py").read_text(encoding="utf-8")
+    if "max_epochs: int = Field(default=1" not in text:
+        raise AssertionError("deep sequential smoke must default max_epochs=1")
+    if "le=5" not in text:
+        raise AssertionError("deep sequential smoke must cap max_epochs at 5")
+    return {"max_epochs_default": 1, "max_epochs_cap": 5}
+
+
 def contabo_dl_manifest(*, seed: int = 42) -> dict[str, Any]:
     checks = [
         assert_compose_torch_threads(),
         assert_env_example_limits(),
         assert_doc_dl_defaults(),
+        assert_deep_router_small_epochs(),
     ]
     return {
         "id": ARTEFACT_ID,
