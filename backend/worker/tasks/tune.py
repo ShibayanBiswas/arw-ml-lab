@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 import pandas as pd
+from labcore.observability.json_logging import bind_context, clear_context
 from labcore.ops.soft_time_limit import (
     PartialHolder,
     is_soft_time_limit_exc,
@@ -24,6 +25,11 @@ from backend.worker.celery_app import celery_app
 def run_tune_task(self, job_id: str, experiment_id: str, body: dict[str, Any]) -> dict[str, Any]:  # noqa: ANN001
     _ = self
     holder = PartialHolder()
+    bind_context(
+        job_id=job_id,
+        run_id=experiment_id,
+        workspace_id=str(body.get("workspace_id") or "offline"),
+    )
     JOB_STORE.update(
         job_id,
         status="running",
@@ -119,3 +125,5 @@ def run_tune_task(self, job_id: str, experiment_id: str, body: dict[str, Any]) -
             event={"type": "error", "message": str(exc)},
         )
         raise
+    finally:
+        clear_context()
