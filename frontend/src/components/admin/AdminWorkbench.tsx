@@ -17,6 +17,7 @@ type Mode =
 export function AdminWorkbench({ mode }: { mode: Mode }) {
   const [health, setHealth] = useState<Record<string, unknown> | null>(null);
   const [workers, setWorkers] = useState<Record<string, unknown> | null>(null);
+  const [quotas, setQuotas] = useState<Record<string, unknown> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [insight, setInsight] = useState<Record<string, unknown> | null>(null);
   const [decision, setDecision] = useState<Record<string, unknown> | null>(null);
@@ -38,6 +39,15 @@ export function AdminWorkbench({ mode }: { mode: Mode }) {
         .then(async (r) => {
           if (!r.ok) throw new Error(String(r.status));
           setWorkers((await r.json()) as Record<string, unknown>);
+        })
+        .catch((e) => setError(String(e)));
+      return;
+    }
+    if (mode === "quotas") {
+      void fetch(`${labApiBase()}/api/v1/admin/quotas`, { headers: labAuthHeaders() })
+        .then(async (r) => {
+          if (!r.ok) throw new Error(String(r.status));
+          setQuotas((await r.json()) as Record<string, unknown>);
         })
         .catch((e) => setError(String(e)));
     }
@@ -156,8 +166,29 @@ export function AdminWorkbench({ mode }: { mode: Mode }) {
           ) : null}
         </div>
       )}
+      {mode === "quotas" && (
+        <div className="space-y-2" data-artefact="OPS.COST.GUARDS">
+          <p className="text-sm text-[var(--muted)]">
+            Contabo CPU cost guards (concurrency, CPU-hours, storage, AI RPM/day). Usage meters fill
+            when the VPS is live.
+          </p>
+          {quotas ? (
+            <pre className="overflow-auto border border-[var(--line)] p-3 text-xs">
+              {JSON.stringify(quotas, null, 2)}
+            </pre>
+          ) : (
+            <p className="text-sm text-[var(--muted)]">Loading quotas…</p>
+          )}
+        </div>
+      )}
       {mode === "users" && (
         <p className="text-sm text-[var(--muted)]">Supabase Auth roster — managed in hosted project.</p>
+      )}
+      {mode === "workspaces" && (
+        <p className="text-sm text-[var(--muted)]">
+          Workspace membership and classification (public / internal / restricted) live in Supabase
+          RLS tables after Contabo migrate.
+        </p>
       )}
       {mode === "audit" && <AuditLogPanel />}
     </div>

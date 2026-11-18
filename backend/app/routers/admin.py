@@ -70,6 +70,23 @@ def admin_audit_list(
     }
 
 
+@router.get("/api/v1/admin/quotas")
+def admin_quotas(
+    user: AuthUser = Depends(require_admin_role),
+    settings: Settings = Depends(get_settings),
+) -> dict[str, Any]:
+    """Workspace cost-guard limits + current usage snapshot (OPS-08)."""
+    from labcore.ops.cost_guards import CostGuardLimits, CostGuardUsage, evaluate_cost_guards
+
+    # Offline / Contabo: usage counters are best-effort zeros until hosted metering wires
+    usage = CostGuardUsage()
+    limits = CostGuardLimits(seed=settings.lab_default_seed)
+    snap = evaluate_cost_guards(usage, limits)
+    snap["workspace_id"] = user.workspace_id or settings.lab_default_workspace_id
+    snap["note"] = "Usage meters fill from jobs/ai_usage on Contabo; limits are Contabo CPU defaults"
+    return snap
+
+
 @router.get("/api/v1/admin/workers")
 def admin_workers(
     user: AuthUser = Depends(require_admin_role),
