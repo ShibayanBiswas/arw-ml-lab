@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Tip | `0c503c5` wind-up prune |
+| Tip | `f95dfbe` wind-up prune + tip docs |
 | Frontend | https://arw-ml-lab.vercel.app — login **200** |
 | Backend | Contabo VPS — **not live** |
 | Local API smoke | TestClient `/healthz` **200** seed 42; catalog **83** algorithms; samples **200** |

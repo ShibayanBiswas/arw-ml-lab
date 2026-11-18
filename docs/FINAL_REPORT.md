@@ -1,7 +1,7 @@
 # ARW ML Lab — Final wind-up report
 
 **Date:** 18 Nov 2026 (IST)  
-**Tip before prune commit:** `7b81299` (oneshot-c281)  
+**Tip:** `f95dfbe` (wind-up prune + tip docs)  
 **Repo:** https://github.com/ShibayanBiswas/arw-ml-lab (`main`)
 
 ## Verdict
@@ -11,13 +11,14 @@
 
 | Layer | Result | Evidence |
 |---|---|---|
-| Repo `main` | Up to date with Contabo infra + app | Tip `7b81299`; prune commit follows |
+| Repo `main` | Up to date with Contabo infra + app | Tip `f95dfbe` |
 | Local API (TestClient) | Pass | `/healthz` 200 seed **42**; `/api/v1/catalog/algorithms` **83**; samples 200 |
 | Local unit/e2e slice | Pass | import allowlist, cost guards, GPU guard, soft-limit contract, nav coverage, feature-contract UQ, hosted FE + journey HTTP |
 | Frontend tsc | Pass | `pnpm exec tsc --noEmit` clean |
 | Vercel frontend | Live | `https://arw-ml-lab.vercel.app/login` → **200**; `/` → **307** |
 | Vercel → Contabo API | Missing | `NEXT_PUBLIC_LAB_API_URL` is localhost/placeholder; no Contabo hostname |
-| Local uvicorn :8000 | Down | Not running in this session (TestClient covers API smoke) |
+| Local uvicorn :8000 / Next :3000 | Down | Not running in this session (TestClient + Vercel cover smoke) |
+| Auth gate on Vercel | Pass | `/data` redirects to `/login` (unauthenticated) |
 | Contabo `/healthz` | Not available | `CONTABO_HOST` missing |
 | GitHub Actions CI | Fail | Billing; jobs die in ~2s with empty steps |
 | Deploy workflow | Skipped | Needs CI green + Contabo secrets |
