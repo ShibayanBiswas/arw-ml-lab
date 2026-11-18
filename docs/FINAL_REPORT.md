@@ -1,7 +1,7 @@
 # ARW ML Lab — One-shot finish report (interim)
 
 **Date:** 18 Nov 2026 (IST)
-**Tip:** see `docs/PROGRESS.md` (oneshot through ~c279; Contabo still blocked)
+**Tip:** see `docs/PROGRESS.md` (oneshot through ~c280; Contabo still blocked)
 **Frontend:** https://arw-ml-lab.vercel.app → READY
 **Backend target:** Contabo VPS — **not live** (`docs/DEPLOY_CONTABO.md`, ADR-0017)
 **Offline hardening ledger:** `docs/PHASE_8_2_REPORT.md`
@@ -21,7 +21,7 @@ Then agent resumes: SSH bootstrap → server `.env` → Deploy green → DS1 EDA
 
 ## Offline one-shot (continued while Contabo blocked)
 
-Catalogue, FE workbenches, Phase 7 reports/admin/load/ZAP, Prediction Studio §45, DL UQ, and STRESS/8.2 contracts through oneshot ~c279, including:
+Catalogue, FE workbenches, Phase 7 reports/admin/load/ZAP, Prediction Studio §45, DL UQ, and STRESS/8.2 contracts through oneshot ~c280, including:
 
 - SoftTimeLimit mid-run `PartialHolder` (train/tune/predict/eda)
 - Predict Redis/memory cancel flags + Contabo `LAB_CANCEL_USE_REDIS`

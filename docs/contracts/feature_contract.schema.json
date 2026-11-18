@@ -42,6 +42,27 @@
     "derived_features": {"type": "array", "description": "engineered columns computed by the saved pipeline (lags, ratios, date parts); never shown as inputs"},
     "preprocessing_hash": {"type": "string"},
     "library_versions": {"type": "object"},
-    "note": {"type": "string"}
-  }
+    "note": {"type": "string"},
+    "pred_threshold": {
+      "type": ["number", "null"],
+      "description": "OOF-tuned decision threshold for binary classification (§45.4); never fitted on test"
+    },
+    "calibration_status": {
+      "type": "string",
+      "enum": ["uncalibrated", "platt", "isotonic", "temperature", "unknown"],
+      "description": "Whether probabilities were calibrated inside CV"
+    },
+    "uncertainty": {
+      "type": ["object", "null"],
+      "description": "Conformal / interval metadata attached at train (qhat, method, level)",
+      "properties": {
+        "method": {"type": "string"},
+        "confidence_level": {"type": "number"},
+        "conformal_qhat": {"type": ["number", "null"]},
+        "source": {"type": "string"}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
 }
