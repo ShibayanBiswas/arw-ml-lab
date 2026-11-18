@@ -83,6 +83,20 @@ export function DeepWorkbench({ mode }: { mode: Mode }) {
       >
         Deep-ensemble smoke
       </button>
+      <button
+        type="button"
+        className="rounded border border-[var(--border)] px-3 py-1.5 text-sm"
+        data-artefact="UQ.CONFORMAL.DL"
+        onClick={() =>
+          void postSmoke(
+            "/api/v1/deep/conformal/smoke",
+            { seed: 42, n: 40, confidence_level: 0.9 },
+            "Running conformal-DL smoke…"
+          )
+        }
+      >
+        Conformal-DL smoke
+      </button>
       </div>
       {status && <p className="text-sm text-[var(--muted)]">{status}</p>}
       {error && (

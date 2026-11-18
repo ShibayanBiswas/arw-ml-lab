@@ -119,3 +119,31 @@ def deep_ensemble_smoke(
         return z * 2.0 + 0.5
 
     return deep_ensemble_predict([m1, m2], x, seed=body.seed)
+
+
+class ConformalDlSmokeBody(BaseModel):
+    seed: int = 42
+    n: int = Field(default=40, ge=10, le=200)
+    confidence_level: float = Field(default=0.9, gt=0.5, lt=1.0)
+
+
+@router.post("/api/v1/deep/conformal/smoke")
+def conformal_dl_smoke(
+    body: ConformalDlSmokeBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """Calib residual qhat + intervals on a synthetic regressor (never trains a net)."""
+    _ = user
+    from labcore.uncertainty.conformal_dl import (
+        conformal_qhat_from_residuals,
+        predict_with_conformal_residual,
+    )
+
+    rng = np.random.default_rng(body.seed)
+    y = rng.normal(size=body.n)
+    pred = y + rng.normal(scale=0.25, size=body.n)
+    qhat = conformal_qhat_from_residuals(y, pred, confidence_level=body.confidence_level)
+    out = predict_with_conformal_residual(pred[:8], qhat)
+    out["confidence_level"] = body.confidence_level
+    out["seed"] = body.seed
+    return out
