@@ -244,7 +244,11 @@ def _score_validated(
         elif col in scored:
             out_df[col] = scored[col]
     for col in scored.get("classification_columns") or []:
-        if col in scored:
+        if col not in scored:
+            continue
+        if col == "pred_set":
+            out_df[col] = [str(s) for s in scored[col]]
+        else:
             out_df[col] = scored[col]
     # PV12 — row flag for lag lookback shortfall (oneshot-c254)
     insuff = list(getattr(report, "insufficient_history_rows", None) or [])
@@ -277,6 +281,8 @@ def _score_validated(
         "pred_confidence": scored.get("pred_confidence"),
         "pred_margin": scored.get("pred_margin"),
         "pred_entropy": scored.get("pred_entropy"),
+        "pred_set": scored.get("pred_set"),
+        "pred_set_method": scored.get("pred_set_method"),
         "pred_interval_method": scored.get("pred_interval_method"),
         "confidence_level": scored.get("confidence_level"),
         "calibration_status": cal_status if scored.get("probabilities") is not None else None,

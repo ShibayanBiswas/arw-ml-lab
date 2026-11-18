@@ -21,6 +21,35 @@ def _level_tag(confidence_level: float) -> str:
     return str(pct)
 
 
+def try_predict_sets(
+    pipeline: Any,
+    X: pd.DataFrame,
+    *,
+    confidence_level: float = 0.9,
+) -> dict[str, Any] | None:
+    """Return conformal prediction sets when ``predict_set`` is available (MAPIE)."""
+    if not hasattr(pipeline, "predict_set"):
+        return None
+    try:
+        _y_pred, y_ps = pipeline.predict_set(X)
+        sets = np.asarray(y_ps)
+        # MAPIE APS: boolean matrix (n, n_classes) or list of label sets
+        if sets.ndim == 2 and sets.dtype != object:
+            pred_sets = [
+                [int(j) for j, on in enumerate(row) if on]
+                for row in sets
+            ]
+        else:
+            pred_sets = [list(s) for s in sets]
+        return {
+            "pred_set": pred_sets,
+            "pred_set_method": "mapie_predict_set",
+            "confidence_level": float(confidence_level),
+        }
+    except Exception:
+        return None
+
+
 def try_predict_intervals(
     pipeline: Any,
     X: pd.DataFrame,
@@ -185,4 +214,12 @@ def predict_batch(
             f"pred_upper_{tag}",
             "pred_interval_method",
         ]
+    psets = try_predict_sets(pipeline, frame, confidence_level=confidence_level)
+    if psets is not None:
+        out["pred_set"] = psets["pred_set"]
+        out["pred_set_method"] = psets["pred_set_method"]
+        cols = list(out.get("classification_columns") or [])
+        if "pred_set" not in cols:
+            cols.append("pred_set")
+        out["classification_columns"] = cols
     return out
