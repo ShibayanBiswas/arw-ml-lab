@@ -18,6 +18,7 @@ class SequentialSmokeBody(BaseModel):
     max_epochs: int = Field(default=1, ge=1, le=5)
     seed: int = 42
     n: int = Field(default=120, ge=64, le=500)
+    preset: Literal["quick", "balanced"] = "quick"
 
 
 @router.post("/api/v1/deep/sequential/smoke")
@@ -26,8 +27,11 @@ def sequential_smoke(
     user: AuthUser = Depends(require_write_role),
 ) -> dict[str, Any]:
     _ = user
+    from labcore.deep.contabo_presets import contabo_dl_preset
     from labcore.deep.sequential import WindowSpec, fit_sequential
 
+    preset = contabo_dl_preset(body.preset)
+    epochs = min(int(body.max_epochs), int(preset["max_epochs"]))
     rng = np.random.default_rng(body.seed)
     X = rng.normal(size=(body.n, 3))
     y = rng.normal(size=body.n)
@@ -38,13 +42,13 @@ def sequential_smoke(
             model=body.model,
             window=WindowSpec(lookback=16, horizon=1, purge=2, embargo=1),
             task="regression",
-            max_epochs=body.max_epochs,
+            max_epochs=epochs,
             seed=body.seed,
         )
     except Exception as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     # drop heavy tensors / non-JSON
-    return {
+    slim = {
         k: v
         for k, v in out.items()
         if k
@@ -60,6 +64,9 @@ def sequential_smoke(
         }
         or isinstance(v, (str, int, float, bool, list, dict, type(None)))
     }
+    slim["contabo_preset"] = preset
+    slim["max_epochs_used"] = epochs
+    return slim
 
 
 class McDropoutSmokeBody(BaseModel):
