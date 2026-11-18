@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AuditLogPanel } from "@/components/admin/AuditLogPanel";
 import { labApiBase, proposeDecision, runInsights } from "@/lib/api";
+import { labAuthHeaders } from "@/lib/lab-session";
 
 type Mode =
   | "users"
@@ -18,6 +19,7 @@ export function AdminWorkbench({ mode }: { mode: Mode }) {
   const [error, setError] = useState<string | null>(null);
   const [insight, setInsight] = useState<Record<string, unknown> | null>(null);
   const [decision, setDecision] = useState<Record<string, unknown> | null>(null);
+  const [evalHarness, setEvalHarness] = useState<Record<string, unknown> | null>(null);
   const [vlmBusy, setVlmBusy] = useState(false);
 
   useEffect(() => {
@@ -41,6 +43,22 @@ export function AdminWorkbench({ mode }: { mode: Mode }) {
       ]);
       setInsight(ins);
       setDecision(dec);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setVlmBusy(false);
+    }
+  }
+
+  async function onEvalHarness() {
+    setVlmBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`${labApiBase()}/api/v1/decisions/eval-harness`, {
+        headers: labAuthHeaders(),
+      });
+      if (!res.ok) throw new Error(`eval-harness: ${res.status}`);
+      setEvalHarness((await res.json()) as Record<string, unknown>);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -73,6 +91,7 @@ export function AdminWorkbench({ mode }: { mode: Mode }) {
             Workspace classification gates providers (public / internal / restricted). Numbers-only
             always available. Keys never appear in the browser.
           </p>
+          <div className="flex flex-wrap gap-2">
           <button
             type="button"
             className="rounded-lg gold-gradient px-4 py-2 text-sm font-semibold text-[#111]"
@@ -81,6 +100,16 @@ export function AdminWorkbench({ mode }: { mode: Mode }) {
           >
             {vlmBusy ? "Running…" : "Probe numbers-only insight + VD1"}
           </button>
+          <button
+            type="button"
+            className="rounded border border-[var(--border)] px-3 py-2 text-sm"
+            data-artefact="DEC.EVAL.HARNESS"
+            disabled={vlmBusy}
+            onClick={() => void onEvalHarness()}
+          >
+            Run guard eval harness
+          </button>
+          </div>
           {insight ? (
             <pre className="overflow-auto border border-[var(--line)] p-3 text-xs">
               {JSON.stringify(insight, null, 2)}
@@ -92,6 +121,11 @@ export function AdminWorkbench({ mode }: { mode: Mode }) {
               data-artefact="VD.NUMBERS.ONLY"
             >
               {JSON.stringify(decision, null, 2)}
+            </pre>
+          ) : null}
+          {evalHarness ? (
+            <pre className="overflow-auto border border-[var(--line)] p-3 text-xs">
+              {JSON.stringify(evalHarness, null, 2)}
             </pre>
           ) : null}
         </div>
