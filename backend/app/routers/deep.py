@@ -60,3 +60,37 @@ def sequential_smoke(
         }
         or isinstance(v, (str, int, float, bool, list, dict, type(None)))
     }
+
+
+class McDropoutSmokeBody(BaseModel):
+    n_samples: int = Field(default=20, ge=2, le=100)
+    seed: int = 42
+    n_rows: int = Field(default=8, ge=2, le=64)
+
+
+@router.post("/api/v1/deep/mc-dropout/smoke")
+def mc_dropout_smoke(
+    body: McDropoutSmokeBody,
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """Tiny torch net + MC-dropout mean/std (never refits a trained lab model)."""
+    _ = user
+    import torch
+    from torch import nn
+
+    from labcore.uncertainty.mc_dropout import mc_dropout_predict
+
+    class _Tiny(nn.Module):
+        def __init__(self) -> None:
+            super().__init__()
+            self.fc = nn.Linear(2, 1)
+            self.drop = nn.Dropout(p=0.5)
+
+        def forward(self, x: torch.Tensor) -> torch.Tensor:
+            return self.fc(self.drop(x))
+
+    torch.manual_seed(body.seed)
+    model = _Tiny()
+    x = torch.randn(body.n_rows, 2)
+    out = mc_dropout_predict(model, x, n_samples=body.n_samples, seed=body.seed)
+    return out
