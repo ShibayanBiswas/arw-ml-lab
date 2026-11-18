@@ -42,3 +42,14 @@ def propose_decision(
         "guards": guarded,
         "seed": 42,
     }
+
+
+@router.get("/api/v1/decisions/eval-harness")
+def decision_eval_harness(
+    user: AuthUser = Depends(require_write_role),
+) -> dict[str, Any]:
+    """Offline Phase 6A guard suite (seed 42); never calls a live VLM."""
+    _ = user
+    from labcore.decisions.eval_harness import run_decision_eval_harness
+
+    return run_decision_eval_harness(seed=42)
