@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Tip | `764024b` wind-up final |
+| Tip | `d1f6b61` wind-up final |
 | Frontend | https://arw-ml-lab.vercel.app — login **200** |
 | Backend | Contabo VPS — **not live** |
 | Local API smoke | TestClient `/healthz` **200** seed 42; catalog **83** algorithms; samples **200** |
